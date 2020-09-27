@@ -1,0 +1,9 @@
+/.bloop/
+/.idea/
+/.metals/
+/.vscode/
+/_site/
+/target/
+/project/.bloop/
+/project/project/
+/project/target/

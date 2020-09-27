@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/1.0" id="drd_numbers" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="3.5.0">
+  <inputData id="InputData_0die4vm" name="number">
+    <extensionElements>
+      <biodi:bounds x="122" y="270" width="125" height="45" />
+    </extensionElements>
+  </inputData>
+  <decision id="numbers" name="numbers">
+    <extensionElements>
+      <biodi:bounds x="207" y="81" width="180" height="80" />
+      <biodi:edge source="InputData_0die4vm">
+        <biodi:waypoints x="201" y="270" />
+        <biodi:waypoints x="277" y="161" />
+      </biodi:edge>
+    </extensionElements>
+    <informationRequirement>
+      <requiredInput href="#InputData_0die4vm" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0vlucip" hitPolicy="FIRST">
+      <input id="InputClause_1wdcmm6" label="number">
+        <inputExpression id="LiteralExpression_0zijywr" typeRef="long">
+          <text>number</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1yqa6vj" label="result" name="result" typeRef="integer" />
+      <output id="OutputClause_1daj18b" label="otherResult" name="otherResult" typeRef="string" />
+      <rule id="DecisionRule_0poldk9">
+        <inputEntry id="UnaryTests_09cs1wx">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_042a1ap">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1nv2bez">
+          <text>"first"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0caaj80">
+        <inputEntry id="UnaryTests_16v8i9p">
+          <text>&lt;3</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1pzpzit">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1c8h8sh">
+          <text>"second"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_14zikns">
+        <inputEntry id="UnaryTests_1so88g2">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0ivpey1">
+          <text>99</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1a9208r">
+          <text>"NOT HANDLED"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
