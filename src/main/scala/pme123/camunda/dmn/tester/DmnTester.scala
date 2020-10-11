@@ -55,16 +55,16 @@ enum TesterValue(val normalized: Set[Any]) {
   
 }
 
-object implicits {
+object conversions {
 
-  implicit def string2Value(x: String): TesterValue =
-    TesterValue.StringValue(x)
+  given Conversion[String, TesterValue]:
+    def apply(x:String): TesterValue = TesterValue.StringValue(x)
 
-  implicit def number2Value(x: Int): TesterValue =
-    TesterValue.NumberValue(new BigDecimal(x))
-
-  implicit def boolean2Value(x: Boolean): TesterValue =
-    TesterValue.BooleanValue(x)
+  given Conversion[Int, TesterValue]:
+    def apply(x:Int): TesterValue = TesterValue.NumberValue(new BigDecimal(x))
+  
+  given Conversion[Boolean, TesterValue]:
+    def apply(x:Boolean): TesterValue = TesterValue.BooleanValue(x)
 }
 
 case class DmnTester(dmnName: String, decisionId: String) {
