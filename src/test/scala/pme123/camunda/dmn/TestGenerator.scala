@@ -1,5 +1,6 @@
 package pme123.camunda.dmn
 
+import pme123.camunda.dmn.tester.TesterValue.RandomInts
 import pme123.camunda.dmn.tester.implicits._
 import pme123.camunda.dmn.tester.{DmnTester, TesterData, TesterInput}
 
@@ -16,7 +17,7 @@ object TestGenerator extends App {
       List(
         TesterInput(
           number,
-          List(1, 2, 3, -12, 234234)
+          List(1, 2, 3, -12, 234234, RandomInts(5))
         )
       )
     )
@@ -45,7 +46,7 @@ object TestGenerator extends App {
             "ch",
             "DE",
             "OTHER",
-            "asdftre longas Input that should be cutted"
+            "an awful long Input that should be cutted"
           )
         ),
         TesterInput(
@@ -55,7 +56,7 @@ object TestGenerator extends App {
             "ch",
             "DE",
             "OTHER",
-            "another awful lon text that is cutted"
+            "another awful long text that is cutted"
           )
         )
       )

@@ -11,6 +11,7 @@ import org.junit.Assert.{assertEquals, fail}
 import os.read.inputStream
 
 import scala.language.implicitConversions
+import scala.util.Random
 
 case class TesterData(
     inputs: List[TesterInput]
@@ -35,42 +36,35 @@ case class TesterData(
 
 case class TesterInput(key: String, values: List[TesterValue]) {
   def normalize(): (String, List[Any]) = {
-    val allValues: List[Any] = values.flatMap(_.normalize())
+    val allValues: List[Any] = values.flatMap(_.normalized)
     key -> allValues
   }
 }
 
-sealed trait TesterValue {
-  def normalize(): Set[Any]
-}
+enum TesterValue(val normalized: Set[Any]) {
 
-object TesterValue {
+  case  StringValue(value: String) extends TesterValue(Set(value))
 
-  case class StringValue(value: String) extends TesterValue {
-    def normalize(): Set[Any] = Set(value)
-  }
-  case class BooleanValue(value: Boolean) extends TesterValue {
-    def normalize(): Set[Any] = Set(value)
-  }
-  case class NumberValue(value: Number) extends TesterValue {
-    def normalize(): Set[Any] = Set(value)
-  }
-  case class ValueSet(values: Set[TesterValue]) extends TesterValue {
-    def normalize(): Set[Any] = values.flatMap(_.normalize())
-  }
+  case BooleanValue(value: Boolean) extends TesterValue( Set(value))
+
+  case  NumberValue(value: Number) extends TesterValue(Set(value))
+
+  case  ValueSet(values: Set[TesterValue]) extends TesterValue(values.flatMap(_.normalized))
+
+  case RandomInts(count: Int) extends TesterValue  (List.fill(count)(Random.nextInt()).toSet)
+  
 }
 
 object implicits {
-  import TesterValue._
 
-  implicit def string2Value(x: String): StringValue =
-    StringValue(x)
+  implicit def string2Value(x: String): TesterValue =
+    TesterValue.StringValue(x)
 
-  implicit def number2Value(x: Int): NumberValue =
-    NumberValue(new BigDecimal(x))
+  implicit def number2Value(x: Int): TesterValue =
+    TesterValue.NumberValue(new BigDecimal(x))
 
-  implicit def boolean2Value(x: Boolean): BooleanValue =
-    BooleanValue(x)
+  implicit def boolean2Value(x: Boolean): TesterValue =
+    TesterValue.BooleanValue(x)
 }
 
 case class DmnTester(dmnName: String, decisionId: String) {
@@ -95,23 +89,27 @@ case class DmnTester(dmnName: String, decisionId: String) {
   def parsedDmn(
       path: Seq[String] = mainPath
   ): Either[Failure, ParsedDmn] = {
-    parsedDmn(inputStream(pwd/path))
+    parsedDmn(inputStream(pwd/path/s"$dmnName.dmn"))
   }
 
   def parsedDmn(
       streamToTest: InputStream
   ): Either[Failure, ParsedDmn] = {
-    engine.parse(streamToTest)
+    engine.parse(streamToTest)  match {
+      case r@Left(failure) =>
+        println(s"FAILURE in $dmnName - $decisionId: $failure")
+        r
+      case r => r
+    }
   }
 
   def runDmnTest(
       path: Seq[String],
       inputs: Map[String, Any],
       expected: EvalResult
-  ): Unit = {
+  ): Unit =
     parsedDmn(path)
       .map(runDmnTest(_, inputs, expected))
-  }
 
   def runDmnTest(
       dmn: ParsedDmn,
