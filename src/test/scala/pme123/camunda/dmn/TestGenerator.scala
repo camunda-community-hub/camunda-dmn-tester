@@ -1,7 +1,7 @@
 package pme123.camunda.dmn
 
 import pme123.camunda.dmn.tester.TesterValue.RandomInts
-import pme123.camunda.dmn.tester.conversions.{given _}
+import pme123.camunda.dmn.tester.conversions.given
 import pme123.camunda.dmn.tester.{DmnTester, TesterData, TesterInput}
 
 import scala.language.implicitConversions
