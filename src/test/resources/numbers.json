@@ -1,0 +1,20 @@
+{
+    "decisionId": "numbers",
+    "dmnPath": ["src", "test", "resources", "numbers.dmn"],
+    "data": [
+        {
+            "key": "number",
+            "values": [
+                1,
+                2,
+                3,
+                -12,
+                234234,
+                {
+                    "type": "RandomInts",
+                    "count": 5
+                }
+            ]
+        }
+    ]
+}

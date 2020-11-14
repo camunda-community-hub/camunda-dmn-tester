@@ -1,0 +1,25 @@
+{
+    "decisionId": "country-risk",
+    "dmnPath": ["src", "test", "resources", "country-risk.dmn"],
+    "data": [
+        {
+            "key": "currentCountry",
+            "values": [
+                "CH",
+                "ch",
+                "DE",
+                "OTHER",
+                "an awful long Input that should be cutted"
+            ]
+        }, {
+            "key": "targetCountry",
+            "values": [
+                "CH",
+                "ch",
+                "DE",
+                "OTHER",
+                "an awful long Input that should be cutted"
+            ]
+        }
+    ]
+}
