@@ -2,7 +2,7 @@ package pme123.camunda.dmn
 
 import pme123.camunda.dmn.tester.TesterValue.RandomInts
 import pme123.camunda.dmn.tester.conversions.given
-import pme123.camunda.dmn.tester.{DmnTester, TesterData, TesterInput}
+import pme123.camunda.dmn.tester._
 
 import scala.language.implicitConversions
 
@@ -13,17 +13,14 @@ object TestGenerator extends App {
   private def numbersTester(): Unit = {
     val numbers = "numbers"
     val number = "number"
-    val data = TesterData(
-      List(
-        TesterInput(
-          number,
-          List(1, 2, 3, -12, 234234, RandomInts(5))
-        )
-      )
-    )
-    val tester = DmnTester(numbers, numbers)
+    val config = DmnConfigHandler(
+      Seq("src", "test", "resources", "numbers.json")
+    ).read()
+    val tester = DmnTester(config.decisionId, config.dmnPath)
+    val data = config.data
+
     tester
-      .parsedDmn(tester.testPath)
+      .parsedDmn()
       .map(tester.run(data, _))
       .map { evaluated =>
         tester.generateDmnTests(data.inputKeys, evaluated)
@@ -37,33 +34,14 @@ object TestGenerator extends App {
     val currentCountry = "currentCountry"
     val targetCountry = "targetCountry"
 
-    val data = TesterData(
-      List(
-        TesterInput(
-          currentCountry,
-          List(
-            "CH",
-            "ch",
-            "DE",
-            "OTHER",
-            "an awful long Input that should be cutted"
-          )
-        ),
-        TesterInput(
-          targetCountry,
-          List(
-            "CH",
-            "ch",
-            "DE",
-            "OTHER",
-            "another awful long text that is cutted"
-          )
-        )
-      )
-    )
-    val tester = DmnTester(countryRisk, countryRisk)
+    val config = DmnConfigHandler(
+      Seq("src", "test", "resources", "country-risk.json")
+    ).read()
+    val tester = DmnTester(config.decisionId, config.dmnPath)
+    val data = config.data
+
     tester
-      .parsedDmn(tester.testPath)
+      .parsedDmn()
       .map(tester.run(data, _))
       .map { evaluated =>
         tester.generateDmnTests(data.inputKeys, evaluated)

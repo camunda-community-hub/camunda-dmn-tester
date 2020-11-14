@@ -10,105 +10,55 @@ import org.camunda.dmn.parser._
 import org.junit.Assert.{assertEquals, fail}
 import os.read.inputStream
 
-import scala.language.implicitConversions
 import scala.util.Random
 
-case class TesterData(
-    inputs: List[TesterInput]
-) {
-
-  lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _) => k }
-
-  def normalize(): List[Map[String, Any]] = {
-    val data = inputs.map(_.normalize())
-    cartesianProduct(data).map(_.toMap)
-  }
-
-  def cartesianProduct(
-      xss: List[(String, List[Any])]
-  ): List[List[(String, Any)]] =
-    xss match {
-      case Nil => List(Nil)
-      case (key, v) :: t =>
-        for (xh <- v; xt <- cartesianProduct(t)) yield (key -> xh) :: xt
-    }
-}
-
-case class TesterInput(key: String, values: List[TesterValue]) {
-  def normalize(): (String, List[Any]) = {
-    val allValues: List[Any] = values.flatMap(_.normalized)
-    key -> allValues
-  }
-}
-
-enum TesterValue(val normalized: Set[Any]) {
-
-  case  StringValue(value: String) extends TesterValue(Set(value))
-
-  case BooleanValue(value: Boolean) extends TesterValue( Set(value))
-
-  case  NumberValue(value: Number) extends TesterValue(Set(value))
-
-  case  ValueSet(values: Set[TesterValue]) extends TesterValue(values.flatMap(_.normalized))
-
-  case RandomInts(count: Int) extends TesterValue  (List.fill(count)(Random.nextInt()).toSet)
-  
-}
-
-object conversions {
-
-  given Conversion[String, TesterValue]:
-    def apply(x:String): TesterValue = TesterValue.StringValue(x)
-
-  given Conversion[Int, TesterValue]:
-    def apply(x:Int): TesterValue = TesterValue.NumberValue(new BigDecimal(x))
-  
-  given Conversion[Boolean, TesterValue]:
-    def apply(x:Boolean): TesterValue = TesterValue.BooleanValue(x)
-}
-
-case class DmnTester(dmnName: String, decisionId: String) {
+case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
   private val engine = new DmnEngine()
-  val testPath = Seq("src", "test", "resources")
-  val mainPath = Seq("src", "main", "resources")
   val generatePath = Seq("target", "generated-tests")
+  val dmnName = dmnPath.last
+
+  case class RunResult(
+      inputs: Map[String, Any],
+      result: Either[Failure, EvalResult]
+  )
 
   def run(
       data: TesterData,
       dmn: ParsedDmn
-  ): Seq[(Map[String, Any], Either[Failure, EvalResult])] = {
+  ): Seq[RunResult] = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
-    val evaluated: Seq[(Map[String, Any], Either[Failure, EvalResult])] =
+    val evaluated =
       allInputs.map(inputMap =>
-        inputMap -> engine
-          .eval(dmn, decisionId, inputMap)
+        RunResult(
+          inputMap,
+          engine.eval(dmn, decisionId, inputMap)
+        )
       )
     evaluated
   }
 
-  def parsedDmn(
-      path: Seq[String] = mainPath
-  ): Either[Failure, ParsedDmn] = {
-    parsedDmn(inputStream(pwd/path/s"$dmnName.dmn"))
+  def parsedDmn(): Either[Failure, ParsedDmn] = {
+    parsedDmn(inputStream(pwd / dmnPath))
   }
 
   def parsedDmn(
       streamToTest: InputStream
   ): Either[Failure, ParsedDmn] = {
-    engine.parse(streamToTest)  match {
-      case r@Left(failure) =>
-        println(s"FAILURE in $dmnName - $decisionId: $failure")
+    engine.parse(streamToTest) match {
+      case r as Left(failure) =>
+        println(
+          s"FAILURE in ${dmnPath.mkString("/")} - ${decisionId}: $failure"
+        )
         r
       case r => r
     }
   }
 
   def runDmnTest(
-      path: Seq[String],
       inputs: Map[String, Any],
       expected: EvalResult
   ): Unit =
-    parsedDmn(path)
+    parsedDmn()
       .map(runDmnTest(_, inputs, expected))
 
   def runDmnTest(
@@ -129,7 +79,7 @@ case class DmnTester(dmnName: String, decisionId: String) {
   def printTestResult(
       name: String,
       inputs: Seq[String],
-      evaluated: Seq[(Map[String, Any], Either[Failure, EvalResult])]
+      evaluated: Seq[RunResult]
   ): Unit = {
 
     def formatStrings(strings: Seq[String]) = {
@@ -142,7 +92,7 @@ case class DmnTester(dmnName: String, decisionId: String) {
     def extractOutputs() = {
       evaluated
         .map {
-          case (_, Right(Result(rMap: Map[_, _]))) =>
+          case RunResult(_, Right(Result(rMap: Map[_, _]))) =>
             rMap.keySet.map(_.toString)
           case _ => Nil
         }
@@ -167,11 +117,11 @@ case class DmnTester(dmnName: String, decisionId: String) {
     )
     println(s"*" * 100)
     evaluated.foreach {
-      case (inputMap, Right(result)) =>
+      case RunResult(inputMap, Right(result)) =>
         println(
           s"INFO:      ${formatStrings(inputs.map(k => inputMap(k).toString))} -> ${formatResult(result)}"
         )
-      case (inputMap, Left(failure)) =>
+      case RunResult(inputMap, Left(failure)) =>
         println(
           scala.Console.RED + s"ERROR:     ${formatStrings(
             inputs.map(k => inputMap(k).toString)
@@ -182,7 +132,7 @@ case class DmnTester(dmnName: String, decisionId: String) {
 
   def generateDmnTests(
       inputs: Seq[String],
-      evaluated: Seq[(Map[String, Any], Either[Failure, EvalResult])],
+      evaluated: Seq[RunResult],
       packageName: String = "pme123.camunda.dmn"
   ): Unit = {
     val className =
@@ -193,7 +143,7 @@ case class DmnTester(dmnName: String, decisionId: String) {
     val inputParams = inputs.map(i => s"""  val $i = "$i"""").mkString("\n")
     lazy val testMethods = evaluated
       .map {
-        case (inputs, Right(evalResult)) =>
+        case RunResult(inputs, Right(evalResult)) =>
           testMethod(
             "test" + inputs.values
               .map(_.toString)

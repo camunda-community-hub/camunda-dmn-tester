@@ -2,7 +2,7 @@ package pme123.camunda.dmn
 
 import org.camunda.dmn.DmnEngine.Result
 import org.junit.Test
-import pme123.camunda.dmn.tester.DmnTester
+import pme123.camunda.dmn.tester._
 
 import scala.language.implicitConversions
 
@@ -14,13 +14,11 @@ class NumbersManualTest {
   val result = "result"
   val otherResult = "otherResult"
 
-  val tester = DmnTester(numbers, numbers)
-  val testPath = tester.testPath
+  val tester = DmnTester(numbers, Seq("src", "test", "resources", "numbers.dmn"))
 
   @Test
   def testConst(): Unit = {
     tester.runDmnTest(
-      testPath,
       Map(number -> 1),
       Result(Map(result -> 1, otherResult -> "first"))
     )
@@ -29,16 +27,14 @@ class NumbersManualTest {
   @Test
   def testInputLessThan(): Unit = {
     tester.runDmnTest(
-      testPath,
       Map(number -> 2),
       Result(Map(result -> 2, otherResult -> "second"))
     )
   }
 
-    @Test
+  @Test
   def testConstNull(): Unit = {
     tester.runDmnTest(
-      testPath,
       Map(number -> null),
       Result(Map(result -> 99, otherResult -> "NOT HANDLED"))
     )

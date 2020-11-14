@@ -9,8 +9,12 @@ lazy val root = project
     // To make the default compiler and REPL use Dotty
     scalaVersion := dottyVersion,
     libraryDependencies ++= Seq(
+      
+    ),
+    libraryDependencies ++= Seq(
       "org.camunda.bpm.extension.dmn.scala" % "dmn-engine" % "1.5.0",
-      "com.lihaoyi" %% "ammonite-ops" % "2.2.0"
+      "com.lihaoyi" %% "ammonite-ops" % "2.2.0",
+      "com.lihaoyi" %% "ujson" % "0.9.5"
     ).map(_.withDottyCompat(scalaVersion.value)) :+
       ("com.novocode" % "junit-interface" % "0.11"),
     // To cross compile with Dotty and Scala 2
