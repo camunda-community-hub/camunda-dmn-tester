@@ -1,21 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/1.0" id="drd_country-risk" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="3.5.0">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_country-risk" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
   <decision id="country-risk" name="country-risk">
-    <extensionElements>
-      <biodi:bounds x="164" y="80" width="180" height="80" />
-      <biodi:edge source="InputData_0die4vm">
-        <biodi:waypoints x="190" y="270" />
-        <biodi:waypoints x="228" y="160" />
-      </biodi:edge>
-      <biodi:edge source="InputData_1cz2a8d">
-        <biodi:waypoints x="319" y="269" />
-        <biodi:waypoints x="298" y="160" />
-      </biodi:edge>
-    </extensionElements>
-    <informationRequirement>
+    <informationRequirement id="InformationRequirement_17w865h">
       <requiredInput href="#InputData_0die4vm" />
     </informationRequirement>
-    <informationRequirement>
+    <informationRequirement id="InformationRequirement_0uxd691">
       <requiredInput href="#InputData_1cz2a8d" />
     </informationRequirement>
     <decisionTable id="country-risk_table" hitPolicy="FIRST">
@@ -92,14 +81,27 @@
       </rule>
     </decisionTable>
   </decision>
-  <inputData id="InputData_0die4vm" name="currentCountry">
-    <extensionElements>
-      <biodi:bounds x="122" y="270" width="125" height="45" />
-    </extensionElements>
-  </inputData>
-  <inputData id="InputData_1cz2a8d" name="targetCountry">
-    <extensionElements>
-      <biodi:bounds x="264" y="269" width="125" height="45" />
-    </extensionElements>
-  </inputData>
+  <inputData id="InputData_0die4vm" name="currentCountry" />
+  <inputData id="InputData_1cz2a8d" name="targetCountry" />
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1ouy0lg">
+      <dmndi:DMNShape id="DMNShape_0gg9mm1" dmnElementRef="country-risk">
+        <dc:Bounds height="80" width="180" x="164" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0azti8d" dmnElementRef="InformationRequirement_17w865h">
+        <di:waypoint x="190" y="270" />
+        <di:waypoint x="228" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_1lhfbzz" dmnElementRef="InformationRequirement_0uxd691">
+        <di:waypoint x="319" y="269" />
+        <di:waypoint x="298" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_1d6cv6c" dmnElementRef="InputData_0die4vm">
+        <dc:Bounds height="45" width="125" x="122" y="270" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0nbapmj" dmnElementRef="InputData_1cz2a8d">
+        <dc:Bounds height="45" width="125" x="264" y="269" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
 </definitions>

@@ -1,19 +1,48 @@
 package pme123.camunda.dmn.tester
 
 import java.io.InputStream
-import java.math.BigDecimal
 
 import ammonite.ops._
-import org.camunda.dmn.DmnEngine
+import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser._
+import org.camunda.dmn.{Audit, DmnEngine}
+import org.camunda.feel._
+import org.camunda.feel.context.Context
+import org.camunda.feel.syntaxtree._
 import org.junit.Assert.{assertEquals, fail}
 import os.read.inputStream
 
-import scala.util.Random
-
 case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
-  private val engine = new DmnEngine()
+  private val engine = new DmnEngine(
+    auditLogListeners = List(new AuditLogListener {
+      override def onEval(log: Audit.AuditLog): Unit = {
+        println(s"AUDITLOG:")
+        log.rootEntry.result match {
+          case DecisionTableEvaluationResult(inputs, matchedRules, result) =>
+            println(
+              "- Inputs: " + inputs
+                .map(i => s"${i.input.name}: ${unwrap(i.value)}")
+                .mkString(", ")
+            )
+            println(
+              "- Matched Rules: " + matchedRules
+                .map(rule =>
+                  s"  - Id:      ${rule.rule.id}" +
+                    "\n  - Outputs: " + rule.outputs
+                      .map(out => s"${out.output.name}: ${unwrap(out.value)}")
+                      .mkString(", ")
+                )
+                .mkString("\n", "\n", "")
+            )
+          case result: Audit.EvaluationResult =>
+            println(s"- Result: ${result.result}")
+        }
+
+      }
+    })
+  )
+
   val generatePath = Seq("target", "generated-tests")
   val dmnName = dmnPath.last
 
@@ -110,22 +139,32 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
         case NilResult     => "NO RESULT"
       }
 
-    println(s"*" * 100)
+    //  println(s"*" * 100)
     println(name)
     println(
       s"EVALUATED: ${formatStrings(inputs)} -> ${formatStrings(extractOutputs())}"
     )
-    println(s"*" * 100)
+//    println(s"*" * 100)
+    def formatInputMap(inputMap: Map[String, Any]) = {
+      formatStrings(inputs.map(k => inputMap(k).toString))
+    }
+
     evaluated.foreach {
+      case RunResult(inputMap, Right(NilResult)) =>
+        println(
+          scala.Console.YELLOW +
+            s"WARN:      ${formatInputMap(inputMap)} -> NO RESULT" +
+            scala.Console.RESET
+        )
       case RunResult(inputMap, Right(result)) =>
         println(
-          s"INFO:      ${formatStrings(inputs.map(k => inputMap(k).toString))} -> ${formatResult(result)}"
+          s"INFO:      ${formatInputMap(inputMap)} -> ${formatResult(result)}"
         )
       case RunResult(inputMap, Left(failure)) =>
         println(
-          scala.Console.RED + s"ERROR:     ${formatStrings(
-            inputs.map(k => inputMap(k).toString)
-          )} -> $failure" + scala.Console.RESET
+          scala.Console.RED +
+            s"ERROR:     ${formatInputMap(inputMap)} -> $failure" +
+            scala.Console.RESET
         )
     }
   }
@@ -224,4 +263,12 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
     write(filePath, genClass, createFolders = true)
   }
 
+    private def unwrap(value: Val): String =
+        engine.valueMapper.unpackVal(value) match {
+          case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
+          case Some(value)    => value.toString
+          case None           => "NO VALUE"
+          case value => 
+            value.toString
+        }
 }

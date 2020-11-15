@@ -8,7 +8,7 @@ import scala.language.implicitConversions
 
 object TestGenerator extends App {
   numbersTester()
-  countryRiskTester()
+ // countryRiskTester()
 
   private def numbersTester(): Unit = {
     val numbers = "numbers"
@@ -23,7 +23,7 @@ object TestGenerator extends App {
       .parsedDmn()
       .map(tester.run(data, _))
       .map { evaluated =>
-        tester.generateDmnTests(data.inputKeys, evaluated)
+      //  tester.generateDmnTests(data.inputKeys, evaluated)
         tester.printTestResult("Numbers", data.inputKeys, evaluated)
       }
   }
@@ -44,7 +44,7 @@ object TestGenerator extends App {
       .parsedDmn()
       .map(tester.run(data, _))
       .map { evaluated =>
-        tester.generateDmnTests(data.inputKeys, evaluated)
+      //  tester.generateDmnTests(data.inputKeys, evaluated)
         tester.printTestResult("Country Risk", data.inputKeys, evaluated)
       }
   }
