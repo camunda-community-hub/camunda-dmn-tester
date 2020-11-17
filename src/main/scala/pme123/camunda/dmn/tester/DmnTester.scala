@@ -17,9 +17,12 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
   private val engine = new DmnEngine(
     auditLogListeners = List(new AuditLogListener {
       override def onEval(log: Audit.AuditLog): Unit = {
-        println(s"AUDITLOG:")
         log.rootEntry.result match {
           case DecisionTableEvaluationResult(inputs, matchedRules, result) =>
+            result match { case ValError(msg) =>
+              println(s"${scala.Console.RED}>>ERROR: $msg")
+              case _ => println(s"${scala.Console.GREEN}>>Success:")
+            }
             println(
               "- Inputs: " + inputs
                 .map(i => s"${i.input.name}: ${unwrap(i.value)}")
@@ -263,12 +266,12 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
     write(filePath, genClass, createFolders = true)
   }
 
-    private def unwrap(value: Val): String =
-        engine.valueMapper.unpackVal(value) match {
-          case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
-          case Some(value)    => value.toString
-          case None           => "NO VALUE"
-          case value => 
-            value.toString
-        }
+  private def unwrap(value: Val): String =
+    engine.valueMapper.unpackVal(value) match {
+      case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
+      case Some(value)       => value.toString
+      case None              => "NO VALUE"
+      case value =>
+        value.toString
+    }
 }

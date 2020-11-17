@@ -8,7 +8,7 @@ import scala.language.implicitConversions
 
 object TestGenerator extends App {
   numbersTester()
- // countryRiskTester()
+  countryRiskTester()
 
   private def numbersTester(): Unit = {
     val numbers = "numbers"
