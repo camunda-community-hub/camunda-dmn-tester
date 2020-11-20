@@ -1,8 +1,9 @@
 package pme123.camunda.dmn.tester
 
-import scala.util.Random
+import scala.Conversion
+import scala.language.implicitConversions
 import scala.math.BigDecimal
-
+import scala.util.Random
 import scala.language.implicitConversions
 
 case class DmnConfig(decisionId: String, data: TesterData, dmnPath: Seq[String])

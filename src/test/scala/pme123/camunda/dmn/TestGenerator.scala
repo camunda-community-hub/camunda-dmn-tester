@@ -1,7 +1,7 @@
 package pme123.camunda.dmn
 
 import pme123.camunda.dmn.tester.TesterValue.RandomInts
-import pme123.camunda.dmn.tester.conversions.given
+import pme123.camunda.dmn.tester.conversions.{given _}
 import pme123.camunda.dmn.tester._
 
 import scala.language.implicitConversions
@@ -9,13 +9,11 @@ import scala.language.implicitConversions
 object TestGenerator extends App {
   numbersTester()
   countryRiskTester()
-
+  
   private def numbersTester(): Unit = {
     val numbers = "numbers"
     val number = "number"
-    val config = DmnConfigHandler(
-      Seq("src", "test", "resources", "numbers.json")
-    ).read()
+    val config = DmnConfigHandler.read(RunnerConfig.defaultBasePath :+ "numbers.json")
     val tester = DmnTester(config.decisionId, config.dmnPath)
     val data = config.data
 
@@ -34,9 +32,8 @@ object TestGenerator extends App {
     val currentCountry = "currentCountry"
     val targetCountry = "targetCountry"
 
-    val config = DmnConfigHandler(
-      Seq("src", "test", "resources", "country-risk.json")
-    ).read()
+    val config = DmnConfigHandler
+      .read(RunnerConfig.defaultBasePath :+  "country-risk.json")
     val tester = DmnTester(config.decisionId, config.dmnPath)
     val data = config.data
 

@@ -12,39 +12,10 @@ import org.camunda.feel.context.Context
 import org.camunda.feel.syntaxtree._
 import org.junit.Assert.{assertEquals, fail}
 import os.read.inputStream
+import zio.stm.{STM, TArray}
+import scala.language.implicitConversions
 
-case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
-  private val engine = new DmnEngine(
-    auditLogListeners = List(new AuditLogListener {
-      override def onEval(log: Audit.AuditLog): Unit = {
-        log.rootEntry.result match {
-          case DecisionTableEvaluationResult(inputs, matchedRules, result) =>
-            result match { case ValError(msg) =>
-              println(s"${scala.Console.RED}>>ERROR: $msg")
-              case _ => println(s"${scala.Console.GREEN}>>Success:")
-            }
-            println(
-              "- Inputs: " + inputs
-                .map(i => s"${i.input.name}: ${unwrap(i.value)}")
-                .mkString(", ")
-            )
-            println(
-              "- Matched Rules: " + matchedRules
-                .map(rule =>
-                  s"  - Id:      ${rule.rule.id}" +
-                    "\n  - Outputs: " + rule.outputs
-                      .map(out => s"${out.output.name}: ${unwrap(out.value)}")
-                      .mkString(", ")
-                )
-                .mkString("\n", "\n", "")
-            )
-          case result: Audit.EvaluationResult =>
-            println(s"- Result: ${result.result}")
-        }
-
-      }
-    })
-  )
+case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine = DmnEngine()) {
 
   val generatePath = Seq("target", "generated-tests")
   val dmnName = dmnPath.last
@@ -55,9 +26,14 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
   )
 
   def run(
-      data: TesterData,
-      dmn: ParsedDmn
-  ): Seq[RunResult] = {
+           data: TesterData
+         ): Either[Failure, Seq[RunResult]] = 
+    parsedDmn().map(run(data, _))
+
+  def run(
+           data: TesterData,
+           dmn: ParsedDmn
+         ): Seq[RunResult] = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
     val evaluated =
       allInputs.map(inputMap =>
@@ -77,7 +53,7 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
       streamToTest: InputStream
   ): Either[Failure, ParsedDmn] = {
     engine.parse(streamToTest) match {
-      case r as Left(failure) =>
+      case r @ Left(failure) =>
         println(
           s"FAILURE in ${dmnPath.mkString("/")} - ${decisionId}: $failure"
         )
@@ -271,6 +247,7 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String]) {
       case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
       case Some(value)       => value.toString
       case None              => "NO VALUE"
+      case null              => "NULL VALUE"
       case value =>
         value.toString
     }

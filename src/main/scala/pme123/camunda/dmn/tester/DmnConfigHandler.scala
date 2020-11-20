@@ -1,15 +1,21 @@
 package pme123.camunda.dmn.tester
 
+import java.nio.file
+
 import ammonite.ops._
 import pme123.camunda.dmn.tester.TesterValue._
 import ujson._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.language.implicitConversions
 
-case class DmnConfigHandler(configPath: Seq[String]) extends App {
+object DmnConfigHandler extends App {
 
-  def read() =
-    ujson.read((pwd / configPath).toNIO) match {
+  def read(configPath: Seq[String]): DmnConfig =
+    read((pwd / configPath).toNIO)
+    
+  def read(configPath: file.Path): DmnConfig =
+    ujson.read(configPath) match {
       case Obj(o) =>
         DmnConfig(
           o("decisionId").str,
@@ -61,3 +67,4 @@ case class DmnConfigHandler(configPath: Seq[String]) extends App {
     }.toList
   }
 }
+
