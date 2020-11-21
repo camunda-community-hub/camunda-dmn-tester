@@ -14,7 +14,7 @@ object CountryRiskManualSpec extends DefaultRunnableSpec {
     TestProps.baseDmnPath :+ "country-risk.dmn"
   )
 
-  def spec = suite("CountryRiskManualTest")(
+  def spec = suite("CountryRiskManualSpec")(
     testM("CH to CH") {
       assertM(
         tester.runDmnTest(

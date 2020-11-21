@@ -1,10 +1,14 @@
 package pme123.camunda.dmn.tester
 
+import java.io.File
+
+import pme123.camunda.dmn.tester.TesterValue.{BooleanValue, NumberValue, StringValue}
+import zio.{Task, ZIO}
+
 import scala.language.implicitConversions
 import scala.math.BigDecimal
-import scala.util.Random
 
-case class DmnConfig(decisionId: String, data: TesterData, dmnPath: Seq[String])
+case class DmnConfig(decisionId: String, data: TesterData, dmnPath: List[String])
 
 case class TesterData(
     inputs: List[TesterInput]
@@ -17,6 +21,9 @@ case class TesterData(
     cartesianProduct(data).map(_.toMap)
   }
 
+  /**
+   * this creates all variations of the inputs you provide
+   */
   def cartesianProduct(
       xss: List[(String, List[Any])]
   ): List[List[(String, Any)]] =
@@ -55,9 +62,33 @@ object TesterValue {
   case class ValueSet(values: Set[TesterValue]) extends TesterValue {
     def normalized: Set[Any] = values.flatMap(_.normalized)
   }
+}
+object hocon {
+  import zio.config._
+  import zio.config.magnolia.DeriveConfigDescriptor._
+  import zio.config.typesafe._
+  import zio.config._, ConfigDescriptor._, ConfigSource._
 
-  case class RandomInts(count: Int) extends TesterValue {
-    def normalized: Set[Any] = List.fill(count)(Random.nextInt()).toSet
+  val stringValue: ConfigDescriptor[TesterValue] =
+    (string)(StringValue.apply, StringValue.unapply).asInstanceOf[ConfigDescriptor[TesterValue]]
+  val bigDecimalValue: ConfigDescriptor[TesterValue] =
+    (bigDecimal)(NumberValue.apply, NumberValue.unapply).asInstanceOf[ConfigDescriptor[TesterValue]]
+  val booleanValue: ConfigDescriptor[TesterValue] =
+    (boolean)(BooleanValue.apply, BooleanValue.unapply).asInstanceOf[ConfigDescriptor[TesterValue]]
+
+  val testerInput: ConfigDescriptor[TesterInput] =
+    (string("key") |@| list("values")(booleanValue orElse bigDecimalValue orElse( stringValue)))(TesterInput.apply, TesterInput.unapply)
+
+  val testerData: ConfigDescriptor[TesterData] =
+    (list("inputs") (testerInput))(TesterData.apply, TesterData.unapply)
+
+  val dmnConfig: ConfigDescriptor[DmnConfig] =
+    (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(string))(DmnConfig.apply, DmnConfig.unapply)
+
+  def loadConfig(configFile: File): Task[DmnConfig] = {
+    ZIO(println(s"load file $configFile")) *>
+    TypesafeConfigSource.fromHoconFile(configFile)
+      .flatMap(s => ZIO.fromEither(read(dmnConfig from s)))
   }
 }
 
@@ -67,6 +98,12 @@ object conversions {
     TesterValue.StringValue(x)
 
   implicit def intToTesterValue(x: Int): TesterValue =
+    TesterValue.NumberValue(BigDecimal(x))
+
+  implicit def longToTesterValue(x: Long): TesterValue =
+    TesterValue.NumberValue(BigDecimal(x))
+
+  implicit def doubleToTesterValue(x: Double): TesterValue =
     TesterValue.NumberValue(BigDecimal(x))
 
   implicit def booleanToTesterValue(x: Boolean): TesterValue =

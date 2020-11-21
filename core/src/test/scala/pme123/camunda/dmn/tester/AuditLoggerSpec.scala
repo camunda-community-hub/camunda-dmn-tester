@@ -7,7 +7,7 @@ import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, assert, suite, testM}
 import zio.{Ref, UIO, ZIO}
 
-object AuditLoggerTest extends DefaultRunnableSpec {
+object AuditLoggerSpec extends DefaultRunnableSpec {
 
   private def decision(index: Int) = DecisionTableEvaluationResult(
     List(
@@ -52,7 +52,7 @@ object AuditLoggerTest extends DefaultRunnableSpec {
       )
     )
   def spec =
-    suite("AuditLogSpex")(
+    suite("AuditLogSpec")(
       testM("eval Log and check result") {
         for {
           auditLogRef <- Ref.make(Seq.empty[EvalResult])

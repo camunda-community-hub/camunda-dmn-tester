@@ -63,14 +63,13 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
 
   private def printDmnLog(decisionId: String, entries: Seq[EvalResult]) = {
     for {
-      inputs <- UIO(entries.headOption.toSeq.flatMap(_.inputs.keys).sorted)
+      inputs <- UIO(entries.headOption.toSeq.flatMap(_.inputs.keys))
       outputs <- UIO(
         entries.headOption.toSeq
           .flatMap(_.matchedRules)
           .headOption
           .toSeq
           .flatMap(_.outputs.keys)
-          .sorted
       )
       _ <- console.putStrLn(s"*" * 100)
       _ <- console.putStrLn(s"DMN: $decisionId")

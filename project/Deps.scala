@@ -9,17 +9,18 @@ object Deps {
   object version {
     val ammonite = "2.2.0"
     val dmnScala = "1.5.1-SNAPSHOT"
-    val ujson = "0.9.5"
     val zio = "1.0.3"
+    val zioConfig = "1.0.0-RC29-1"
   }
 
   val dmnScala =
     "org.camunda.bpm.extension.dmn.scala" % "dmn-engine" % version.dmnScala
 
   val ammonite = "com.lihaoyi" %% "ammonite-ops" % version.ammonite
-  val ujson = "com.lihaoyi" %% "ujson" % version.ujson
 
   val zio = "dev.zio" %% "zio" % version.zio
+  val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % version.zioConfig
+  val zioConfigHocon = "dev.zio" %% "zio-config-typesafe" % version.zioConfig
 
   val zioTest = "dev.zio" %% "zio-test" % version.zio
   val zioTestSbt = "dev.zio" %% "zio-test-sbt" % version.zio
