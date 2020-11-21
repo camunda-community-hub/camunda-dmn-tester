@@ -9,7 +9,7 @@ import zio._
 case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
     extends AuditLogListener {
 
-  val runtime = Runtime.default
+  val runtime: Runtime[zio.ZEnv] = Runtime.default
 
   def onEval(log: Audit.AuditLog): Unit = {
     lazy val newValue = Seq(log.rootEntry.result).collectFirst {
@@ -56,5 +56,19 @@ case class EvalResult(
     matchedRules: Seq[MatchedRule],
     failed: Option[EvalError] = None
 )
+
+object EvalResult {
+  def failed(errorMsg: String): EvalResult =
+    EvalResult(Map.empty, Seq.empty, Some(EvalError(errorMsg)))
+
+  def successSingle(value: Any): EvalResult =
+    EvalResult(Map.empty, Seq(MatchedRule("someRule", Map("single" -> value.toString))))
+
+  def successMap(resultMap: Map[String, Any]): EvalResult =
+    EvalResult(Map.empty, Seq(MatchedRule("someRule", resultMap.view.mapValues(_.toString).toMap)))
+
+  lazy val noResult: EvalResult =
+    EvalResult(Map.empty, Seq.empty)
+}
 case class MatchedRule(ruleId: String, outputs: Map[String, String])
 case class EvalError(msg: String)

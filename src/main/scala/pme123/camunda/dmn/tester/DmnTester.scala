@@ -3,37 +3,37 @@ package pme123.camunda.dmn.tester
 import java.io.InputStream
 
 import ammonite.ops._
-import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
-import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.parser._
-import org.camunda.dmn.{Audit, DmnEngine}
-import org.camunda.feel._
-import org.camunda.feel.context.Context
-import org.camunda.feel.syntaxtree._
-import org.junit.Assert.{assertEquals, fail}
 import os.read.inputStream
-import zio.stm.{STM, TArray}
+import pme123.camunda.dmn.tester
+import zio.{IO, UIO, ZIO}
+
 import scala.language.implicitConversions
 
-case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine = DmnEngine()) {
+case class DmnTester(
+    decisionId: String,
+    dmnPath: Seq[String],
+    engine: DmnEngine = new DmnEngine()
+) {
 
   val generatePath = Seq("target", "generated-tests")
-  val dmnName = dmnPath.last
+  val dmnName: String = dmnPath.last
 
   case class RunResult(
       inputs: Map[String, Any],
-      result: Either[Failure, EvalResult]
+      result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
   )
 
   def run(
-           data: TesterData
-         ): Either[Failure, Seq[RunResult]] = 
+      data: TesterData
+  ): Either[DmnEngine.Failure, Seq[RunResult]] =
     parsedDmn().map(run(data, _))
 
   def run(
-           data: TesterData,
-           dmn: ParsedDmn
-         ): Seq[RunResult] = {
+      data: TesterData,
+      dmn: ParsedDmn
+  ): Seq[RunResult] = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
     val evaluated =
       allInputs.map(inputMap =>
@@ -45,17 +45,17 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
     evaluated
   }
 
-  def parsedDmn(): Either[Failure, ParsedDmn] = {
+  def parsedDmn(): Either[DmnEngine.Failure, ParsedDmn] = {
     parsedDmn(inputStream(pwd / dmnPath))
   }
 
   def parsedDmn(
       streamToTest: InputStream
-  ): Either[Failure, ParsedDmn] = {
+  ): Either[DmnEngine.Failure, ParsedDmn] = {
     engine.parse(streamToTest) match {
       case r @ Left(failure) =>
         println(
-          s"FAILURE in ${dmnPath.mkString("/")} - ${decisionId}: $failure"
+          s"FAILURE in ${dmnPath.mkString("/")} - $decisionId: $failure"
         )
         r
       case r => r
@@ -64,23 +64,36 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
 
   def runDmnTest(
       inputs: Map[String, Any],
-      expected: EvalResult
-  ): Unit =
-    parsedDmn()
-      .map(runDmnTest(_, inputs, expected))
+      expected: tester.EvalResult
+  ): IO[String, String] =
+    ZIO
+      .fromEither(parsedDmn())
+      .mapError(f => f.message)
+      .flatMap(p => runDmnTest(p, inputs, expected))
 
   def runDmnTest(
       dmn: ParsedDmn,
       inputs: Map[String, Any],
-      expected: EvalResult
-  ): Unit = {
-
-    val result = engine.eval(dmn, decisionId, inputs)
-
-    result match {
-      case Left(failure) => fail(s"Failure $failure")
-      case Right(r) =>
-        assertEquals(s"Success $r", expected, r)
+      expected: tester.EvalResult
+  ): IO[String, String] = {
+    engine.eval(dmn, decisionId, inputs) match {
+      case Right(DmnEngine.NilResult) if expected.matchedRules.isEmpty =>
+        UIO(s"Success No Result")
+      case Right(DmnEngine.Result(value: Map[_, _]))
+          if expected.matchedRules.flatMap(_.outputs).toMap == value.map {
+            case (k, v) => s"$k" -> s"$v"
+          } =>
+        UIO(s"Success $value")
+      case Right(DmnEngine.Result(value: Any))
+          if expected.matchedRules.head.outputs.head._2 == s"$value" =>
+        UIO(s"Success $value")
+      case Right(result) =>
+        ZIO.fail(s"The expected ($expected) was not equal to $result")
+      case Left(DmnEngine.Failure(message))
+          if expected.failed.exists((e: EvalError) => e.msg == message) =>
+        UIO(s"Success $message")
+      case Left(DmnEngine.Failure(message)) =>
+        ZIO.fail(s"Test failed: $message")
     }
   }
 
@@ -100,7 +113,7 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
     def extractOutputs() = {
       evaluated
         .map {
-          case RunResult(_, Right(Result(rMap: Map[_, _]))) =>
+          case RunResult(_, Right(DmnEngine.Result(rMap: Map[_, _]))) =>
             rMap.keySet.map(_.toString)
           case _ => Nil
         }
@@ -110,12 +123,12 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
         .getOrElse(Nil)
         .toSeq
     }
-    def formatResult(evalResult: EvalResult) =
+    def formatResult(evalResult: DmnEngine.EvalResult) =
       evalResult match {
-        case Result(rMap: Map[_, _]) =>
+        case DmnEngine.Result(rMap: Map[_, _]) =>
           formatStrings(rMap.map { case (_, v) => v.toString }.toSeq)
-        case Result(other) => other.toString
-        case NilResult     => "NO RESULT"
+        case DmnEngine.Result(other) => other.toString
+        case DmnEngine.NilResult     => "NO RESULT"
       }
 
     //  println(s"*" * 100)
@@ -129,7 +142,7 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
     }
 
     evaluated.foreach {
-      case RunResult(inputMap, Right(NilResult)) =>
+      case RunResult(inputMap, Right(DmnEngine.NilResult)) =>
         println(
           scala.Console.YELLOW +
             s"WARN:      ${formatInputMap(inputMap)} -> NO RESULT" +
@@ -176,8 +189,9 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
                 s""""$k"""" -> v.toString
             }.toString,
             evalResult match {
-              case Result(result) => s"Result(${outputAsString(result)})"
-              case NilResult      => "NilResult"
+              case DmnEngine.Result(result) =>
+                s"Result(${outputAsString(result)})"
+              case DmnEngine.NilResult => "NilResult"
             }
           )
         case other =>
@@ -241,14 +255,4 @@ case class DmnTester(decisionId: String, dmnPath: Seq[String], engine: DmnEngine
     rm ! filePath
     write(filePath, genClass, createFolders = true)
   }
-
-  private def unwrap(value: Val): String =
-    engine.valueMapper.unpackVal(value) match {
-      case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
-      case Some(value)       => value.toString
-      case None              => "NO VALUE"
-      case null              => "NULL VALUE"
-      case value =>
-        value.toString
-    }
 }

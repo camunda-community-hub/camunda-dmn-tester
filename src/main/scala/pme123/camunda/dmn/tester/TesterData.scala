@@ -1,10 +1,8 @@
 package pme123.camunda.dmn.tester
 
-import scala.Conversion
 import scala.language.implicitConversions
 import scala.math.BigDecimal
 import scala.util.Random
-import scala.language.implicitConversions
 
 case class DmnConfig(decisionId: String, data: TesterData, dmnPath: Seq[String])
 
@@ -65,12 +63,12 @@ object TesterValue {
 
 object conversions {
 
-    given Conversion[String, TesterValue]:
-        def apply(x:String): TesterValue = TesterValue.StringValue(x)
+  implicit def stringToTesterValue(x: String): TesterValue =
+    TesterValue.StringValue(x)
 
-    given Conversion[Int, TesterValue]:
-        def apply(x:Int): TesterValue = TesterValue.NumberValue(BigDecimal(x))
+  implicit def intToTesterValue(x: Int): TesterValue =
+    TesterValue.NumberValue(BigDecimal(x))
 
-    given Conversion[Boolean, TesterValue]:
-        def apply(x:Boolean): TesterValue = TesterValue.BooleanValue(x)
+  implicit def booleanToTesterValue(x: Boolean): TesterValue =
+    TesterValue.BooleanValue(x)
 }

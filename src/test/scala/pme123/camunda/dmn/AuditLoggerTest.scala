@@ -57,17 +57,18 @@ object AuditLoggerTest extends DefaultRunnableSpec {
     suite("AuditLogSpex")(
       testM("eval Log and check result") {
         for {
-          _ <- ZIO(eval)
           auditLogRef <- Ref.make(Seq.empty[EvalResult])
           auditLogger <- UIO(
             AuditLogger(auditLogRef)
           )
-          _ <- ZIO.foreach(1 to 10) { i =>
+          _ <- ZIO.foreach_(1 to 10) { i =>
             ZIO(eval(i, auditLogger))
           }
           evalResult <- auditLogRef.get
-        } yield assert(evalResult.size)(equalTo(10)) //&& if you run it sequential this works only
-          //assert(evalResult.head.matchedRules.head.ruleId)(equalTo("rule1"))
+        } yield assert(evalResult.size)(
+          equalTo(10)
+        ) //&& if you run it sequential this works only
+        //assert(evalResult.head.matchedRules.head.ruleId)(equalTo("rule1"))
       }
     )
 
