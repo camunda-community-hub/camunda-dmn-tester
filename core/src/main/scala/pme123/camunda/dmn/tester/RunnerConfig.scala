@@ -10,7 +10,7 @@ case class RunnerConfig(
 )
 object RunnerConfig {
 
-  val defaultBasePath = Seq("src", "test", "resources", "dmn-configs")
+  val defaultBasePath = Seq("core", "src", "test", "resources", "dmn-configs")
 
   //TODO add support for config file
   def config = UIO(RunnerConfig(defaultBasePath))

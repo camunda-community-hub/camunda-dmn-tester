@@ -14,7 +14,7 @@ object CountryRiskManualSpec extends DefaultRunnableSpec {
 
   val tester = DmnTester(
     "country-risk",
-    Seq("src", "test", "resources", "country-risk.dmn")
+    baseDmnPath :+ "country-risk.dmn"
   )
 
   def spec = suite("CountryRiskManualTest")(

@@ -20,13 +20,13 @@ object TestRunner extends zio.App {
       auditLogRef <- Ref.make(Seq.empty[EvalResult])
       auditLogger <- UIO(AuditLogger(auditLogRef))
       engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
-      _ <- ZIO.foreach(dmnConfigs) {
+      _ <- ZIO.foreach_(dmnConfigs) {
         case DmnConfig(decisionId, data, dmnPath) =>
-          ZIO(DmnTester(decisionId, dmnPath, engine).run(data))
+          ZIO.fromEither(DmnTester(decisionId, dmnPath, engine).run(data))
       }
       audits <- auditLogRef.get
-      _ <- ZIO.foreach(audits) { audit =>
-        console.putStrLn(s" - $audit")
+      _ <- ZIO.foreach_(audits) { audit =>
+          console.putStrLn(s" - $audit")
       }
     } yield ()).exitCode
 

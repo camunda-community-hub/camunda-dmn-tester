@@ -1,6 +1,6 @@
 {
     "decisionId": "numbers",
-    "dmnPath": ["src", "test", "resources", "numbers.dmn"],
+    "dmnPath": ["core", "src", "test", "resources", "numbers.dmn"],
     "data": [
         {
             "key": "number",

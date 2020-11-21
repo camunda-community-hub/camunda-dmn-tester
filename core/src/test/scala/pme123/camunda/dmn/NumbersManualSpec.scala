@@ -17,7 +17,7 @@ object NumbersManualSpec extends DefaultRunnableSpec {
   val otherResult = "otherResult"
 
   val tester =
-    DmnTester(numbers, Seq("src", "test", "resources", "numbers.dmn"))
+    DmnTester(numbers, baseDmnPath :+ "numbers.dmn")
 
   def spec = suite("CountryRiskManualTest")(
     testM("const") {

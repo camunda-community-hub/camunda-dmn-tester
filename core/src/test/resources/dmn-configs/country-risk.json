@@ -1,6 +1,6 @@
 {
     "decisionId": "country-risk",
-    "dmnPath": ["src", "test", "resources", "country-risk.dmn"],
+    "dmnPath": ["core", "src", "test", "resources", "country-risk.dmn"],
     "data": [
         {
             "key": "currentCountry",

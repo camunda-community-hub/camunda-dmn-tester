@@ -7,3 +7,5 @@
 /project/.bloop/
 /project/project/
 /project/target/
+/core/target/
+/sbtPlugin/target/
