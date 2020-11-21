@@ -3,10 +3,11 @@ package pme123.camunda.dmn
 import org.camunda.dmn.DmnEngine
 
 package object tester {
+
   case class RunResult(
-      inputs: Map[String, Any],
-      result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
-  )
+                        inputs: Map[String, Any],
+                        result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
+                      )
 
   def formatStrings(strings: Seq[String]): String = {
     val inputFormatter = "%1$23s"

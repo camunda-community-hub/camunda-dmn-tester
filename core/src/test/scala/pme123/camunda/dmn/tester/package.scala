@@ -1,5 +1,5 @@
-package pme123.camunda
+package pme123.camunda.dmn.tester
 
-package object dmn {
+object TestProps {
   val baseDmnPath = Seq("core", "src", "test", "resources")
 }

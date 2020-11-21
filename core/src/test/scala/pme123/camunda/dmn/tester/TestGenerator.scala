@@ -1,12 +1,7 @@
-package pme123.camunda.dmn
+package pme123.camunda.dmn.tester
 
-import pme123.camunda.dmn.tester._
-
-import scala.language.implicitConversions
-
-/**
- * generates Unit Tests.
- */
+/** generates Unit Tests.
+  */
 object TestGenerator extends App {
   numbersTester()
   countryRiskTester()

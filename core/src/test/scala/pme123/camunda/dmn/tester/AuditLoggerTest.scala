@@ -1,13 +1,11 @@
-package pme123.camunda.dmn
+package pme123.camunda.dmn.tester
 
 import org.camunda.dmn.Audit._
 import org.camunda.dmn.parser.{ParsedInput, ParsedOutput, ParsedRule}
 import org.camunda.feel.syntaxtree.{ConstBool, ParsedExpression, ValString}
-import org.camunda.feel.valuemapper.ValueMapper
-import pme123.camunda.dmn.tester.{AuditLogger, EvalResult}
-import zio._
 import zio.test.Assertion.equalTo
-import zio.test._
+import zio.test.{DefaultRunnableSpec, assert, suite, testM}
+import zio.{Ref, UIO, ZIO}
 
 object AuditLoggerTest extends DefaultRunnableSpec {
 

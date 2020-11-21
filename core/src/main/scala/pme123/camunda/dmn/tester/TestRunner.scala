@@ -12,13 +12,16 @@ import zio.console.Console
 import scala.language.implicitConversions
 
 object TestRunner extends zio.App {
+private lazy val runtime = Runtime.default
 
   def run(args: List[String]): zio.URIO[zio.ZEnv, zio.ExitCode] =
-    runApp.exitCode
+    RunnerConfig.config.flatMap(runApp).exitCode
 
-  def runApp: ZIO[Console, Serializable, Unit] = {
+  def standalone(config: RunnerConfig) =
+    runtime.unsafeRun(runApp(config))
+
+  def runApp(config: RunnerConfig): ZIO[Console, Serializable, Unit] = {
     for {
-      _ <- console.putStrLn("Let's Start")
       config <- RunnerConfig.config
       dmnConfigs <- ZIO(readConfigs((pwd / config.basePath).toIO))
       auditLogRef <- Ref.make(Seq.empty[EvalResult])

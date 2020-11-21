@@ -1,12 +1,8 @@
-package pme123.camunda.dmn
+package pme123.camunda.dmn.tester
 
-import org.camunda.dmn.DmnEngine.{NilResult, Result}
 import pme123.camunda.dmn.tester.EvalResult.{noResult, successMap}
-import pme123.camunda.dmn.tester._
-import zio.test.Assertion._
-import zio.test._
-
-import scala.language.implicitConversions
+import zio.test.Assertion.isNonEmptyString
+import zio.test.{DefaultRunnableSpec, assertM, suite, testM}
 
 //noinspection TypeAnnotation
 object NumbersManualSpec extends DefaultRunnableSpec {
@@ -17,15 +13,17 @@ object NumbersManualSpec extends DefaultRunnableSpec {
   val otherResult = "otherResult"
 
   val tester =
-    DmnTester(numbers, baseDmnPath :+ "numbers.dmn")
+    DmnTester(numbers, TestProps.baseDmnPath :+ "numbers.dmn")
 
   def spec = suite("CountryRiskManualTest")(
     testM("const") {
-      assertM{
+      assertM {
         tester.runDmnTest(
           Map(number -> 1),
-          EvalResult.failed("multiple values aren't allowed for UNIQUE hit policy. found: 'List(Map(result -> ValNumber(1), otherResult -> ValString(first)), Map(result -> ValNumber(2), otherResult -> ValString(second)))'")
-        )// check exception
+          EvalResult.failed(
+            "multiple values aren't allowed for UNIQUE hit policy. found: 'List(Map(result -> ValNumber(1), otherResult -> ValString(first)), Map(result -> ValNumber(2), otherResult -> ValString(second)))'"
+          )
+        ) // check exception
       }(isNonEmptyString)
     },
     testM("input less than") {

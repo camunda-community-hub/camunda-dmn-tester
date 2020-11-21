@@ -1,11 +1,8 @@
-package pme123.camunda.dmn
+package pme123.camunda.dmn.tester
 
-import pme123.camunda.dmn.tester.DmnTester
 import pme123.camunda.dmn.tester.EvalResult.successSingle
-import zio.test.Assertion._
-import zio.test._
-
-import scala.language.implicitConversions
+import zio.test.Assertion.isNonEmptyString
+import zio.test.{DefaultRunnableSpec, assertM, suite, testM}
 
 //noinspection TypeAnnotation
 object CountryRiskManualSpec extends DefaultRunnableSpec {
@@ -14,7 +11,7 @@ object CountryRiskManualSpec extends DefaultRunnableSpec {
 
   val tester = DmnTester(
     "country-risk",
-    baseDmnPath :+ "country-risk.dmn"
+    TestProps.baseDmnPath :+ "country-risk.dmn"
   )
 
   def spec = suite("CountryRiskManualTest")(
