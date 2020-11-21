@@ -4,6 +4,9 @@ import pme123.camunda.dmn.tester._
 
 import scala.language.implicitConversions
 
+/**
+ * generates Unit Tests.
+ */
 object TestGenerator extends App {
   numbersTester()
   countryRiskTester()
@@ -20,7 +23,6 @@ object TestGenerator extends App {
       .map { evaluated =>
         DmnUnitTestGenerator(config.decisionId, config.dmnPath)
           .generate(data.inputKeys, evaluated)
-        ResultPrinter.printTestResult("Numbers", data.inputKeys, evaluated)
       }
   }
 
@@ -37,7 +39,6 @@ object TestGenerator extends App {
       .map { evaluated =>
         DmnUnitTestGenerator(config.decisionId, config.dmnPath)
           .generate(data.inputKeys, evaluated)
-        ResultPrinter.printTestResult("Country Risk", data.inputKeys, evaluated)
       }
   }
 }

@@ -7,13 +7,17 @@ import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
 import zio._
+import zio.console.Console
 
 import scala.language.implicitConversions
 
 object TestRunner extends zio.App {
 
   def run(args: List[String]): zio.URIO[zio.ZEnv, zio.ExitCode] =
-    (for {
+    runApp.exitCode
+
+  def runApp: ZIO[Console, Serializable, Unit] = {
+    for {
       _ <- console.putStrLn("Let's Start")
       config <- RunnerConfig.config
       dmnConfigs <- ZIO(readConfigs((pwd / config.basePath).toIO))
@@ -24,11 +28,9 @@ object TestRunner extends zio.App {
         case DmnConfig(decisionId, data, dmnPath) =>
           ZIO.fromEither(DmnTester(decisionId, dmnPath, engine).run(data))
       }
-      audits <- auditLogRef.get
-      _ <- ZIO.foreach_(audits) { audit =>
-          console.putStrLn(s" - $audit")
-      }
-    } yield ()).exitCode
+      _ <- auditLogger.printLog()
+    } yield ()
+  }
 
   private def readConfigs(file: File) =
     getRecursively(file).map(f => DmnConfigHandler.read(ops.Path(f).toNIO))
