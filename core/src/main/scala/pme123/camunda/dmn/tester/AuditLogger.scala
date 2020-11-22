@@ -4,6 +4,7 @@ import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
+import pme123.camunda.dmn.tester.EvalStatus.{ERROR, WARN, INFO}
 import zio._
 import zio.console.Console
 
@@ -91,18 +92,18 @@ case class RowPrinter(
 
   def printResultRow(): URIO[Console, Unit] =
     ZIO.foreach_(evalResults.sortBy(_.decisionId)) {
-      case EvalResult(_, inputMap, Nil, None) =>
+      case EvalResult(WARN, _, inputMap, Nil, None) =>
         printWarning(
           s"WARN:      ${formatInputMap(inputMap)} -> NO RESULT"
         )
 
-      case EvalResult(_, inputMap, matchedRules, Some(EvalError(msg))) =>
+      case EvalResult(ERROR, _, inputMap, matchedRules, Some(EvalError(msg))) =>
         val inputStr = s"ERROR:     ${formatInputMap(inputMap)} -> "
         printError(
           s"""$inputStr${formatOutputMap(matchedRules, inputStr.length)}
             | >>> ${msg.split("\\.").head}""".stripMargin
         )
-      case EvalResult(_, inputMap, matchedRules, _) =>
+      case EvalResult(INFO, _, inputMap, matchedRules, _) =>
         val inputStr = s"INFO:      ${formatInputMap(inputMap)} -> "
         console.putStrLn(
           s"$inputStr${formatOutputMap(matchedRules, inputStr.length)}"
@@ -125,32 +126,58 @@ case class RowPrinter(
 }
 
 case class EvalResult(
+    status: EvalStatus,
     decisionId: String,
     inputs: Map[String, String],
     matchedRules: Seq[MatchedRule],
-    failed: Option[EvalError] = None
+    failed: Option[EvalError]
 )
 
 object EvalResult {
+
   def failed(errorMsg: String): EvalResult =
-    EvalResult("test", Map.empty, Seq.empty, Some(EvalError(errorMsg)))
+    apply("test", Map.empty, Seq.empty, Some(EvalError(errorMsg)))
 
   def successSingle(value: Any): EvalResult =
-    EvalResult(
+    apply(
       "test",
       Map.empty,
-      Seq(MatchedRule("someRule", Map("single" -> value.toString)))
+      Seq(MatchedRule("someRule", Map("single" -> value.toString))),
+      None
     )
 
   def successMap(resultMap: Map[String, Any]): EvalResult =
-    EvalResult(
+    apply(
       "test",
       Map.empty,
-      Seq(MatchedRule("someRule", resultMap.view.mapValues(_.toString).toMap))
+      Seq(MatchedRule("someRule", resultMap.view.mapValues(_.toString).toMap)),
+      None
     )
 
   lazy val noResult: EvalResult =
-    EvalResult("test", Map.empty, Seq.empty)
+    apply("test", Map.empty, Seq.empty, None)
+
+  def apply(
+      decisionId: String,
+      inputs: Map[String, String],
+      matchedRules: Seq[MatchedRule],
+      failed: Option[EvalError]
+  ): EvalResult = {
+    val status = (matchedRules, failed) match {
+      case (_, Some(_)) => ERROR
+      case (Nil, _)     => WARN
+      case _            => INFO
+    }
+    EvalResult(status, decisionId, inputs, matchedRules, failed)
+  }
 }
+
 case class MatchedRule(ruleId: String, outputs: Map[String, String])
 case class EvalError(msg: String)
+sealed trait EvalStatus
+
+object EvalStatus {
+  case object INFO extends EvalStatus
+  case object WARN extends EvalStatus
+  case object ERROR extends EvalStatus
+}
