@@ -1,5 +1,6 @@
 package pme123.camunda.dmn
 
+import ammonite.ops.{pwd, up}
 import org.camunda.dmn.DmnEngine
 
 package object tester {
@@ -18,5 +19,10 @@ package object tester {
 
       }
       .mkString("| ", " | ", " |")
+  }
+
+  def osPath(path: List[String]) = path match {
+    case ".." :: tail => pwd / up / tail
+    case other => pwd / other
   }
 }

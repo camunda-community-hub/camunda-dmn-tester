@@ -1,3 +1,5 @@
+import java.io.File
+
 val scala213Version = "2.13.3"
 
 val zioVersion = "1.0.3"

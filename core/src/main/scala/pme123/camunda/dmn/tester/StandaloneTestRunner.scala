@@ -1,6 +1,5 @@
 package pme123.camunda.dmn.tester
 
-import pme123.camunda.dmn.tester.TestRunner
 import zio.Runtime
 
 object StandaloneTestRunner extends App {

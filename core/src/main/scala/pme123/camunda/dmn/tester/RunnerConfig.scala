@@ -6,11 +6,11 @@ import ammonite.ops._
 import zio.UIO
 
 case class RunnerConfig(
-    basePath: Seq[String]
+    basePath: List[String]
 )
 object RunnerConfig {
 
-  val defaultBasePath = Seq("core", "src", "test", "resources", "dmn-configs")
+  val defaultBasePath = List("core", "src", "test", "resources", "dmn-configs")
   val defaultConfig: RunnerConfig = RunnerConfig(defaultBasePath)
 
   //TODO add support for config file

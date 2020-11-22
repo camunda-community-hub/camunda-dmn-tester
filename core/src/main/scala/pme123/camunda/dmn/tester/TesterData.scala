@@ -77,7 +77,7 @@ object hocon {
     (boolean)(BooleanValue.apply, BooleanValue.unapply).asInstanceOf[ConfigDescriptor[TesterValue]]
 
   val testerInput: ConfigDescriptor[TesterInput] =
-    (string("key") |@| list("values")(booleanValue orElse bigDecimalValue orElse( stringValue)))(TesterInput.apply, TesterInput.unapply)
+    (string("key") |@| list("values")(bigDecimalValue orElse booleanValue orElse( stringValue)))(TesterInput.apply, TesterInput.unapply)
 
   val testerData: ConfigDescriptor[TesterData] =
     (list("inputs") (testerInput))(TesterData.apply, TesterData.unapply)

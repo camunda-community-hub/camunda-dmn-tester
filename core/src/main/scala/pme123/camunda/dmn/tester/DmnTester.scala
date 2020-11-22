@@ -2,7 +2,6 @@ package pme123.camunda.dmn.tester
 
 import java.io.InputStream
 
-import ammonite.ops._
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.parser._
 import os.read.inputStream
@@ -11,9 +10,10 @@ import zio.{IO, UIO, ZIO}
 
 import scala.language.implicitConversions
 
+
 case class DmnTester(
     decisionId: String,
-    dmnPath: Seq[String],
+    dmnPath: List[String],
     engine: DmnEngine = new DmnEngine()
 ) {
 
@@ -38,7 +38,7 @@ case class DmnTester(
   }
 
   def parsedDmn(): Either[DmnEngine.Failure, ParsedDmn] = {
-    parsedDmn(inputStream(pwd / dmnPath))
+    parsedDmn(inputStream(osPath(dmnPath)))
   }
 
   def parsedDmn(

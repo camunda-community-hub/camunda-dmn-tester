@@ -58,7 +58,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
       case Some(value)       => value.toString
       case None              => "NO VALUE"
       case value =>
-        value.toString
+        s"$value"
     }
 
   private def printDmnLog(decisionId: String, entries: Seq[EvalResult]) = {
