@@ -8,4 +8,6 @@ object StandaloneTestRunner extends App {
 
   def standalone(config: RunnerConfig): Unit =
     runtime.unsafeRun(TestRunner.runApp(config))
+
+  standalone(RunnerConfig.defaultConfig)
 }

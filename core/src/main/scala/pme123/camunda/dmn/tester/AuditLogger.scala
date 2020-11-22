@@ -92,18 +92,15 @@ case class RowPrinter(
   def printResultRow(): URIO[Console, Unit] =
     ZIO.foreach_(evalResults.sortBy(_.decisionId)) {
       case EvalResult(_, inputMap, Nil, None) =>
-        console.putStrLn(
-          scala.Console.YELLOW +
-            s"WARN:      ${formatInputMap(inputMap)} -> NO RESULT" +
-            scala.Console.RESET
+        printWarning(
+          s"WARN:      ${formatInputMap(inputMap)} -> NO RESULT"
         )
 
       case EvalResult(_, inputMap, matchedRules, Some(EvalError(msg))) =>
         val inputStr = s"ERROR:     ${formatInputMap(inputMap)} -> "
-        console.putStrLnErr(
-          scala.Console.RED + s"""$inputStr${formatOutputMap(matchedRules, inputStr.length)}
-            | >>> ${msg.split("\\.").head}""".stripMargin +
-            scala.Console.RESET
+        printError(
+          s"""$inputStr${formatOutputMap(matchedRules, inputStr.length)}
+            | >>> ${msg.split("\\.").head}""".stripMargin
         )
       case EvalResult(_, inputMap, matchedRules, _) =>
         val inputStr = s"INFO:      ${formatInputMap(inputMap)} -> "

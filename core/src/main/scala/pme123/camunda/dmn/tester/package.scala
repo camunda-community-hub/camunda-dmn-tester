@@ -2,27 +2,39 @@ package pme123.camunda.dmn
 
 import ammonite.ops.{pwd, up}
 import org.camunda.dmn.DmnEngine
+import os.Path
+import zio.console.Console
+import zio.{URIO, console}
 
 package object tester {
 
   case class RunResult(
-                        inputs: Map[String, Any],
-                        result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
-                      )
+      inputs: Map[String, Any],
+      result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
+  )
 
   def formatStrings(strings: Seq[String]): String = {
     val inputFormatter = "%1$23s"
     strings
-      .map{
+      .map {
         case i if i.length > 22 => inputFormatter.format(i.take(20) + "..")
-        case i  => inputFormatter.format(i.take(22))
+        case i                  => inputFormatter.format(i.take(22))
 
       }
       .mkString("| ", " | ", " |")
   }
 
-  def osPath(path: List[String]) = path match {
+  def osPath(path: List[String]): Path = path match {
     case ".." :: tail => pwd / up / tail
-    case other => pwd / other
+    case other        => pwd / other
   }
+
+  def printError(msg: String): URIO[Console, Unit] =
+    console.putStrLn(
+      scala.Console.RED + msg + scala.Console.RESET
+    )
+  def printWarning(msg: String): URIO[Console, Unit] =
+    console.putStrLn(
+      scala.Console.YELLOW + msg + scala.Console.RESET
+    )
 }

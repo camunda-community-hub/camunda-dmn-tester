@@ -16,6 +16,9 @@ This is work in progress, so the features it provides so far:
   * A Warning if no Rule matched.
   * An Error if there is one.
   * An Error if a Rule could not be parsed.
+  
+## Next Steps / Ideas
+* Improve Exceptions (for Feel - Parsing Problems)  
  
 ## Usage
 > At the moment I am waiting for this [Pull Request](https://github.com/camunda/dmn-scala/pull/16)
