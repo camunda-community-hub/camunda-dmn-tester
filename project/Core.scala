@@ -3,15 +3,16 @@ import sbt._
 
 object Core {
 
-  lazy val settings = Def.settings(
+  lazy val settings: Project => Project = _.settings(
     name := "camunda-dmn-tester",
     scalaVersion := Deps.scala213,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    resolvers += Resolver.bintrayRepo("pme123", "projects"),
     resolvers += Resolver.mavenLocal // only needed for dmn-engine SNAPSHOT
 //    crossScalaVersions := Deps.supportedScalaVersions
   )
 
-  lazy val deps = Def.settings(
+  lazy val deps: Project => Project = _.settings(
     libraryDependencies ++= Seq(
       Deps.ammonite,
       Deps.dmnScala,

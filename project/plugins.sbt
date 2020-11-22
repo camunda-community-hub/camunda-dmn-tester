@@ -1,1 +1,1 @@
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.4")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.6.1")
