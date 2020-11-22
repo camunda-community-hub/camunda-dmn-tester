@@ -6,15 +6,15 @@ val zioVersion = "1.0.3"
 
 lazy val projectSettings: Project => Project = _.settings(
   organization := "pme123",
-  version := "0.1.0",
+  version := "0.1.1",
   scalaVersion := scala213Version
 )
 
 lazy val root = project
+  .aggregate(core)
   .in(file("."))
   .configure(projectSettings)
   .settings(publish / skip := true)
-  .dependsOn(core)
 
 lazy val core = project
   .in(file("./core"))
@@ -42,8 +42,9 @@ lazy val publicationSettings: Project => Project = _.settings(
         </developer>
       </developers>
   ),
+  licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   bintrayRepository := {
-    if (isSnapshot.value) "projects-snapshots" else "projects"
+    if (isSnapshot.value) "maven-snapshots" else "maven"
   }
 )
 

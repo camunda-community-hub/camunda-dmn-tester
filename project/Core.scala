@@ -7,7 +7,6 @@ object Core {
     name := "camunda-dmn-tester",
     scalaVersion := Deps.scala213,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    resolvers += Resolver.bintrayRepo("pme123", "projects"),
     resolvers += Resolver.mavenLocal // only needed for dmn-engine SNAPSHOT
 //    crossScalaVersions := Deps.supportedScalaVersions
   )
