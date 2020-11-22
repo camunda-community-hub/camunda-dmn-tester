@@ -1,3 +1,4 @@
+[ ![Download](https://api.bintray.com/packages/pme123/maven/camunda-dmn-tester/images/download.svg) ](https://bintray.com/pme123/maven/camunda-dmn-tester/_latestVersion)
 # Camunda DMN Table Tester
 > As a developer I want to test the DMNs that I get from the Business, even not knowing the concrete rules.
 
