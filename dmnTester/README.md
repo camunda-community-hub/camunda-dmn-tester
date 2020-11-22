@@ -3,9 +3,12 @@
 ## Install Ammonite 
 > see https://ammonite.io/#Ammonite-REPL
 
-* Add test configurations in `dmn-configs`
+Copy this directory (`dmnTester`) in your Root directory of your project.
 
-  Example `country-risk.conf`:
+## Configuration
+Add test configurations in `dmn-configs`.
+
+Example `country-risk.conf`:
 ```
 decisionId: country-risk,
 dmnPath: [core, src, test, resources, country-risk.dmn],
@@ -19,8 +22,8 @@ data: {
   }]
 }
 ```
-
- * Run it in the terminal
+## Run it
+In the terminal:
  
 `cd dmnTester`
 

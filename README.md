@@ -1,11 +1,19 @@
 # Camunda DMN Table Tester
+> As a developer I want to test the DMNs that I get from the Business, even not knowing the concrete rules.
 
-This small project has 2 main goals:
+The goal of this project is to support that as good as possible.
 
-1. Test Camunda DMN Tables automatically
-2. Start using Dotty alias Scala 3
-
-> this project is based on
-[dotty-example-project](https://github.com/lampepfl/dotty-example-project/blob/master/README.md).
-and was created with [dotty-cross](https://github.com/lampepfl/dotty-cross.g8).
-
+This is work in progress, so the features it provides so far:
+* Define your test in simple Config Files (HOCON).
+* Provide a Script that runs all the Tests (Ammonite).
+* Display the result in the console:
+  ![Console Output](docs/Screenshot_console.png)
+  * All matched Rules for its inputs.
+  * A Warning if no Rule matched.
+  * An Error if there is one.
+  * An Error if a Rule could not be parsed.
+  
+## Usage
+> At the moment I am waiting for this [Pull Request](https://github.com/camunda/dmn-scala/pull/16)
+> to release the first version.
+See [dmnTester/README](dmnTester/README.md)
