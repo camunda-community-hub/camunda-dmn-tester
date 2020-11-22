@@ -7,11 +7,11 @@ import zio.Runtime
 object TestGenerator extends App {
   numbersTester()
   countryRiskTester()
-  val runtime = Runtime.default
+  lazy val runtime = Runtime.default
   private def numbersTester(): Unit = {
     val config =
       runtime.unsafeRun(
-        DmnConfigHandler.read(RunnerConfig.defaultBasePath :+ "numbers.json")
+        DmnConfigHandler.read(RunnerConfig.defaultBasePath :+ "numbers.conf")
       )
     val tester = DmnTester(config.decisionId, config.dmnPath)
     val data = config.data
@@ -30,7 +30,7 @@ object TestGenerator extends App {
     val config =
       runtime.unsafeRun(
         DmnConfigHandler.read(
-          RunnerConfig.defaultBasePath :+ "country-risk.json"
+          RunnerConfig.defaultBasePath :+ "country-risk.conf"
         )
       )
     val tester = DmnTester(config.decisionId, config.dmnPath)

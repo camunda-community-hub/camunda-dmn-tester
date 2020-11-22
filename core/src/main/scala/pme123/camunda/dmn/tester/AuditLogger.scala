@@ -101,8 +101,9 @@ case class RowPrinter(
       case EvalResult(_, inputMap, matchedRules, Some(EvalError(msg))) =>
         val inputStr = s"ERROR:     ${formatInputMap(inputMap)} -> "
         console.putStrLnErr(
-          s"""$inputStr${formatOutputMap(matchedRules, inputStr.length)}
-            | >>> ${msg.split("\\.").head}""".stripMargin
+          scala.Console.RED + s"""$inputStr${formatOutputMap(matchedRules, inputStr.length)}
+            | >>> ${msg.split("\\.").head}""".stripMargin +
+            scala.Console.RESET
         )
       case EvalResult(_, inputMap, matchedRules, _) =>
         val inputStr = s"INFO:      ${formatInputMap(inputMap)} -> "
