@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_bad-feel-output" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
-  <decision id="bad-feel-output" name="bad-feel-output">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_bad-feel-input" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
+  <decision id="bad-feel-input" name="bad-feel-input">
     <informationRequirement id="InformationRequirement_17w865h">
       <requiredInput href="#InputData_0die4vm" />
     </informationRequirement>
     <informationRequirement id="InformationRequirement_0uxd691">
       <requiredInput href="#InputData_1cz2a8d" />
     </informationRequirement>
-    <decisionTable id="bad-feel-output_table" hitPolicy="FIRST">
+    <decisionTable id="bad-feel-input_table" hitPolicy="FIRST">
       <input id="input_1" label="Current Country">
         <inputExpression id="inputExpression_1" typeRef="string" expressionLanguage="FEEL">
           <text>upper case(currentCountry)</text>
@@ -28,13 +28,13 @@
           <text>"CH"</text>
         </inputEntry>
         <outputEntry id="LiteralExpression_10624at">
-          <text></text>
+          <text>false</text>
         </outputEntry>
       </rule>
       <rule id="DecisionRule_04lsupm">
         <description></description>
         <inputEntry id="UnaryTests_1b60xtl">
-          <text>"CH"</text>
+          <text>CH</text>
         </inputEntry>
         <inputEntry id="UnaryTests_1qws2q2">
           <text>"DE","AT","FR"</text>
@@ -96,7 +96,7 @@
   <inputData id="InputData_1cz2a8d" name="targetCountry" />
   <dmndi:DMNDI>
     <dmndi:DMNDiagram id="DMNDiagram_1ouy0lg">
-      <dmndi:DMNShape id="DMNShape_0gg9mm1" dmnElementRef="bad-feel-output">
+      <dmndi:DMNShape id="DMNShape_0gg9mm1" dmnElementRef="bad-feel-input">
         <dc:Bounds height="80" width="180" x="164" y="80" />
       </dmndi:DMNShape>
       <dmndi:DMNEdge id="DMNEdge_0azti8d" dmnElementRef="InformationRequirement_17w865h">

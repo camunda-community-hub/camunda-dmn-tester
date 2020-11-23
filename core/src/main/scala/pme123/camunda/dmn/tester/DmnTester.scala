@@ -56,7 +56,10 @@ case class DmnTester(
             if message.contains("Failed to parse FEEL expression ''") =>
           HandledTesterException(
             s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.
-              |> Hint: All outputs need a value.""".stripMargin
+              |Hints:
+              |> All outputs need a value.
+              |> Did you miss to wrap Strings in " - e.g. "TEXT"?
+              |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/""".stripMargin
           )
         case Failure(msg) =>
           HandledTesterException(msg)
