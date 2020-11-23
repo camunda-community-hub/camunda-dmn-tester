@@ -17,22 +17,31 @@ case class DmnTester(
     engine: DmnEngine = new DmnEngine()
 ) {
 
-  def run(data: TesterData): ZIO[Any, HandledTesterException, Seq[RunResult]] =
+  def run(data: TesterData): ZIO[Any, HandledTesterException, RunResults] =
     parsedDmn().map(run(data, _))
 
   def run(
       data: TesterData,
       dmn: ParsedDmn
-  ): Seq[RunResult] = {
+  ): RunResults = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
-    val evaluated =
+    val evaluated = {
       allInputs.map(inputMap =>
         RunResult(
           inputMap,
           engine.eval(dmn, decisionId, inputMap)
         )
       )
-    evaluated
+    }
+    val rulIds = dmn.decisions.find(_.id == decisionId)
+      .toSeq
+      .map(_.logic)
+      .collect{
+        case ParsedDecisionTable(_,_,rules,hitPolicy,_) =>
+        rules.map(_.id)
+      }.flatten
+
+    RunResults(Dmn(decisionId, rulIds), evaluated)
   }
 
   def parsedDmn(): IO[HandledTesterException, ParsedDmn] =

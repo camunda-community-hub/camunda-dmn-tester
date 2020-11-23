@@ -19,9 +19,9 @@ object TestGenerator extends App {
     tester
       .parsedDmn()
       .map(tester.run(data, _))
-      .map { evaluated =>
+      .map { results =>
         DmnUnitTestGenerator(config.decisionId, config.dmnPath)
-          .generate(data.inputKeys, evaluated)
+          .generate(data.inputKeys, results.results)
       }
   }
 
@@ -39,9 +39,9 @@ object TestGenerator extends App {
     tester
       .parsedDmn()
       .map(tester.run(data, _))
-      .map { evaluated =>
+      .map { results =>
         DmnUnitTestGenerator(config.decisionId, config.dmnPath)
-          .generate(data.inputKeys, evaluated)
+          .generate(data.inputKeys, results.results)
       }
   }
 }

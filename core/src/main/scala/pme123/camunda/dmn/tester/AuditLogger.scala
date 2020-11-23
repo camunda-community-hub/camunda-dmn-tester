@@ -4,7 +4,7 @@ import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
-import pme123.camunda.dmn.tester.EvalStatus.{ERROR, WARN, INFO}
+import pme123.camunda.dmn.tester.EvalStatus.{ERROR, INFO, WARN}
 import zio._
 import zio.console.Console
 
@@ -42,12 +42,12 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
     )
   }
 
-  def printLog(): ZIO[Console, Nothing, Unit] = {
+  def printLog(dmns: Seq[Dmn]): ZIO[Console, Nothing, Unit] = {
     for {
       logEntries <- auditLogRef.get
-      _ <- ZIO.foreach_(logEntries.groupBy(_.decisionId)) {
-        case (decisionId, entries) =>
-          printDmnLog(decisionId, entries)
+      entryMap <- UIO(logEntries.groupBy(_.decisionId))
+      _ <- ZIO.foreach_(dmns) { dmn =>
+        printDmnLog(dmn, entryMap(dmn.id))
       }
     } yield ()
   }
@@ -62,7 +62,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
         s"$value"
     }
 
-  private def printDmnLog(decisionId: String, entries: Seq[EvalResult]) = {
+  private def printDmnLog(dmn: Dmn, entries: Seq[EvalResult]) = {
     for {
       inputs <- UIO(entries.headOption.toSeq.flatMap(_.inputs.keys))
       outputs <- UIO(
@@ -73,11 +73,13 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
           .flatMap(_.outputs.keys)
       )
       _ <- console.putStrLn(s"*" * 100)
-      _ <- console.putStrLn(s"DMN: $decisionId")
+      _ <- console.putStrLn(s"DMN: ${dmn.id}")
       _ <- console.putStrLn(
-        s"EVALUATED: ${formatStrings(inputs)} -> ${formatStrings("Rule ID" +: outputs)}"
+        s"EVALUATED: ${formatStrings(inputs)} -> ${formatStrings("Row Number / Rule ID" +: outputs)}"
       )
-      _ <- RowPrinter(entries, inputs, outputs).printResultRow()
+      rowPrinter <- UIO(RowPrinter(entries, inputs, outputs, dmn.ruleIds))
+      _ <- rowPrinter.printResultRow()
+      _ <- rowPrinter.printMissingRules()
     } yield ()
 
   }
@@ -87,7 +89,8 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
 case class RowPrinter(
     evalResults: Seq[EvalResult],
     inputs: Seq[String],
-    outputs: Seq[String]
+    outputs: Seq[String],
+    ruleIds: Seq[String]
 ) {
 
   def printResultRow(): URIO[Console, Unit] =
@@ -110,6 +113,19 @@ case class RowPrinter(
         )
     }
 
+  def printMissingRules(): URIO[Console, Unit] =
+    ruleIds.filterNot(matchedRuleIds.contains(_)).toList match {
+      case Nil =>
+        console.putStrLn(s"INFO:      All Rules matched at least ones.")
+      case l =>
+        printWarning(
+          s"WARN:      The following Rules never matched: [${l.map(rowIndex).mkString(", ")}]"
+        )
+    }
+
+  private lazy val matchedRuleIds =
+    evalResults.flatMap(_.matchedRules.map(_.ruleId)).distinct
+
   private def formatInputMap(inputMap: Map[String, Any]) =
     formatStrings(inputs.map(k => inputMap(k).toString))
 
@@ -119,9 +135,12 @@ case class RowPrinter(
   ) =
     matchedRules
       .map { case MatchedRule(ruleId, outputMap) =>
-        s"${formatStrings(ruleId +: outputs.map(k => outputMap(k)))}"
+        s"${formatStrings(rowIndex(ruleId: String) +: outputs.map(k => outputMap(k)))}"
       }
       .mkString(s"\n${"-" * inputLength}")
+
+  private def rowIndex(ruleId: String) =
+    s"${ruleIds.indexWhere(_ == ruleId) + 1}: $ruleId"
 
 }
 

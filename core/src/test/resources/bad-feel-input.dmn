@@ -79,17 +79,6 @@
           <text>true</text>
         </outputEntry>
       </rule>
-      <rule id="DecisionRule_019worq">
-        <inputEntry id="UnaryTests_18vcmw3">
-          <text></text>
-        </inputEntry>
-        <inputEntry id="UnaryTests_18rjuja">
-          <text></text>
-        </inputEntry>
-        <outputEntry id="LiteralExpression_028hvm1">
-          <text></text>
-        </outputEntry>
-      </rule>
     </decisionTable>
   </decision>
   <inputData id="InputData_0die4vm" name="currentCountry" />

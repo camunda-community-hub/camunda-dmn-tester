@@ -6,7 +6,7 @@ val zioVersion = "1.0.3"
 
 lazy val projectSettings: Project => Project = _.settings(
   organization := "pme123",
-  version := "0.1.1",
+  version := "0.2.0",
   scalaVersion := scala213Version
 )
 

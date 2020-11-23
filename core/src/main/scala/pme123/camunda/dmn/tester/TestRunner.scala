@@ -25,8 +25,8 @@ object TestRunner extends zio.App {
       auditLogRef <- Ref.make(Seq.empty[EvalResult])
       auditLogger <- UIO(AuditLogger(auditLogRef))
       engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
-      _ <- ZIO.foreach_(dmnConfigs)(testDmnTable(_, engine))
-      _ <- auditLogger.printLog()
+      results <- ZIO.foreach(dmnConfigs)(testDmnTable(_, engine))
+      _ <- auditLogger.printLog(results.filter(_.nonEmpty).map(_.get.dmn))
       result <- auditLogRef.get
     } yield result
   }
@@ -69,18 +69,18 @@ object TestRunner extends zio.App {
       f.listFiles.filter(_.getName.endsWith(".conf"))
   }
 
-  private def testDmnTable(dmnConfig: DmnConfig, engine: DmnEngine) = {
+  private def testDmnTable(dmnConfig: DmnConfig, engine: DmnEngine): ZIO[Console, Nothing, Option[RunResults]] = {
     val DmnConfig(decisionId, data, dmnPath) = dmnConfig
     console.putStrLn(
       s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"
     ) *>
       DmnTester(decisionId, dmnPath, engine)
         .run(data)
+        .map(r => Some(r))
         .catchAll { case HandledTesterException(msg) =>
              printError(
               s"ERROR: $msg"
-            )
+            ) *> UIO.none
         }
-
   }
 }

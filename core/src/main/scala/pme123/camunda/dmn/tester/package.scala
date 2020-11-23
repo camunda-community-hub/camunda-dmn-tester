@@ -8,10 +8,14 @@ import zio.{URIO, console}
 
 package object tester {
 
+  case class RunResults(dmn: Dmn, results: Seq[RunResult])
+
   case class RunResult(
       inputs: Map[String, Any],
       result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
   )
+
+  case class Dmn(id: String, ruleIds: Seq[String])
 
   def formatStrings(strings: Seq[String]): String = {
     val inputFormatter = "%1$23s"

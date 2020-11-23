@@ -67,6 +67,17 @@
           <text>true</text>
         </outputEntry>
       </rule>
+      <rule id="DecisionRule_1f8ao7h">
+        <inputEntry id="UnaryTests_05cxaud">
+          <text>"GB"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0qq67ck">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0j23hss">
+          <text>false</text>
+        </outputEntry>
+      </rule>
       <rule id="DecisionRule_1d36vu5">
         <description></description>
         <inputEntry id="UnaryTests_1mg049b">
