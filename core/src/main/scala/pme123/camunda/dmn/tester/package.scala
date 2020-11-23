@@ -38,3 +38,5 @@ package object tester {
       scala.Console.YELLOW + msg + scala.Console.RESET
     )
 }
+
+case class HandledTesterException(msg: String)

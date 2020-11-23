@@ -4,7 +4,7 @@ import java.io.File
 
 import ammonite.ops
 import org.camunda.dmn.DmnEngine
-import org.camunda.dmn.DmnEngine.Failure
+import pme123.camunda.dmn.HandledTesterException
 import zio._
 import zio.console.Console
 
@@ -15,7 +15,9 @@ object TestRunner extends zio.App {
   def run(args: List[String]): zio.URIO[zio.ZEnv, zio.ExitCode] =
     RunnerConfig.config.flatMap(runApp).exitCode
 
-  def runApp(config: RunnerConfig): ZIO[Console, Serializable, Seq[EvalResult]] = {
+  def runApp(
+      config: RunnerConfig
+  ): ZIO[Console, Serializable, Seq[EvalResult]] = {
     for {
       _ <- console.putStrLn(s"Using: $config")
       zConfigs <- readConfigs(config.basePath)
@@ -31,21 +33,32 @@ object TestRunner extends zio.App {
 
   private def readConfigs(path: List[String]) = {
     ZIO(osPath(path).toIO)
+      .mapError { ex =>
+        ex.printStackTrace()
+        HandledTesterException(ex.getMessage)
+      }
       .flatMap {
         case f if !f.exists() =>
           ZIO.fail(
-            s"Your provided Config Path does not exist (${f.getAbsolutePath})."
+            HandledTesterException(
+              s"Your provided Config Path does not exist (${f.getAbsolutePath})."
+            )
           )
         case f if !f.isDirectory =>
           ZIO.fail(
-            s"Your provided Config Path is not a directory (${f.getAbsolutePath})."
+            HandledTesterException(
+              s"Your provided Config Path is not a directory (${f.getAbsolutePath})."
+            )
           )
         case file =>
           ZIO(
             getRecursively(file).map(f =>
               DmnConfigHandler.read(ops.Path(f).toIO)
             )
-          )
+          ).mapError { ex =>
+            ex.printStackTrace()
+            HandledTesterException(ex.getMessage)
+          }
       }
   }
 
@@ -60,17 +73,14 @@ object TestRunner extends zio.App {
     val DmnConfig(decisionId, data, dmnPath) = dmnConfig
     console.putStrLn(
       s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"
-    ) *> ZIO
-      .fromEither(DmnTester(decisionId, dmnPath, engine).run(data))
-      .catchAll {
-        case Failure(message)
-            if message.contains("Failed to parse FEEL expression ''") =>
-          printError(
-            s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.
-                    |> Hint: All outputs need a value.""".stripMargin
-          )
-        case other =>
-          ZIO(other)
-      }
+    ) *>
+      DmnTester(decisionId, dmnPath, engine)
+        .run(data)
+        .catchAll { case HandledTesterException(msg) =>
+             printError(
+              s"ERROR: $msg"
+            )
+        }
+
   }
 }

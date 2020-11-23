@@ -1,7 +1,14 @@
 package pme123.camunda.dmn.tester
 
+import pme123.camunda.dmn.HandledTesterException
 import pme123.camunda.dmn.tester.EvalStatus._
-import zio.test.Assertion.{endsWithString, equalTo, isSubtype, startsWithString}
+import zio.test.Assertion.{
+  endsWithString,
+  equalTo,
+  hasField,
+  isSubtype,
+  startsWithString
+}
 import zio.test.{DefaultRunnableSpec, assert, suite, testM}
 
 object TestRunnerSpec extends DefaultRunnableSpec {
@@ -21,11 +28,15 @@ object TestRunnerSpec extends DefaultRunnableSpec {
             .runApp(RunnerConfig(RunnerConfig.defaultBasePath :+ "bad"))
             .flip
         } yield assert(result)(
-          isSubtype[String](
-            startsWithString(
-              "Your provided Config Path does not exist ("
-            ) && endsWithString(
-              "camunda-dmn-tester/core/src/test/resources/dmn-configs/bad)."
+          isSubtype[HandledTesterException](
+            hasField(
+              "msg",
+              _.msg,
+              startsWithString(
+                "Your provided Config Path does not exist ("
+              ) && endsWithString(
+                "camunda-dmn-tester/core/src/test/resources/dmn-configs/bad)."
+              )
             )
           )
         )
@@ -38,11 +49,15 @@ object TestRunnerSpec extends DefaultRunnableSpec {
             )
             .flip
         } yield assert(result)(
-          isSubtype[String](
-            startsWithString(
-              "Your provided Config Path is not a directory (/"
-            ) && endsWithString(
-              "camunda-dmn-tester/core/src/test/resources/dmn-configs/numbers.conf)."
+          isSubtype[HandledTesterException](
+            hasField(
+              "msg",
+              _.msg,
+              startsWithString(
+                "Your provided Config Path is not a directory (/"
+              ) && endsWithString(
+                "camunda-dmn-tester/core/src/test/resources/dmn-configs/numbers.conf)."
+              )
             )
           )
         )
