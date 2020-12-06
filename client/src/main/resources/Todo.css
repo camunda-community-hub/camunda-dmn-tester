@@ -1,0 +1,30 @@
+.todos-container > div {
+  margin-top: 10px !important;
+  margin-bottom: 10px !important;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+}
+
+.todo-tag {
+  margin: 10px;
+  white-space: normal !important;
+  max-width: 100%;
+  word-break: break-all;
+}
+
+.todo-form {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 5px;
+}
+.todo-form.icon {
+  color: rgba(0,0,0,.25);
+}

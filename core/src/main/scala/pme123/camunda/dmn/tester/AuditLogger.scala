@@ -47,7 +47,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
       logEntries <- auditLogRef.get
       entryMap <- UIO(logEntries.groupBy(_.decisionId))
       _ <- ZIO.foreach_(dmns) { dmn =>
-        printDmnLog(dmn, entryMap(dmn.id))
+        printDmnLog(dmn, entryMap.getOrElse(dmn.id, Nil))
       }
     } yield ()
   }

@@ -7,5 +7,15 @@
 /project/.bloop/
 /project/project/
 /project/target/
+project/metals.sbt
 /core/target/
 /sbtPlugin/target/
+.bsp/
+yarn.lock
+.idea/
+.metals/
+/client/target/
+/client/build/
+/shared/.js/
+/shared/.jvm/
+/server/target/
