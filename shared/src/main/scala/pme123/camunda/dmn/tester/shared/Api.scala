@@ -1,4 +1,4 @@
-package pme123.scalably.slinky.shared
+package pme123.camunda.dmn.tester.shared
 
 trait Api {
   // message of the day

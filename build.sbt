@@ -3,14 +3,13 @@ import Settings.{client => cli, core => cor, server => ser, shared => sha, _}
 lazy val root = project
   .settings(name := s"$projectName-root", commands += ReleaseCmd)
   .in(file("."))
-  .aggregate(core, shared.js, shared.jvm, client, server)
+  .aggregate(core, client, server)
   .configure(
     projectSettings,
     preventPublication
   )
 
 lazy val core = project
-  .settings(name := projectName)
   .configure(
     projectSettings,
     publicationSettings,
@@ -48,12 +47,12 @@ lazy val client =
 
 lazy val server =
   project
-    .settings(name := s"$projectName-server")
     .dependsOn(shared.jvm)
     .configure(
       projectSettings,
+      ser.settings,
       ser.deps,
-      ser.http4s,
+      cor.deps, // must be moved?
       ser.docker,
       sha.deps,
       preventPublication

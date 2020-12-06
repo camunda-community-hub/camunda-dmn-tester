@@ -9,7 +9,6 @@ import sbt.Keys._
 import sbt._
 import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 
-
 object Settings {
 
   val projectName = "camunda-dmn-tester"
@@ -20,13 +19,12 @@ object Settings {
       scalaVersion := "2.13.2"
     )
 
-  lazy val ReleaseCmd = Command.command("release") {
-    state =>
-      "clean" ::
-        "build" ::
-        "server/compile" ::
-        "server/stage" ::
-        state
+  lazy val ReleaseCmd = Command.command("release") { state =>
+    "clean" ::
+      "build" ::
+      "server/compile" ::
+      "server/stage" ::
+      state
   }
 
   lazy val publicationSettings: Project => Project = _.settings(
@@ -54,7 +52,8 @@ object Settings {
     _.settings(
       publish := {},
       publishTo := Some(
-        Resolver.file("Unused transient repository", target.value / "fakepublish")
+        Resolver
+          .file("Unused transient repository", target.value / "fakepublish")
       ),
       publishArtifact := false,
       publishLocal := {},
@@ -96,17 +95,20 @@ object Settings {
   }
 
   object server {
+    lazy val settings: Project => Project = _.settings(
+      name := s"$projectName-server",
+      Compile / unmanagedResourceDirectories += baseDirectory.value / "../client/target/build",
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+      resolvers += Resolver.mavenLocal // only needed for dmn-engine SNAPSHOT
+      //    crossScalaVersions := Deps.supportedScalaVersions
+    )
+
     lazy val deps: Project => Project =
       _.settings(
-        Compile / unmanagedResourceDirectories += baseDirectory.value / "../client/target/build"
-      )
-
-    val http4sVersion = "0.21.12"
-    lazy val http4s: Project => Project =
-      _.settings(
         libraryDependencies ++= Seq(
-          "org.http4s" %% "http4s-dsl" % http4sVersion,
-          "org.http4s" %% "http4s-blaze-server" % http4sVersion
+          Deps.http4sDsl,
+          Deps.http4sServer,
+          Deps.slf4j % Runtime
         )
       )
 
@@ -124,7 +126,10 @@ object Settings {
       _.settings(
         scalacOptions += "-Ymacro-annotations",
         requireJsDomEnv in Test := true,
-        addCommandAlias("dev", ";set javaOptions  += \"-DIsLocal=true\";fastOptJS::startWebpackDevServer;~fastOptJS"),
+        addCommandAlias(
+          "dev",
+          ";set javaOptions  += \"-DIsLocal=true\";fastOptJS::startWebpackDevServer;~fastOptJS"
+        ),
         addCommandAlias("build", "fullOptJS::webpack"),
         libraryDependencies ++= Seq(
           "me.shadaj" %%% "slinky-web" % "0.6.6",
@@ -147,7 +152,6 @@ object Settings {
           "webpack-merge" -> "4.2.2"
         )
       )
-
 
     lazy val antdSettings: Project => Project =
       _.settings(
@@ -176,7 +180,11 @@ object Settings {
         webpackConfigFile in Test := Some(
           baseDirectory.value / "webpack" / "webpack-core.config.js"
         ),
-        webpackDevServerExtraArgs in fastOptJS := Seq("--inline", "--hot", "--disableHostCheck"),
+        webpackDevServerExtraArgs in fastOptJS := Seq(
+          "--inline",
+          "--hot",
+          "--disableHostCheck"
+        ),
         webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
       )
 

@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.client.todo
 
-import pme123.scalably.slinky.shared.TodoItem
+import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData}
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
 import slinky.core.facade.ReactElement
@@ -22,9 +22,9 @@ object components {
   @react object TList {
 
     case class Props(
-                      todos: Seq[TodoItem],
-                      onTodoToggle: TodoItem => Unit,
-                      onTodoRemoval: TodoItem => Unit
+                      todos: Seq[DmnConfig],
+                      onTodoToggle: DmnConfig => Unit,
+                      onTodoRemoval: DmnConfig => Unit
                     )
 
     val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
@@ -39,7 +39,7 @@ object components {
                   "There's nothing to do :(".asInstanceOf[ReactElement]
                 )
               )
-              .setRenderItem((todo: TodoItem, _) =>
+              .setRenderItem((todo: DmnConfig, _) =>
                 TItem(todo, onTodoToggle, onTodoRemoval)
               )
               .setPagination(
@@ -54,28 +54,29 @@ object components {
   @react object TItem {
 
     case class Props(
-                      todo: TodoItem,
-                      onTodoToggle: TodoItem => Unit,
-                      onTodoRemoval: TodoItem => Unit
+                      todo: DmnConfig,
+                      onTodoToggle: DmnConfig => Unit,
+                      onTodoRemoval: DmnConfig => Unit
                     )
 
     val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
       props =>
         val Props(todo, onTodoToggle, onTodoRemoval) = props
         List.Item
-          .withKey(todo.id.get)
+          .withKey(todo.decisionId)
           .className("list-item")
           .actions(
             js.Array(
               Tooltip.TooltipPropsWithOverlayRefAttributes
                 .titleReactElement(
-                  if (todo.completed) "Mark as uncompleted"
+                  div("ok")
+             /*     if (todo.completed) "Mark as uncompleted"
                   else "Mark as completed")(
                   Switch
                     .checkedChildren(AntdIcon(CheckOutlined))
                     .unCheckedChildren(AntdIcon(CloseOutlined))
                     .onChange((_, _) => onTodoToggle(props.todo))
-                    .defaultChecked(todo.completed)
+                    .defaultChecked(todo.completed) */
                 ),
               Popconfirm
                 .title(
@@ -93,8 +94,8 @@ object components {
             div(
               className := "todo-item"
             )(
-              Tag(todo.content)
-                .color(if (todo.completed) aStr.cyan else aStr.red)
+              Tag(todo.decisionId)
+                .color(aStr.cyan)
                 .className("todo-tag")
             )
           )
@@ -104,7 +105,7 @@ object components {
   @react object AddTodoForm {
 
     case class Props(
-                      onFormSubmit: TodoItem => Unit
+                      onFormSubmit: DmnConfig => Unit
                     )
 
     val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
@@ -114,7 +115,7 @@ object components {
 
         val onFinish = (_: Any) => {
           val content = form.getFieldValue("content").toString
-          onFormSubmit(TodoItem(None, new Date().getTime().toInt, content))
+          onFormSubmit(DmnConfig("decisionId", TesterData(scala.List.empty), scala.List.empty))
           form.resetFields()
         }
 

@@ -2,15 +2,12 @@ package pme123.camunda.dmn.tester.client.todo
 
 import autowire.{clientCallable, _}
 import boopickle.Default._
-import org.scalajs.dom.XMLHttpRequest
-import org.scalajs.dom.ext.AjaxException
 import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.client.todo.components.{AddTodoForm, TList}
-import pme123.scalably.slinky.shared.{Api, TodoItem}
-import components.{AddTodoForm, TList}
+import pme123.camunda.dmn.tester.shared
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig}
 import slinky.core.FunctionalComponent
 import slinky.core.facade.Hooks.{useEffect, useState}
-import slinky.web.html.{div, s}
 import typings.antd.antdStrings
 import typings.antd.antdStrings.{center, middle}
 import typings.antd.components._
@@ -31,12 +28,12 @@ object containers {
     _ =>
       val (error, setError) = useState[Option[String]](None)
       val (isLoaded, setIsLoaded) = useState(false)
-      val (todos, setItems) = useState(Seq.empty[TodoItem])
+      val (todos, setItems) = useState(Seq.empty[DmnConfig])
 
       // Note: the empty deps array [] means
       // this useEffect will run once
       useEffect(        () =>
-          AjaxClient[Api].getAllTodos().call().onComplete {
+          AjaxClient[DmnApi].getConfigs(Seq("dmnTester", "dmn-configs")).call().onComplete {
             case Success(todos) =>
               setIsLoaded(true)
               setItems(todos)
@@ -48,21 +45,21 @@ object containers {
       )
 
       lazy val handleFormSubmit =
-        (todo: TodoItem) =>
-          AjaxClient[Api].updateTodo(todo).call().foreach { todos =>
+        (todo: DmnConfig) =>
+          /*AjaxClient[DmnApi].updateTodo(todo).call().foreach { todos =>
             setItems(todos)
-          }
+          }*/  ()
 
       lazy val handleTodoToggle =
-        (todo: TodoItem) =>
-          AjaxClient[Api].updateTodo(todo.copy(completed = !todo.completed)).call().foreach { todos =>
+        (todo: DmnConfig) =>
+        /*  AjaxClient[DmnApi].updateTodo(todo.copy(completed = !todo.completed)).call().foreach { todos =>
             setItems(todos)
-          }
+          }*/  ()
       lazy val handleRemoveTodo =
-        (todo: TodoItem) =>
-          AjaxClient[Api].deleteTodo(todo.id.get).call().foreach { todos =>
+        (todo: DmnConfig) =>
+       /*   AjaxClient[DmnApi].deleteTodo(todo.id.get).call().foreach { todos =>
             setItems(todos)
-          }
+          }*/  ()
       Row
         // .gutter(20) //[o, 20] ?
         .justify(center)

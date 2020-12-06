@@ -1,13 +1,8 @@
 package pme123.camunda.dmn.tester.server
 
-import java.nio.ByteBuffer
 import java.util.{Date, UUID}
-
 import boopickle.Default._
-import boopickle.UnpickleImpl
-import pme123.scalably.slinky.shared._
-
-import scala.concurrent.ExecutionContext.global
+import pme123.camunda.dmn.tester.shared._
 
 class ApiService extends Api {
   var todos = Seq(

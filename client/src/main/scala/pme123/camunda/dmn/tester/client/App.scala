@@ -17,7 +17,7 @@ object AppCSS extends js.Object
 @js.native
 object AntCSS extends js.Any
 
-@JSImport("resources/logo.svg", JSImport.Default)
+@JSImport("resources/logo.png", JSImport.Default)
 @js.native
 object ReactLogo extends js.Object
 
@@ -38,7 +38,7 @@ object ReactLogo extends js.Object
           className := "App-logo",
           alt := "logo"
         ),
-        h1(className := "App-title")("Slinky's TODO List")
+        h1(className := "App-title")("Camunda DMN Tester")
       ),
       Layout.Content(
         containers.TodoContainer()

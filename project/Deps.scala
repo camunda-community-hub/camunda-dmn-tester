@@ -1,3 +1,4 @@
+import sbt.Keys.libraryDependencies
 import sbt._
 
 object Deps {
@@ -9,6 +10,8 @@ object Deps {
   object version {
     val ammonite = "2.2.0"
     val dmnScala = "1.5.1-SNAPSHOT"
+    val http4s = "0.21.12"
+    val slf4j = "1.7.30"
     val zio = "1.0.3"
     val zioConfig = "1.0.0-RC29-1"
   }
@@ -25,4 +28,7 @@ object Deps {
   val zioTest = "dev.zio" %% "zio-test" % version.zio
   val zioTestSbt = "dev.zio" %% "zio-test-sbt" % version.zio
 
+  lazy val http4sDsl = "org.http4s" %% "http4s-dsl" % version.http4s
+  lazy val http4sServer = "org.http4s" %% "http4s-blaze-server" % version.http4s
+ lazy val slf4j = "org.slf4j" % "slf4j-simple" % version.slf4j
 }

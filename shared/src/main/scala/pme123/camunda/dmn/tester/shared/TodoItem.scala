@@ -1,4 +1,4 @@
-package pme123.scalably.slinky.shared
+package pme123.camunda.dmn.tester.shared
 
 import boopickle.Default._
 
