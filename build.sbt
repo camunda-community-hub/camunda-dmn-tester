@@ -1,9 +1,7 @@
 import Settings.{client => cli, core => cor, server => ser, shared => sha, _}
 
 lazy val root = project
-  .settings(
-    name := s"$projectName-root",
-    commands += ReleaseCmd)
+  .settings(name := s"$projectName-root", commands += ReleaseCmd)
   .in(file("."))
   .aggregate(core, shared.js, shared.jvm, client, server)
   .configure(
@@ -17,8 +15,7 @@ lazy val core = project
     projectSettings,
     publicationSettings,
     cor.settings,
-    cor.deps,
-    preventPublication
+    cor.deps
   )
 
 lazy val shared =
@@ -60,4 +57,5 @@ lazy val server =
       ser.docker,
       sha.deps,
       preventPublication
-    ).enablePlugins(JavaAppPackaging)
+    )
+    .enablePlugins(JavaAppPackaging)

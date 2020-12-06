@@ -1,4 +1,4 @@
-package pme123.scalably.slinky.server
+package pme123.camunda.dmn.tester.server
 
 import boopickle.Default._
 import boopickle.UnpickleImpl

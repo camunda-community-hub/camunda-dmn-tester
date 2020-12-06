@@ -16,7 +16,7 @@ object Settings {
 
   lazy val projectSettings: Project => Project =
     _.settings(
-      version := "0.2.0",
+      version := "0.3.0",
       scalaVersion := "2.13.2"
     )
 

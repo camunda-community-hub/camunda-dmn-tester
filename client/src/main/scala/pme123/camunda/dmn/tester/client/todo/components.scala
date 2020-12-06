@@ -1,4 +1,4 @@
-package pme123.scalably.slinky.todo
+package pme123.camunda.dmn.tester.client.todo
 
 import pme123.scalably.slinky.shared.TodoItem
 import slinky.core.FunctionalComponent

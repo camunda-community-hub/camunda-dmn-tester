@@ -1,4 +1,4 @@
-package pme123.scalably.slinky
+package pme123.camunda.dmn.tester.client
 
 import org.scalajs.dom
 import slinky.hot

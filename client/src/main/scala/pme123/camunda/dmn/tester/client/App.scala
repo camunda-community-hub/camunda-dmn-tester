@@ -1,6 +1,6 @@
-package pme123.scalably.slinky
+package pme123.camunda.dmn.tester.client
 
-import pme123.scalably.slinky.todo.containers
+import pme123.camunda.dmn.tester.client.todo.containers
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.web.html._

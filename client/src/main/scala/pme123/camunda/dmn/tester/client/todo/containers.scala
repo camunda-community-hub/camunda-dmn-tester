@@ -1,12 +1,13 @@
-package pme123.scalably.slinky.todo
+package pme123.camunda.dmn.tester.client.todo
 
 import autowire.{clientCallable, _}
 import boopickle.Default._
 import org.scalajs.dom.XMLHttpRequest
 import org.scalajs.dom.ext.AjaxException
-import pme123.scalably.slinky.services.AjaxClient
+import pme123.camunda.dmn.tester.client.services.AjaxClient
+import pme123.camunda.dmn.tester.client.todo.components.{AddTodoForm, TList}
 import pme123.scalably.slinky.shared.{Api, TodoItem}
-import pme123.scalably.slinky.todo.components.{AddTodoForm, TList}
+import components.{AddTodoForm, TList}
 import slinky.core.FunctionalComponent
 import slinky.core.facade.Hooks.{useEffect, useState}
 import slinky.web.html.{div, s}

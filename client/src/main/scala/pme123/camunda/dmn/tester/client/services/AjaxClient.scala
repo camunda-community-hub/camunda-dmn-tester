@@ -1,4 +1,4 @@
-package pme123.scalably.slinky.services
+package pme123.camunda.dmn.tester.client.services
 
 import java.nio.ByteBuffer
 
