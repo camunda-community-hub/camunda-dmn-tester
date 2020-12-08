@@ -1,4 +1,4 @@
-.todos-container > div {
+.configs-container > div {
   margin-top: 10px !important;
   margin-bottom: 10px !important;
 }
@@ -8,23 +8,23 @@
   justify-content: space-between;
 }
 
-.todo-item {
+.config-item {
   display: flex;
   align-items: center;
 }
 
-.todo-tag {
+.config-tag {
   margin: 10px;
   white-space: normal !important;
   max-width: 100%;
   word-break: break-all;
 }
 
-.todo-form {
+.config-form {
   margin-top: 20px;
   margin-bottom: 20px;
   padding: 5px;
 }
-.todo-form.icon {
+.config-form.icon {
   color: rgba(0,0,0,.25);
 }

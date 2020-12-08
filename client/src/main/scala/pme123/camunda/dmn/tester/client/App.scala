@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.client
 
-import pme123.camunda.dmn.tester.client.todo.containers
+import pme123.camunda.dmn.tester.client.config.containers
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.web.html._
@@ -41,12 +41,12 @@ object ReactLogo extends js.Object
         h1(className := "App-title")("Camunda DMN Tester")
       ),
       Layout.Content(
-        containers.TodoContainer()
+        containers.DmnConfigContainer()
       ),
       Layout.Footer(className := "App-footer")(
         "Check it out on Github: ",
-        a(href := "https://github.com/pme123/slinky-todos")(
-          "slinky-todos"
+        a(href := "https://github.com/pme123/camunda-dmn-tester")(
+          "camunda-dmn-tester"
         )
       )
     )
