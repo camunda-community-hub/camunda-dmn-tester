@@ -6,6 +6,8 @@ trait DmnApi {
 
   // gets the absolute path of the server
   def getBasePath(): String
+
+  def runTests(configs: Seq[DmnConfig]): Seq[EvalResult]
   // update a Config
  // def updateConfig(item: DmnConfig): Seq[DmnConfig]
 

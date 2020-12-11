@@ -1,9 +1,11 @@
 package pme123.camunda.dmn.tester.client.config
 
+import pme123.camunda.dmn.tester.client.config.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.shared.DmnConfig
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
-import slinky.core.facade.ReactElement
+import slinky.core.facade.Hooks.useState
+import slinky.core.facade.{Fragment, ReactElement}
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod.{CheckOutlined, CloseOutlined}
@@ -11,11 +13,71 @@ import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
 import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.{antdStrings => aStr}
-import typings.csstype.csstypeStrings
-import typings.csstype.mod.TextAlignProperty
-import typings.react.mod.CSSProperties
 
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.literal
+
+@react object ConfigCard {
+
+  case class Props(
+      configs: Seq[DmnConfig],
+      isLoaded: Boolean,
+      maybeError: Option[String],
+      setConfigs: Seq[DmnConfig] => Unit
+  )
+
+  val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
+    props =>
+      val (isActive, setIsActive) = useState(false)
+       val Props(configs, isLoaded, maybeError, setConfigs) = props
+
+        lazy val handleConfigToggle = { (config: DmnConfig) =>
+          val newCF = config.copy(isActive = !config.isActive)
+          setConfigs(configs.map {
+            case c if c.decisionId == config.decisionId =>
+              newCF
+            case c => c
+          })
+        }
+
+        Card
+          .title(
+            Fragment(
+              "2. Select the DMN Configurations you want to test.",
+              div(style := literal(textAlign = "right", marginRight = 10))(
+                activeCheck(
+                  isActive = isActive,
+                  active => {
+                    setIsActive(active)
+                    setConfigs(configs.map(_.copy(isActive = active)))
+                  }
+                )
+              )
+            )
+          )(
+            (maybeError, isLoaded) match {
+              case (Some(msg), _) =>
+                Alert
+                  .message(
+                    s"Error: The DMN Configurations could not be loaded. (is the path ok?)"
+                  )
+                  .`type`(aStr.error)
+                  .showIcon(true)
+              case (_, false) =>
+                Spin
+                  .size(aStr.default)
+                  .spinning(true)(
+                    Alert
+                      .message("Loading Configs")
+                      .`type`(aStr.info)
+                      .showIcon(true)
+                  )
+              case _ =>
+                ConfigList(configs, handleConfigToggle)
+            }
+          )
+  }
+}
 
 @react object ConfigList {
 

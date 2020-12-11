@@ -4,9 +4,10 @@ import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
-import pme123.camunda.dmn.tester.server.zzz.EvalStatus._
+import pme123.camunda.dmn.tester.shared.{EvalError, EvalResult, MatchedRule}
 import zio._
 import zio.console.Console
+import pme123.camunda.dmn.tester.shared.EvalStatus._
 
 case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
     extends AuditLogListener {
@@ -87,10 +88,10 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
 }
 
 case class RowPrinter(
-    evalResults: Seq[EvalResult],
-    inputs: Seq[String],
-    outputs: Seq[String],
-    ruleIds: Seq[String]
+                       evalResults: Seq[EvalResult],
+                       inputs: Seq[String],
+                       outputs: Seq[String],
+                       ruleIds: Seq[String]
 ) {
 
   def printResultRow(): URIO[Console, Unit] =
@@ -142,61 +143,4 @@ case class RowPrinter(
   private def rowIndex(ruleId: String) =
     s"${ruleIds.indexWhere(_ == ruleId) + 1}: $ruleId"
 
-}
-
-case class EvalResult(
-    status: EvalStatus,
-    decisionId: String,
-    inputs: Map[String, String],
-    matchedRules: Seq[MatchedRule],
-    failed: Option[EvalError]
-)
-
-object EvalResult {
-
-  def failed(errorMsg: String): EvalResult =
-    apply("test", Map.empty, Seq.empty, Some(EvalError(errorMsg)))
-
-  def successSingle(value: Any): EvalResult =
-    apply(
-      "test",
-      Map.empty,
-      Seq(MatchedRule("someRule", Map("single" -> value.toString))),
-      None
-    )
-
-  def successMap(resultMap: Map[String, Any]): EvalResult =
-    apply(
-      "test",
-      Map.empty,
-      Seq(MatchedRule("someRule", resultMap.view.mapValues(_.toString).toMap)),
-      None
-    )
-
-  lazy val noResult: EvalResult =
-    apply("test", Map.empty, Seq.empty, None)
-
-  def apply(
-      decisionId: String,
-      inputs: Map[String, String],
-      matchedRules: Seq[MatchedRule],
-      failed: Option[EvalError]
-  ): EvalResult = {
-    val status = (matchedRules, failed) match {
-      case (_, Some(_)) => ERROR
-      case (Nil, _)     => WARN
-      case _            => INFO
-    }
-    EvalResult(status, decisionId, inputs, matchedRules, failed)
-  }
-}
-
-case class MatchedRule(ruleId: String, outputs: Map[String, String])
-case class EvalError(msg: String)
-sealed trait EvalStatus
-
-object EvalStatus {
-  case object INFO extends EvalStatus
-  case object WARN extends EvalStatus
-  case object ERROR extends EvalStatus
 }

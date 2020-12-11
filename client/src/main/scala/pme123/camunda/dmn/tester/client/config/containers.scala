@@ -2,16 +2,16 @@ package pme123.camunda.dmn.tester.client.config
 
 import autowire.{clientCallable, _}
 import boopickle.Default._
-import pme123.camunda.dmn.tester.client.config.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig}
-import slinky.core.FunctionalComponent
+import slinky.core.{FunctionalComponent, SyntheticEvent, TagMod}
 import slinky.core.facade.Fragment
 import slinky.core.facade.Hooks.{useEffect, useState}
 import slinky.web.html.{div, style}
 import typings.antd.antdStrings
-import typings.antd.antdStrings.{center, middle}
+import typings.antd.antdStrings.{center, middle, primary}
 import typings.antd.components._
+import typings.antd.mod.message
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
@@ -28,9 +28,8 @@ object containers {
 
   val DmnConfigContainer: FunctionalComponent[Unit] =
     FunctionalComponent[Unit] { _ =>
-      val (error, setError) = useState[Option[String]](None)
+      val (maybeError, setError) = useState[Option[String]](None)
       val (isLoaded, setIsLoaded) = useState(false)
-      val (isActive, setIsActive) = useState(false)
       val (configs, setConfigs) = useState(Seq.empty[DmnConfig])
       val (basePath, setBasePath) = useState("")
 
@@ -44,15 +43,26 @@ object containers {
             .call()
             .onComplete {
               case Success(path) =>
-                setIsLoaded(true)
                 setBasePath(path)
               case Failure(ex) =>
-                setIsLoaded(true)
-                setError(Some(ex.toString))
+                message.error(ex.toString)
             }
         },
         Seq.empty
       )
+
+      lazy val runTests = (_: SyntheticEvent[_, _]) => {
+        println("RUN TESTS")
+        AjaxClient[DmnApi]
+          .runTests(configs.filter(_.isActive))
+          .call()
+          .onComplete {
+            case Success(testResults) =>
+              println(s"testResults: $testResults")
+            case Failure(ex) =>
+              message.error(ex.toString)
+          }
+      }
 
       lazy val handleFormSubmit =
         (path: String) => {
@@ -69,24 +79,6 @@ object containers {
                 setError(Some(ex.toString))
             }
         }
-
-      lazy val handleConfigToggle = { (config: DmnConfig) =>
-        val newCF = config.copy(isActive = !config.isActive)
-        setConfigs(configs.map {
-          case c if c.decisionId == config.decisionId =>
-            newCF
-          case c => c
-        })
-      /* AjaxClient[DmnApi]
-            .updateConfig(config.copy(isActive = !config.isActive))
-            .call()
-            .onComplete {
-              case Success(configs) =>
-                setConfigs(configs)
-              case Failure(_) =>
-                message.error(s"Problem update $config", 10)
-            }*/
-      }
 
       lazy val handleRemoveConfig =
         (config: DmnConfig) =>
@@ -105,44 +97,21 @@ object containers {
               )
           ),
           col(
+            ConfigCard(configs, isLoaded, maybeError, setConfigs)
+          ),
+          col(
             Card
-              .title(
-                Fragment(
-                  "2. Select the DMN Configurations you want to test.",
-                  div(style := literal(textAlign = "right", marginRight = 10))(
-                    activeCheck(isActive = isActive, active => {
-                      setIsActive(active)
-                      setConfigs(configs.map(_.copy(isActive = active)))
-                    })
-                  )
-                )
-              )(
-                (error, isLoaded) match {
-                  case (Some(msg), _) =>
-                    Alert
-                      .message(
-                        s"Error: The DMN Configurations could not be loaded. (is the path ok?)"
-                      )
-                      .`type`(antdStrings.error)
-                      .showIcon(true)
-                  case (_, false) =>
-                    Spin
-                      .size(antdStrings.default)
-                      .spinning(true)(
-                        Alert
-                          .message("Loading Configs")
-                          .`type`(antdStrings.info)
-                          .showIcon(true)
-                      )
-                  case _ =>
-                    ConfigList(configs, handleConfigToggle)
-                }
+              .title("3. Run the Tests.")(
+                Button
+                  .`type`(primary)
+                  .block(true)
+                  .onClick(runTests)("Run it")
               )
           )
         )
     }
 
-  private def col(card: Card.Builder) =
+  private def col(card: TagMod[slinky.web.html.div.tag.type]) =
     Col
       .xs(23)
       .sm(23)

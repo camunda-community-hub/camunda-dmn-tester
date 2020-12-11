@@ -2,9 +2,10 @@ package pme123.camunda.dmn.tester.server
 
 import ammonite.ops
 import ammonite.ops.pwd
-import pme123.camunda.dmn.tester.server.zzz.{DmnConfigHandler, osPath}
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig}
-import zio.{Runtime, ZIO, console}
+import org.camunda.dmn.DmnEngine
+import pme123.camunda.dmn.tester.server.zzz._
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, EvalResult}
+import zio.{Ref, Runtime, UIO, ZIO, console}
 
 import java.io.File
 
@@ -25,18 +26,30 @@ class DmnService extends DmnApi {
       } yield dmnConfigs
     )
 
-/*
-  override def updateConfig(item: DmnConfig): Seq[DmnConfig] =
-    runtime.unsafeRun(
-      for {
-        zConfigs <- readConfigs(path.toList)
-        dmnConfigs <- ZIO.collectAll(zConfigs)
-        _ <- console.putStrLn(
-          s"Found ${dmnConfigs.size} DmnConfigs in ${pwd / path}"
-        )
-      } yield dmnConfigs
+  override def runTests(dmnConfigs: Seq[DmnConfig]): Seq[EvalResult] =
+    runtime.unsafeRun(for {
+        _ <- console.putStrLn("Let's start")
+        auditLogRef <- Ref.make(Seq.empty[EvalResult])
+        auditLogger <- UIO(AuditLogger(auditLogRef))
+        engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
+        results <- ZIO.foreach(dmnConfigs)(DmnTester.testDmnTable(_, engine))
+        _ <- auditLogger.printLog(results.filter(_.nonEmpty).map(_.get.dmn))
+        result <- auditLogRef.get
+      } yield result
     )
-*/
+
+  /*
+    override def updateConfig(item: DmnConfig): Seq[DmnConfig] =
+      runtime.unsafeRun(
+        for {
+          zConfigs <- readConfigs(path.toList)
+          dmnConfigs <- ZIO.collectAll(zConfigs)
+          _ <- console.putStrLn(
+            s"Found ${dmnConfigs.size} DmnConfigs in ${pwd / path}"
+          )
+        } yield dmnConfigs
+      )
+  */
 
   private def readConfigs(path: List[String]) = {
     ZIO(osPath(path).toIO)
