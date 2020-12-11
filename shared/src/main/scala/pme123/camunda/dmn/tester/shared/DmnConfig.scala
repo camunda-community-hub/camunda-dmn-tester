@@ -6,7 +6,8 @@ import scala.math.BigDecimal
 case class DmnConfig(
     decisionId: String,
     data: TesterData,
-    dmnPath: List[String]
+    dmnPath: List[String],
+    isActive: Boolean = false
 )
 
 case class TesterData(

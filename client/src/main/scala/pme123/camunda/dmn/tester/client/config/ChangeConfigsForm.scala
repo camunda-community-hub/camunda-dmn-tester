@@ -17,37 +17,32 @@ import scala.scalajs.js.Dynamic.literal
 @react object ChangeConfigsForm {
 
   case class Props(
-      path: String,
+      basePath: String,
       onFormSubmit: String => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(path, onFormSubmit) = props
+      val Props(basePath, onFormSubmit) = props
       val form = useFormMod.default().head
 
-      val onFinish = (_: Any) => {
-        val p = form.getFieldValue("path").toString
-        onFormSubmit(p)
-        //   form.resetFields()
-      }
-
-        Form
-          .form(form)
-          .layout(aStr.horizontal)
-          .className("config-form")(
-            Row
-              .gutter(20)(
-                Col.span(24)(
-                  PathSelect(onFormSubmit)
-                )
-              ),
-            Row
-              .gutter(20)(
-                Col.span(24)(
-                  UploadElement()
+      Form
+        .form(form)
+        .layout(aStr.horizontal)
+        .className("config-form")(
+          Row
+            .gutter(20)(
+              Col.span(24)(
+                PathSelect(basePath, onFormSubmit)
               )
-          ))
+            ),
+          Row
+            .gutter(20)(
+              Col.span(24)(
+                // UploadElement()
+              )
+            )
+        )
   }
 
 }
@@ -55,37 +50,37 @@ import scala.scalajs.js.Dynamic.literal
 @react object UploadElement {
 
   case class Props(
-                  )
+  )
 
-  val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
-    _ =>
-      Upload
-        .name("file")
-        .multiple(false)
-        .action("https://www.mocky.io/v2/5cc8019d300000980a055e76")
-        .onChange { info =>
-          info.file.status.toString match {
-            case "uploading" =>
-              println(s"Uploading ${info.file}")
-            case "done" =>
-              message
-                .success(s"${info.file.name} file uploaded successfully.")
-            case "error" =>
-              message.error(s"${info.file.name} file upload failed.")
-          }
-        }(
-          p(className := "ant-upload-drag-icon")(AntdIcon(InboxOutlined)),
-          p(className := "ant-upload-text")(
-            "Click or drag a DMN Config to this area to upload"
-          ),
-          p(className := "ant-upload-hint")("Support for a single upload.")
-        )
+  val component: FunctionalComponent[Props] = FunctionalComponent[Props] { _ =>
+    Upload
+      .name("file")
+      .multiple(false)
+      .action("https://www.mocky.io/v2/5cc8019d300000980a055e76")
+      .onChange { info =>
+        info.file.status.toString match {
+          case "uploading" =>
+            println(s"Uploading ${info.file}")
+          case "done" =>
+            message
+              .success(s"${info.file.name} file uploaded successfully.")
+          case "error" =>
+            message.error(s"${info.file.name} file upload failed.")
+        }
+      }(
+        p(className := "ant-upload-drag-icon")(AntdIcon(InboxOutlined)),
+        p(className := "ant-upload-text")(
+          "Click or drag a DMN Config to this area to upload"
+        ),
+        p(className := "ant-upload-hint")("Support for a single upload.")
+      )
   }
 }
 
 @react object PathSelect {
 
   case class Props(
+      basePath: String,
       onChangePath: String => Unit
   )
 
@@ -93,11 +88,9 @@ import scala.scalajs.js.Dynamic.literal
     props =>
       val (paths, setPaths) = useState[Seq[String]](configPaths)
       val (name, setName) = useState[String]("")
-      val Props(onChangePath) = props
+      val Props(basePath, onChangePath) = props
 
       def onNameChange = (event: ChangeEvent[HTMLInputElement]) => {
-
-        val target = event.currentTarget
         setName(event.currentTarget.value)
       }
 
@@ -108,11 +101,11 @@ import scala.scalajs.js.Dynamic.literal
 
       FormItem
         .name("path")
-        .label("DMN Config Path")
+        .label(if(basePath.length > 40) ".." + basePath.takeRight(40) else basePath)
         .initialValue(paths.head)(
           Select[String]
             .placeholder(
-              "Select a option and change input text above"
+              "Select a path or add your own"
             )
             .dropdownRender(menu =>
               div(
@@ -144,7 +137,6 @@ import scala.scalajs.js.Dynamic.literal
               )
             )
             .onChange { (value, _) =>
-              println(s"Path changed to $value")
               onChangePath(value)
             }(
               paths.map(p => Select.Option(p).withKey(p)(p))

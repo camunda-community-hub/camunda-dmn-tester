@@ -11,7 +11,7 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
 import org.http4s.{Request, StaticFile, _}
-import pme123.camunda.dmn.tester.shared.{Api, DmnApi}
+import pme123.camunda.dmn.tester.shared.DmnApi
 
 import java.nio.ByteBuffer
 import scala.concurrent.ExecutionContext.global

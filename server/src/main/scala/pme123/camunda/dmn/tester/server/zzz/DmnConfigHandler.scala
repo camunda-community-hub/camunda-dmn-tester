@@ -2,13 +2,12 @@ package pme123.camunda.dmn.tester.server.zzz
 
 
 import ammonite.ops._
-
-import java.io.File
 import pme123.camunda.dmn.tester.server.HandledTesterException
 import pme123.camunda.dmn.tester.shared.TesterValue._
 import pme123.camunda.dmn.tester.shared._
 import zio._
 
+import java.io.File
 import scala.language.implicitConversions
 
 object DmnConfigHandler {
@@ -27,9 +26,8 @@ object DmnConfigHandler {
 
 object hocon {
   import zio.config._
-  import zio.config.magnolia.DeriveConfigDescriptor._
+  import ConfigDescriptor._
   import zio.config.typesafe._
-  import zio.config._, ConfigDescriptor._, ConfigSource._
 
   val stringValue: ConfigDescriptor[TesterValue] =
     (string)(StringValue.apply, StringValue.unapply).asInstanceOf[ConfigDescriptor[TesterValue]]
@@ -45,7 +43,7 @@ object hocon {
     (list("inputs") (testerInput))(TesterData.apply, TesterData.unapply)
 
   val dmnConfig: ConfigDescriptor[DmnConfig] =
-    (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(string))(DmnConfig.apply, DmnConfig.unapply)
+    (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(string) |@| boolean("isActive").default(false))(DmnConfig.apply, DmnConfig.unapply)
 
   def loadConfig(configFile: File): Task[DmnConfig] = {
     ZIO(println(s"load file $configFile")) *>

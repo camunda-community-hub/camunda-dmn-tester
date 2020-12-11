@@ -11,7 +11,10 @@ import java.io.File
 class DmnService extends DmnApi {
   private val runtime = Runtime.default
 
-  override def getConfigs(path: Seq[String]): Seq[DmnConfig] = {
+  override def getBasePath(): String =
+    pwd.toIO.getAbsolutePath
+
+  override def getConfigs(path: Seq[String]): Seq[DmnConfig] =
     runtime.unsafeRun(
       for {
         zConfigs <- readConfigs(path.toList)
@@ -21,7 +24,19 @@ class DmnService extends DmnApi {
         )
       } yield dmnConfigs
     )
-  }
+
+/*
+  override def updateConfig(item: DmnConfig): Seq[DmnConfig] =
+    runtime.unsafeRun(
+      for {
+        zConfigs <- readConfigs(path.toList)
+        dmnConfigs <- ZIO.collectAll(zConfigs)
+        _ <- console.putStrLn(
+          s"Found ${dmnConfigs.size} DmnConfigs in ${pwd / path}"
+        )
+      } yield dmnConfigs
+    )
+*/
 
   private def readConfigs(path: List[String]) = {
     ZIO(osPath(path).toIO)
@@ -61,5 +76,4 @@ class DmnService extends DmnApi {
       .flatMap(getRecursively) ++
       f.listFiles.filter(_.getName.endsWith(".conf"))
   }
-
 }
