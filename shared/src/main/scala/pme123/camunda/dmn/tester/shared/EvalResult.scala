@@ -2,7 +2,7 @@ package pme123.camunda.dmn.tester.shared
 
 case class DmnEvalResult(dmn: Dmn, inputs: Seq[Map[String, String]], evalResults: Seq[EvalResult])
 
-case class Dmn(id: String, ruleIds: Seq[String])
+case class Dmn(id: String, hitPolicy: String, ruleIds: Seq[String])
 
 case class EvalResult(
     status: EvalStatus,

@@ -37,15 +37,15 @@ case class DmnTester(
       }
       )
     }
-    val rulIds = dmn.decisions
+    val maybeDecision = dmn.decisions
       .find(_.id == decisionId)
-      .toSeq
+    val all = maybeDecision
       .map(_.logic)
-      .collect { case ParsedDecisionTable(_, _, rules, _, _) =>
-        rules.map(_.id)
+      .collect { case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
+        (hitPolicy -> rules.map(_.id))
       }
-      .flatten
-    RunResults(Dmn(decisionId, rulIds), evaluated)
+      println(s"ALL: $all")
+    RunResults(Dmn(decisionId, all.map(_._1.toString).getOrElse("NOT FOUND"), all.toSeq.flatMap(_._2)), evaluated)
   }
 
   def parsedDmn(): IO[HandledTesterException, ParsedDmn] =

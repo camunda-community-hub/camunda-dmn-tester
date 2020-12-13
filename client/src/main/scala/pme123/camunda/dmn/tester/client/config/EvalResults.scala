@@ -101,6 +101,7 @@ class TableItem(
         .className("list-item")(
           section(
             h2(dmn.id),
+            p(s"Hitpolicy: ${dmn.hitPolicy}"),
             Table[TableRow]
               .bordered(true)
               .pagination(antdBooleans.`false`)
