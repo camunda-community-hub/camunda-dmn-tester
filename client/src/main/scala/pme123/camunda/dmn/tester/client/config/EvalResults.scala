@@ -5,7 +5,7 @@ import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
 import slinky.core.facade.ReactElement
-import slinky.web.html._
+import slinky.web.html.{colSpan, _}
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod
 import typings.antd.components._
@@ -127,7 +127,7 @@ class TableItem(
                         .setDataIndex(in)
                         .setKey(in)
                         .setRender((_, row, _) =>
-                          renderTextCell(row.inputs(in))
+                          renderTextCell(row.inputs(in), 1)
                             .setProps(CellType().setRowSpan(row.inputRowSpan))
                         )
                     ): _*
@@ -139,7 +139,20 @@ class TableItem(
                       .setTitle("Dmn Row")
                       .setDataIndex("DmnRow")
                       .setKey("DmnRow")
-                      .setRender((_, row, _) => build(span(row.dmnRowIndex))) +:
+                      .setRender { (_, row, _) =>
+                        row.outputMessage match {
+                          case Some(msg) =>
+                            val colSpan = rowCreator.outputs.length + 1
+                            renderTextCell(msg, colSpan)
+                              .setProps(
+                                CellType()
+                                  .setColSpan(colSpan)
+                                  .setClassName(s"${row.status}-cell")
+                              )
+                          case _ => renderTextCell(row.dmnRowIndex.toString, 1)
+                        }
+
+                      } +:
                       rowCreator.outputs.zipWithIndex.map { case (out, index) =>
                         ColumnType[TableRow]
                           .setTitle(out)
@@ -147,18 +160,15 @@ class TableItem(
                           .setKey(out)
                           .setRender((_, row, _) => {
                             val value =
-                              if (row.outputs.isEmpty) "NO RESULT"
+                              if (row.outputs.isEmpty)
+                                row.outputMessage.getOrElse("-")
                               else row.outputs(out)
-                            val colSpan = (row.outputsMerged, index) match {
-                              case (true, 0) => rowCreator.outputs.length
-                              case (true, _) => 0
-                              case _         => 1
-                            }
-                            renderTextCell(value)
+                            val colSpan =
+                              row.outputMessage.map(_ => 0).getOrElse(1)
+                            renderTextCell(value, colSpan)
                               .setProps(
                                 CellType()
                                   .setColSpan(colSpan)
-                                  .setClassName(s"${row.status}-cell")
                               )
                           })
                       }: _*
@@ -168,7 +178,7 @@ class TableItem(
         )
   }
 
-  private def renderTextCell(text: String) = {
+  private def renderTextCell(text: String, colSpan: Int) = {
     RenderedCell[TableRow]()
       .setChildren(
         Tooltip.TooltipPropsWithOverlayRefAttributes
@@ -176,7 +186,7 @@ class TableItem(
             Typography
               .Text(text)
               .ellipsis(true)
-              .style(CSSProperties().setMaxWidth(150))
+              .style(CSSProperties().setMaxWidth(150 * colSpan))
           )
           .build
       )
@@ -217,7 +227,7 @@ class TableRow(
     val inputRowSpan: Int,
     val dmnRowIndex: Int,
     val outputs: Map[String, String],
-    val outputsMerged: Boolean
+    val outputMessage: Option[String]
 ) extends js.Object
 
 case class RowCreator(
@@ -230,19 +240,37 @@ case class RowCreator(
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case EvalResult(status, _, inputMap, Nil, _) =>
-        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, true))
+        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, Some("NOT FOUND")))
       case EvalResult(status, _, inputMap, matchedRules, maybeError) =>
-        val outputs = outputMap(matchedRules)
-        outputs.zipWithIndex.map { case ((dmnRow, outputMap), index) =>
-          new TableRow(
-            status,
-            inputMap,
-            if (index == 0) outputs.size else 0,
-            dmnRow,
-            outputMap,
-            false
+        val errorRow = maybeError
+          .map(msg =>
+            new TableRow(
+              status,
+              inputMap,
+              0,
+              0,
+              Map.empty,
+              Some(msg.msg)
+            )
           )
-        }
+          .toSeq
+
+        val outputs = outputMap(matchedRules)
+        val rows =
+          outputs.zipWithIndex.map { case ((dmnRow, outputMap), index) =>
+            new TableRow(
+              status,
+              inputMap,
+              if (index == 0)
+                outputs.size +
+                  maybeError.map(_ => 1).getOrElse(0) // add an extra row
+              else 0,
+              dmnRow,
+              outputMap,
+              None
+            )
+          }
+        rows ++ errorRow
     }
 
   private lazy val matchedRuleIds =
