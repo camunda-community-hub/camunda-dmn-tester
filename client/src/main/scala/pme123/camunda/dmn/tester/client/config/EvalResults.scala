@@ -10,10 +10,8 @@ import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType}
 import typings.antd.{antdBooleans, antdStrings => aStr}
-import typings.csstype.csstypeStrings
 import typings.rcTable.interfaceMod.{CellType, RenderedCell}
 import typings.react.mod.CSSProperties
 
@@ -141,7 +139,7 @@ class TableItem(
                       .setDataIndex("DmnRow")
                       .setKey("DmnRow")
                       .setRender((_, row, _) => build(span(row.dmnRowIndex))) +:
-                      rowCreator.outputs.map(out =>
+                      rowCreator.outputs.zipWithIndex.map { case (out, index) =>
                         ColumnType[TableRow]
                           .setTitle(out)
                           .setDataIndex(out)
@@ -150,9 +148,19 @@ class TableItem(
                             val value =
                               if (row.outputs.isEmpty) "NO RESULT"
                               else row.outputs(out)
+                            val colSpan = (row.outputsMerged, index) match {
+                              case (true, 0) => rowCreator.outputs.length
+                              case (true, _) => 0
+                              case _         => 1
+                            }
                             renderTextCell(value)
+                              .setProps(
+                                CellType()
+                                  .setColSpan(colSpan)
+                                  .setClassName(s"${row.status}-cell")
+                              )
                           })
-                      ): _*
+                      }: _*
                   )
               )
           )
@@ -207,7 +215,8 @@ class TableRow(
     val inputs: Map[String, String],
     val inputRowSpan: Int,
     val dmnRowIndex: Int,
-    val outputs: Map[String, String]
+    val outputs: Map[String, String],
+    val outputsMerged: Boolean
 ) extends js.Object
 
 case class RowCreator(
@@ -220,7 +229,7 @@ case class RowCreator(
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case EvalResult(status, _, inputMap, Nil, _) =>
-        Seq(new TableRow(status, inputMap, 1, 0, Map.empty))
+        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, true))
       case EvalResult(status, _, inputMap, matchedRules, maybeError) =>
         val outputs = outputMap(matchedRules)
         outputs.zipWithIndex.map { case ((dmnRow, outputMap), index) =>
@@ -229,7 +238,8 @@ case class RowCreator(
             inputMap,
             if (index == 0) outputs.size else 0,
             dmnRow,
-            outputMap
+            outputMap,
+            false
           )
         }
     }
