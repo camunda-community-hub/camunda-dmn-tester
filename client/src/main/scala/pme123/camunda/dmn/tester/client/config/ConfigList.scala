@@ -29,53 +29,53 @@ import scala.scalajs.js.Dynamic.literal
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val (isActive, setIsActive) = useState(false)
-       val Props(configs, isLoaded, maybeError, setConfigs) = props
+      val Props(configs, isLoaded, maybeError, setConfigs) = props
 
-        lazy val handleConfigToggle = { (config: DmnConfig) =>
-          val newCF = config.copy(isActive = !config.isActive)
-          setConfigs(configs.map {
-            case c if c.decisionId == config.decisionId =>
-              newCF
-            case c => c
-          })
-        }
+      lazy val handleConfigToggle = { (config: DmnConfig) =>
+        val newCF = config.copy(isActive = !config.isActive)
+        setConfigs(configs.map {
+          case c if c.decisionId == config.decisionId =>
+            newCF
+          case c => c
+        })
+      }
 
-        Card
-          .title(
-            Fragment(
-              "2. Select the DMN Configurations you want to test.",
-              div(style := literal(textAlign = "right", marginRight = 10))(
-                activeCheck(
-                  isActive = isActive,
-                  active => {
-                    setIsActive(active)
-                    setConfigs(configs.map(_.copy(isActive = active)))
-                  }
-                )
+      Card
+        .title(
+          Fragment(
+            "2. Select the DMN Configurations you want to test.",
+            div(style := literal(textAlign = "right", marginRight = 10))(
+              activeCheck(
+                isActive = isActive,
+                active => {
+                  setIsActive(active)
+                  setConfigs(configs.map(_.copy(isActive = active)))
+                }
               )
             )
-          )(
-            (maybeError, isLoaded) match {
-              case (Some(msg), _) =>
-                Alert
-                  .message(
-                    s"Error: The DMN Configurations could not be loaded. (is the path ok?)"
-                  )
-                  .`type`(aStr.error)
-                  .showIcon(true)
-              case (_, false) =>
-                Spin
-                  .size(aStr.default)
-                  .spinning(true)(
-                    Alert
-                      .message("Loading Configs")
-                      .`type`(aStr.info)
-                      .showIcon(true)
-                  )
-              case _ =>
-                ConfigList(configs, handleConfigToggle)
-            }
           )
+        )(
+          (maybeError, isLoaded) match {
+            case (Some(msg), _) =>
+              Alert
+                .message(
+                  s"Error: The DMN Configurations could not be loaded. (is the path ok?)"
+                )
+                .`type`(aStr.error)
+                .showIcon(true)
+            case (_, false) =>
+              Spin
+                .size(aStr.default)
+                .spinning(true)(
+                  Alert
+                    .message("Loading Configs")
+                    .`type`(aStr.info)
+                    .showIcon(true)
+                )
+            case _ =>
+              ConfigList(configs, handleConfigToggle)
+          }
+        )
   }
 }
 
@@ -100,11 +100,6 @@ import scala.scalajs.js.Dynamic.literal
             )
             .setRenderItem((config: DmnConfig, _) =>
               ConfigItem(config, onConfigToggle)
-            )
-            .setPagination(
-              PaginationConfig()
-                .setPosition(aStr.bottom)
-                .setPageSize(10)
             )
         )
   }

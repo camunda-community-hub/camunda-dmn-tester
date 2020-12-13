@@ -1,26 +1,23 @@
 package pme123.camunda.dmn.tester.client.config
 
-import pme123.camunda.dmn.tester.shared.EvalStatus._
 import pme123.camunda.dmn.tester.shared._
+import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
-import slinky.core.facade.Hooks.useState
-import slinky.core.facade.{Fragment, ReactElement}
-import slinky.core.{BuildingComponent, FunctionalComponent}
+import slinky.core.facade.ReactElement
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod
-import typings.antd.anon.ScrollToFirstRowOnChange
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
 import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType}
 import typings.antd.{antdBooleans, antdStrings => aStr}
-import typings.rcTable.anon.X
+import typings.csstype.csstypeStrings
 import typings.rcTable.interfaceMod.{CellType, RenderedCell}
+import typings.react.mod.CSSProperties
 
 import scala.scalajs.js
-import scala.scalajs.js.Dynamic.literal
 
 @react object EvalResultsCard {
 
@@ -87,11 +84,7 @@ class TableItem(
             .setRenderItem((evalResult: DmnEvalResult, _) =>
               EvalResultsItem(evalResult)
             )
-            .setPagination(
-              PaginationConfig()
-                .setPosition(aStr.bottom)
-                .setPageSize(10)
-            )
+
         )
   }
 }
@@ -197,14 +190,14 @@ class TableItem(
   }
 
   private def icon(evalStatus: EvalStatus): ReactElement =
-    evalStatus match {
+    (evalStatus match {
       case EvalStatus.ERROR =>
-        AntdIcon(mod.StopTwoTone).twoToneColor(aStr.red.toString).size(10)
+        AntdIcon(mod.StopTwoTone).twoToneColor(aStr.red.toString)
       case EvalStatus.WARN =>
-        AntdIcon(mod.WarningTwoTone).twoToneColor(aStr.orange.toString).size(16)
+        AntdIcon(mod.WarningTwoTone).twoToneColor(aStr.orange.toString)
       case EvalStatus.INFO =>
-        AntdIcon(mod.InfoCircleTwoTone).twoToneColor(aStr.green.toString).size(12)
-    }
+        AntdIcon(mod.InfoCircleTwoTone).twoToneColor(aStr.green.toString)
+    }).style(CSSProperties().setFontSize(20))
 
 }
 
