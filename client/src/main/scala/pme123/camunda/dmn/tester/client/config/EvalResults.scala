@@ -84,7 +84,6 @@ class TableItem(
             .setRenderItem((evalResult: DmnEvalResult, _) =>
               EvalResultsItem(evalResult)
             )
-
         )
   }
 }
@@ -97,9 +96,8 @@ class TableItem(
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-
-      val DmnEvalResult(dmn, evalResults) = props.evalResult
-      val rowCreator = createRowCreator(props.evalResult)
+      val er @ DmnEvalResult(dmn, _, _) = props.evalResult
+      val rowCreator = createRowCreator(er)
       List.Item
         .withKey(dmn.id)
         .className("list-item")(
@@ -120,7 +118,7 @@ class TableItem(
                     RenderedCell[TableRow]()
                       .setChildren(icon(row.status))
                       .setProps(CellType().setRowSpan(row.inputRowSpan))
-                    ),
+                  ),
                 ColumnGroupType[TableRow](js.Array())
                   .setTitleReactElement("Inputs")
                   .setChildrenVarargs(
@@ -130,14 +128,7 @@ class TableItem(
                         .setDataIndex(in)
                         .setKey(in)
                         .setRender((_, row, _) =>
-                          RenderedCell[TableRow]()
-                            .setChildren(Tooltip.TooltipPropsWithOverlayRefAttributes
-                              .titleReactElement(row.inputs(in))(
-                                span(
-                                  className := "ellipsis-text"
-                                )(row.inputs(in))
-                              )
-                              .build)
+                          renderTextCell(row.inputs(in))
                             .setProps(CellType().setRowSpan(row.inputRowSpan))
                         )
                     ): _*
@@ -145,46 +136,56 @@ class TableItem(
                 ColumnGroupType[TableRow](js.Array())
                   .setTitleReactElement("Outputs")
                   .setChildrenVarargs(
-
                     ColumnType[TableRow]
                       .setTitle("Dmn Row")
                       .setDataIndex("DmnRow")
                       .setKey("DmnRow")
-                      .setRender((_, row, _) =>
-                            build(span(row.dmnRowIndex))
-                      ) +:
-                    rowCreator.outputs.map(out =>
+                      .setRender((_, row, _) => build(span(row.dmnRowIndex))) +:
+                      rowCreator.outputs.map(out =>
                         ColumnType[TableRow]
                           .setTitle(out)
                           .setDataIndex(out)
                           .setKey(out)
                           .setRender((_, row, _) => {
-                            val value = if(row.outputs.isEmpty) "NO RESULT" else row.outputs(out)
-                            Tooltip.TooltipPropsWithOverlayRefAttributes
-                              .titleReactElement(value)(
-                                span(
-                                  className := "ellipsis-text"
-                                )(value)
-                              )
-                              .build
-                          }
-                          )
-                    ): _*
+                            val value =
+                              if (row.outputs.isEmpty) "NO RESULT"
+                              else row.outputs(out)
+                            renderTextCell(value)
+                          })
+                      ): _*
                   )
               )
           )
         )
   }
 
+  private def renderTextCell(text: String) = {
+    RenderedCell[TableRow]()
+      .setChildren(
+        Tooltip.TooltipPropsWithOverlayRefAttributes
+          .titleReactElement(text)(
+            Typography
+              .Text(text)
+              .ellipsis(true)
+              .style(CSSProperties().setMaxWidth(150))
+          )
+          .build
+      )
+  }
+
   private def createRowCreator(dmnEvalResult: DmnEvalResult) = {
-    val DmnEvalResult(dmn, entries) = dmnEvalResult
-    val inputs = entries.headOption.toSeq.flatMap(_.inputs.keys)
+    val DmnEvalResult(dmn, ins, entries) = dmnEvalResult
+    val inputKeys = ins.headOption.toSeq.flatMap(_.keys)
+    // replace the inputs from the result entries (as these are already the evaluated inputs)
+    val insEntries = ins.zip(entries).map { case (iMap, evalResult) =>
+      evalResult.copy(inputs = iMap)
+    }
     val outputs = entries.headOption.toSeq
       .flatMap(_.matchedRules)
       .headOption
       .toSeq
       .flatMap(_.outputs.keys)
-    RowCreator(entries, inputs, outputs, dmn.ruleIds)
+    RowCreator(insEntries, inputKeys, outputs, dmn.ruleIds)
     //   _ <- rowCreator.printResultRow()
     //   _ <- rowCreator.printMissingRules()
   }
@@ -219,11 +220,17 @@ case class RowCreator(
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case EvalResult(status, _, inputMap, Nil, _) =>
-          Seq(new TableRow(status, inputMap, 1, 0, Map.empty))
+        Seq(new TableRow(status, inputMap, 1, 0, Map.empty))
       case EvalResult(status, _, inputMap, matchedRules, maybeError) =>
         val outputs = outputMap(matchedRules)
         outputs.zipWithIndex.map { case ((dmnRow, outputMap), index) =>
-          new TableRow(status, inputMap, if(index == 0) outputs.size else 0, dmnRow, outputMap)
+          new TableRow(
+            status,
+            inputMap,
+            if (index == 0) outputs.size else 0,
+            dmnRow,
+            outputMap
+          )
         }
     }
 

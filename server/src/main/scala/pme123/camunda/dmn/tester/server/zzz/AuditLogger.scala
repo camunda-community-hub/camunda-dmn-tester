@@ -32,6 +32,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
                 .toMap
             )
           )
+        println(s"ON EVAL: $ins: ${log.rootEntry.id}")
         EvalResult(log.rootEntry.id, ins, rules, maybeError)
     }
     runtime.unsafeRun(
@@ -44,19 +45,28 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
   }
 
   def getDmnEvalResults(
-      dmns: Seq[Dmn]
-  ): ZIO[Any, Nothing, Seq[DmnEvalResult]] =
+      runResults: Seq[RunResults]
+  ): ZIO[Console, Nothing, Seq[DmnEvalResult]] = {
     for {
       logEntries <- auditLogRef.get
       entryMap <- UIO(logEntries.groupBy(_.decisionId))
-      results <- ZIO.foreach(dmns) { dmn =>
-        UIO(DmnEvalResult(dmn, entryMap.getOrElse(dmn.id, Nil)))
+      results <- ZIO.foreach(runResults) { case RunResults(dmn, res) =>
+        UIO(
+          DmnEvalResult(
+            dmn,
+            res.map(_.inputs.view.mapValues(_.toString).toMap),
+            entryMap.getOrElse(dmn.id, Nil)
+          )
+        )
       }
     } yield results
+  }
 
-  def printLog(dmns: Seq[Dmn]): ZIO[Console, NoSuchElementException, Unit] =
+  def printLog(
+      runResults: Seq[RunResults]
+  ): ZIO[Console, NoSuchElementException, Unit] =
     for {
-      (evalResults: Seq[DmnEvalResult]) <- getDmnEvalResults(dmns)
+      evalResults <- getDmnEvalResults(runResults)
       _ <- ZIO.foreach_(evalResults) { evalResult =>
         printDmnLog(evalResult)
       }
@@ -73,7 +83,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
     }
 
   private def printDmnLog(dmnEvalResult: DmnEvalResult) = {
-    val DmnEvalResult(dmn, entries) = dmnEvalResult
+    val DmnEvalResult(dmn, _, entries) = dmnEvalResult
     for {
       inputs <- UIO(entries.headOption.toSeq.flatMap(_.inputs.keys))
       outputs <- UIO(

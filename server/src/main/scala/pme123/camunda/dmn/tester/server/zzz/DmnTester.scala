@@ -27,11 +27,14 @@ case class DmnTester(
   ): RunResults = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
     val evaluated = {
-      allInputs.map(inputMap =>
+      allInputs.map(inputMap => {
+        println(s"EVAL: $inputMap")
+
         RunResult(
           inputMap,
           engine.eval(dmn, decisionId, inputMap)
         )
+      }
       )
     }
     val rulIds = dmn.decisions
@@ -42,7 +45,6 @@ case class DmnTester(
         rules.map(_.id)
       }
       .flatten
-
     RunResults(Dmn(decisionId, rulIds), evaluated)
   }
 

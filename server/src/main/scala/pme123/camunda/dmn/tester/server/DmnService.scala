@@ -33,7 +33,7 @@ class DmnService extends DmnApi {
         auditLogger <- UIO(AuditLogger(auditLogRef))
         engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
         results <- ZIO.foreach(dmnConfigs)(DmnTester.testDmnTable(_, engine))
-        result <- auditLogger.getDmnEvalResults(results.filter(_.nonEmpty).map(_.get.dmn))
+        result <- auditLogger.getDmnEvalResults(results.filter(_.nonEmpty).map(_.get))
       } yield result
     )
 
