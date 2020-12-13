@@ -3,12 +3,14 @@ package pme123.camunda.dmn.tester.client.config
 import autowire.{clientCallable, _}
 import boopickle.Default._
 import pme123.camunda.dmn.tester.client.services.AjaxClient
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, EvalResult}
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult, EvalResult}
 import slinky.core.facade.Hooks.{useEffect, useState}
 import slinky.core.{FunctionalComponent, SyntheticEvent, TagMod}
+import slinky.web.html.{h2, section}
 import typings.antd.antdStrings.{center, middle, primary}
 import typings.antd.components._
 import typings.antd.mod.message
+import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
@@ -30,7 +32,7 @@ object containers {
       val (maybeEvalResultsError, setEvalResultsError) =
         useState[Option[String]](None)
       val (isEvalResultsLoaded, setIsEvalResultsLoaded) = useState(true)
-      val (evalResults, setEvalResults) = useState(Seq.empty[EvalResult])
+      val (evalResults, setEvalResults) = useState(Seq.empty[DmnEvalResult])
       val (basePath, setBasePath) = useState("")
 
       // Note: the empty deps array [] means

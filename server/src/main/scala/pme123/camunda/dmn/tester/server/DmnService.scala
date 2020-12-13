@@ -4,7 +4,7 @@ import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.zzz._
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, EvalResult}
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult, EvalResult}
 import zio.{Ref, Runtime, UIO, ZIO, console}
 
 import java.io.File
@@ -26,15 +26,14 @@ class DmnService extends DmnApi {
       } yield dmnConfigs
     )
 
-  override def runTests(dmnConfigs: Seq[DmnConfig]): Seq[EvalResult] =
+  override def runTests(dmnConfigs: Seq[DmnConfig]): Seq[DmnEvalResult] =
     runtime.unsafeRun(for {
         _ <- console.putStrLn("Let's start")
         auditLogRef <- Ref.make(Seq.empty[EvalResult])
         auditLogger <- UIO(AuditLogger(auditLogRef))
         engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
         results <- ZIO.foreach(dmnConfigs)(DmnTester.testDmnTable(_, engine))
-        _ <- auditLogger.printLog(results.filter(_.nonEmpty).map(_.get.dmn))
-        result <- auditLogRef.get
+        result <- auditLogger.getDmnEvalResults(results.filter(_.nonEmpty).map(_.get.dmn))
       } yield result
     )
 

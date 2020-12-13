@@ -4,7 +4,7 @@ import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
-import pme123.camunda.dmn.tester.shared.{EvalError, EvalResult, MatchedRule}
+import pme123.camunda.dmn.tester.shared._
 import zio._
 import zio.console.Console
 import pme123.camunda.dmn.tester.shared.EvalStatus._
@@ -43,15 +43,24 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
     )
   }
 
-  def printLog(dmns: Seq[Dmn]): ZIO[Console, Nothing, Unit] = {
+  def getDmnEvalResults(
+      dmns: Seq[Dmn]
+  ): ZIO[Any, Nothing, Seq[DmnEvalResult]] =
     for {
       logEntries <- auditLogRef.get
       entryMap <- UIO(logEntries.groupBy(_.decisionId))
-      _ <- ZIO.foreach_(dmns) { dmn =>
-        printDmnLog(dmn, entryMap.getOrElse(dmn.id, Nil))
+      results <- ZIO.foreach(dmns) { dmn =>
+        UIO(DmnEvalResult(dmn, entryMap.getOrElse(dmn.id, Nil)))
+      }
+    } yield results
+
+  def printLog(dmns: Seq[Dmn]): ZIO[Console, NoSuchElementException, Unit] =
+    for {
+      (evalResults: Seq[DmnEvalResult]) <- getDmnEvalResults(dmns)
+      _ <- ZIO.foreach_(evalResults) { evalResult =>
+        printDmnLog(evalResult)
       }
     } yield ()
-  }
 
   private def unwrap(value: Val): String =
     ValueMapper.defaultValueMapper
@@ -63,7 +72,8 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
         s"$value"
     }
 
-  private def printDmnLog(dmn: Dmn, entries: Seq[EvalResult]) = {
+  private def printDmnLog(dmnEvalResult: DmnEvalResult) = {
+    val DmnEvalResult(dmn, entries) = dmnEvalResult
     for {
       inputs <- UIO(entries.headOption.toSeq.flatMap(_.inputs.keys))
       outputs <- UIO(
@@ -88,10 +98,10 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
 }
 
 case class RowPrinter(
-                       evalResults: Seq[EvalResult],
-                       inputs: Seq[String],
-                       outputs: Seq[String],
-                       ruleIds: Seq[String]
+    evalResults: Seq[EvalResult],
+    inputs: Seq[String],
+    outputs: Seq[String],
+    ruleIds: Seq[String]
 ) {
 
   def printResultRow(): URIO[Console, Unit] =

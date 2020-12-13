@@ -3,6 +3,7 @@ package pme123.camunda.dmn.tester.server
 import ammonite.ops.{pwd, up}
 import org.camunda.dmn.DmnEngine
 import os.Path
+import pme123.camunda.dmn.tester.shared.Dmn
 import zio.console.Console
 import zio.{URIO, console}
 
@@ -14,8 +15,6 @@ package object zzz {
       inputs: Map[String, Any],
       result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
   )
-
-  case class Dmn(id: String, ruleIds: Seq[String])
 
   def formatStrings(strings: Seq[String]): String = {
     val inputFormatter = "%1$23s"

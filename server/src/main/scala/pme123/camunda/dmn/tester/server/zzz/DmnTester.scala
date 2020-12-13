@@ -5,12 +5,7 @@ import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.dmn.parser._
 import os.read.inputStream
 import pme123.camunda.dmn.tester.server.HandledTesterException
-import pme123.camunda.dmn.tester.shared.{
-  DmnConfig,
-  EvalError,
-  EvalResult,
-  TesterData
-}
+import pme123.camunda.dmn.tester.shared._
 import zio.console.Console
 import zio.{IO, UIO, ZIO, console}
 
