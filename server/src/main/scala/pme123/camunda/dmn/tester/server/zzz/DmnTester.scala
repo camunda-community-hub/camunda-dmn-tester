@@ -28,8 +28,6 @@ case class DmnTester(
     val allInputs: Seq[Map[String, Any]] = data.normalize()
     val evaluated = {
       allInputs.map(inputMap => {
-        println(s"EVAL: $inputMap")
-
         RunResult(
           inputMap,
           engine.eval(dmn, decisionId, inputMap)

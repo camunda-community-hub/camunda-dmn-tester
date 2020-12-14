@@ -1,6 +1,15 @@
 package pme123.camunda.dmn.tester.shared
 
-case class DmnEvalResult(dmn: Dmn, inputs: Seq[Map[String, String]], evalResults: Seq[EvalResult])
+import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
+
+case class DmnEvalResult(
+    dmn: Dmn,
+    inputs: Seq[Map[String, String]],
+    evalResults: Seq[EvalResult]
+) {
+  def maxEvalStatus: EvalStatus =
+    evalResults.map(_.status).sorted.headOption.getOrElse(INFO)
+}
 
 case class Dmn(id: String, hitPolicy: String, ruleIds: Seq[String])
 
@@ -54,10 +63,20 @@ object EvalResult {
 
 case class MatchedRule(ruleId: String, outputs: Map[String, String])
 case class EvalError(msg: String)
-sealed trait EvalStatus
+sealed trait EvalStatus extends Comparable[EvalStatus] {
+  def order: Int
+  override def compareTo(o: EvalStatus): Int = order.compareTo(o.order)
+
+}
 
 object EvalStatus {
-  case object INFO extends EvalStatus
-  case object WARN extends EvalStatus
-  case object ERROR extends EvalStatus
+  case object INFO extends EvalStatus {
+    val order = 3
+  }
+  case object WARN extends EvalStatus {
+    val order = 2
+  }
+  case object ERROR extends EvalStatus {
+    val order = 1
+  }
 }

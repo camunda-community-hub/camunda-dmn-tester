@@ -95,7 +95,7 @@ import scala.scalajs.js.Dynamic.literal
             .setDataSource(js.Array(configs: _*))
             .setLocale(
               ListLocale().setEmptyText(
-                "There are no DMN configurations:(".asInstanceOf[ReactElement]
+                Empty().description("There are no DMN configurations:(").build
               )
             )
             .setRenderItem((config: DmnConfig, _) =>

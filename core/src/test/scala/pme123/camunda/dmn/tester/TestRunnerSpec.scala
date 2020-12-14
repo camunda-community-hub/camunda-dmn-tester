@@ -18,9 +18,9 @@ object TestRunnerSpec extends DefaultRunnableSpec {
       testM("runner works without failures") {
         for {
           result <- TestRunner.runApp(RunnerConfig.defaultConfig)
-        } yield assert(result.size)(equalTo(29)) &&
+        } yield assert(result.size)(equalTo(54)) &&
           assert(result.count(_.status == WARN))(equalTo(1)) &&
-          assert(result.count(_.status == ERROR))(equalTo(1))
+          assert(result.count(_.status == ERROR))(equalTo(26))
       },
       testM("runner works with non existing Config path") {
         for {

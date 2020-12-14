@@ -28,14 +28,14 @@ import scala.scalajs.js
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(evalResults, isLoaded, maybeError) = props
-
+println(s"PROPS: $props")
       Card
         .title("4. Check the Test Results.")(
           (maybeError, isLoaded) match {
             case (Some(msg), _) =>
               Alert
                 .message(
-                  s"Error: The DMN EvalResultsurations could not be loaded. (is the path ok?)"
+                  s"Error: The DMN EvalResults could not be loaded. ($msg)"
                 )
                 .`type`(aStr.error)
                 .showIcon(true)
@@ -76,7 +76,7 @@ class TableItem(
             .setDataSource(js.Array(evalResults: _*))
             .setLocale(
               ListLocale().setEmptyText(
-                "There are no DMN configurations:(".asInstanceOf[ReactElement]
+                Empty().description("There are no Tests selected:(").build
               )
             )
             .setRenderItem((evalResult: DmnEvalResult, _) =>
@@ -100,7 +100,7 @@ class TableItem(
         .withKey(dmn.id)
         .className("list-item")(
           section(
-            h2(dmn.id),
+            h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
             Table[TableRow]
               .bordered(true)
@@ -119,7 +119,7 @@ class TableItem(
                       .setProps(CellType().setRowSpan(row.inputRowSpan))
                   ),
                 ColumnGroupType[TableRow](js.Array())
-                  .setTitleReactElement("Inputs")
+                  .setTitleReactElement("Test Input(s)")
                   .setChildrenVarargs(
                     rowCreator.inputs.map(in =>
                       ColumnType[TableRow]
@@ -132,46 +132,46 @@ class TableItem(
                         )
                     ): _*
                   ),
+                ColumnType[TableRow]
+                  .setTitle("Dmn Row")
+                  .setDataIndex("DmnRow")
+                  .setKey("DmnRow")
+                  .setRender { (_, row, _) =>
+                    row.outputMessage match {
+                      case Some(msg) =>
+                        val colSpan = rowCreator.outputs.length + 1
+                        renderTextCell(msg, colSpan)
+                          .setProps(
+                            CellType()
+                              .setColSpan(colSpan)
+                              .setClassName(s"${row.status}-cell")
+                          )
+                      case _ => renderTextCell(row.dmnRowIndex.toString, 1)
+                    }
+
+                  },
                 ColumnGroupType[TableRow](js.Array())
                   .setTitleReactElement("Outputs")
                   .setChildrenVarargs(
-                    ColumnType[TableRow]
-                      .setTitle("Dmn Row")
-                      .setDataIndex("DmnRow")
-                      .setKey("DmnRow")
-                      .setRender { (_, row, _) =>
-                        row.outputMessage match {
-                          case Some(msg) =>
-                            val colSpan = rowCreator.outputs.length + 1
-                            renderTextCell(msg, colSpan)
-                              .setProps(
-                                CellType()
-                                  .setColSpan(colSpan)
-                                  .setClassName(s"${row.status}-cell")
-                              )
-                          case _ => renderTextCell(row.dmnRowIndex.toString, 1)
-                        }
-
-                      } +:
-                      rowCreator.outputs.zipWithIndex.map { case (out, index) =>
-                        ColumnType[TableRow]
-                          .setTitle(out)
-                          .setDataIndex(out)
-                          .setKey(out)
-                          .setRender((_, row, _) => {
-                            val value =
-                              if (row.outputs.isEmpty)
-                                row.outputMessage.getOrElse("-")
-                              else row.outputs(out)
-                            val colSpan =
-                              row.outputMessage.map(_ => 0).getOrElse(1)
-                            renderTextCell(value, colSpan)
-                              .setProps(
-                                CellType()
-                                  .setColSpan(colSpan)
-                              )
-                          })
-                      }: _*
+                    rowCreator.outputs.zipWithIndex.map { case (out, index) =>
+                      ColumnType[TableRow]
+                        .setTitle(out)
+                        .setDataIndex(out)
+                        .setKey(out)
+                        .setRender((_, row, _) => {
+                          val value =
+                            if (row.outputs.isEmpty)
+                              row.outputMessage.getOrElse("-")
+                            else row.outputs(out)
+                          val colSpan =
+                            row.outputMessage.map(_ => 0).getOrElse(1)
+                          renderTextCell(value, colSpan)
+                            .setProps(
+                              CellType()
+                                .setColSpan(colSpan)
+                            )
+                        })
+                    }: _*
                   )
               )
           )
@@ -239,8 +239,8 @@ case class RowCreator(
 
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
-      case EvalResult(status, _, inputMap, Nil, _) =>
-        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, Some("NOT FOUND")))
+      case EvalResult(status, _, inputMap, Nil, maybeError) =>
+        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, Some(maybeError.map(_.msg).getOrElse("NOT FOUND"))))
       case EvalResult(status, _, inputMap, matchedRules, maybeError) =>
         val errorRow = maybeError
           .map(msg =>
