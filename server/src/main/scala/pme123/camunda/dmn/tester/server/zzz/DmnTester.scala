@@ -4,7 +4,7 @@ import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.dmn.parser._
 import os.read.inputStream
-import pme123.camunda.dmn.tester.server.HandledTesterException
+import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 import zio.console.Console
 import zio.{IO, UIO, ZIO, console}
@@ -18,7 +18,7 @@ case class DmnTester(
     engine: DmnEngine = new DmnEngine()
 ) {
 
-  def run(data: TesterData): ZIO[Any, HandledTesterException, RunResults] =
+  def run(data: TesterData): ZIO[Any, EvalException, RunResults] =
     parsedDmn().map(run(data, _))
 
   def run(
@@ -32,25 +32,33 @@ case class DmnTester(
           inputMap,
           engine.eval(dmn, decisionId, inputMap)
         )
-      }
-      )
+      })
     }
     val maybeDecision = dmn.decisions
       .find(_.id == decisionId)
-    val all = maybeDecision
+    val hitPolicyAndRulIds = maybeDecision
       .map(_.logic)
       .collect { case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
-        (hitPolicy -> rules.map(_.id))
+        hitPolicy -> rules.map(_.id)
       }
-      println(s"ALL: $all")
-    RunResults(Dmn(decisionId, all.map(_._1.toString).getOrElse("NOT FOUND"), all.toSeq.flatMap(_._2)), evaluated)
+    RunResults(
+      Dmn(
+        decisionId,
+        hitPolicyAndRulIds
+          .map { case (hitPolicy, _) => hitPolicy.toString }
+          .getOrElse("NOT FOUND"),
+        hitPolicyAndRulIds.toSeq.flatMap { case (_, ruleIds) => ruleIds }
+      ),
+      evaluated
+    )
   }
 
-  def parsedDmn(): IO[HandledTesterException, ParsedDmn] =
+  def parsedDmn(): IO[EvalException, ParsedDmn] =
     for {
       is <- ZIO(inputStream(osPath(dmnPath)))
         .orElseFail(
-          HandledTesterException(
+          EvalException(
+            decisionId,
             s"There was no DMN in ${dmnPath.mkString("/")}."
           )
         )
@@ -59,28 +67,29 @@ case class DmnTester(
 
   def parsedDmn(
       streamToTest: InputStream
-  ): IO[HandledTesterException, ParsedDmn] = {
+  ): IO[EvalException, ParsedDmn] = {
     ZIO
       .fromEither(engine.parse(streamToTest))
       .mapError {
         case Failure(message)
             if message.contains("Failed to parse FEEL expression ''") =>
-          HandledTesterException(
-            s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.
-              |Hints:
-              |> All outputs need a value.
-              |> Did you miss to wrap Strings in " - e.g. "TEXT"?
-              |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/""".stripMargin
+          EvalException(
+            decisionId,
+            s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.\n
+              |Hints:\n
+              |> All outputs need a value.\n
+              |> Did you miss to wrap Strings in " - e.g. "TEXT"?\n
+              |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/\n""".stripMargin
           )
         case Failure(msg) =>
-          HandledTesterException(msg)
+          EvalException(decisionId, msg)
       }
   }
 
   def runDmnTest(
       inputs: Map[String, Any],
       expected: EvalResult
-  ): IO[HandledTesterException, String] =
+  ): IO[EvalException, String] =
     parsedDmn()
       .flatMap(p => runDmnTest(p, inputs, expected))
 
@@ -88,7 +97,7 @@ case class DmnTester(
       dmn: ParsedDmn,
       inputs: Map[String, Any],
       expected: EvalResult
-  ): IO[HandledTesterException, String] = {
+  ): IO[EvalException, String] = {
     engine.eval(dmn, decisionId, inputs) match {
       case Right(DmnEngine.NilResult) if expected.matchedRules.isEmpty =>
         UIO(s"Success No Result")
@@ -102,7 +111,8 @@ case class DmnTester(
         UIO(s"Success $value")
       case Right(result) =>
         ZIO.fail(
-          HandledTesterException(
+          EvalException(
+            decisionId,
             s"The expected ($expected) was not equal to $result"
           )
         )
@@ -110,7 +120,7 @@ case class DmnTester(
           if expected.failed.exists((e: EvalError) => e.msg == message) =>
         UIO(s"Success $message")
       case Left(DmnEngine.Failure(message)) =>
-        ZIO.fail(HandledTesterException(s"Test failed: $message"))
+        ZIO.fail(EvalException(decisionId, s"Test failed: $message"))
     }
   }
 }
@@ -119,18 +129,12 @@ object DmnTester {
   def testDmnTable(
       dmnConfig: DmnConfig,
       engine: DmnEngine
-  ): ZIO[Console, Nothing, Option[RunResults]] = {
+  ): ZIO[Console, EvalException, RunResults] = {
     val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
     console.putStrLn(
       s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"
     ) *>
       DmnTester(decisionId, dmnPath, engine)
         .run(data)
-        .map(r => Some(r))
-        .catchAll { case HandledTesterException(msg) =>
-          printError(
-            s"ERROR: $msg"
-          ) *> UIO.none
-        }
   }
 }

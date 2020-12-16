@@ -4,7 +4,16 @@ import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.zzz._
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult, EvalResult}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{
+  ConfigException,
+  EvalException
+}
+import pme123.camunda.dmn.tester.shared.{
+  DmnApi,
+  DmnConfig,
+  DmnEvalResult,
+  EvalResult
+}
 import zio.{Ref, Runtime, UIO, ZIO, console}
 
 import java.io.File
@@ -26,16 +35,24 @@ class DmnService extends DmnApi {
       } yield dmnConfigs
     )
 
-  override def runTests(dmnConfigs: Seq[DmnConfig]): Seq[DmnEvalResult] =
+  override def runTests(
+      dmnConfigs: Seq[DmnConfig]
+  ): Seq[Either[EvalException, DmnEvalResult]] =
     runtime.unsafeRun(for {
-        _ <- console.putStrLn("Let's start")
-        auditLogRef <- Ref.make(Seq.empty[EvalResult])
-        auditLogger <- UIO(AuditLogger(auditLogRef))
-        engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
-        results <- ZIO.foreach(dmnConfigs)(DmnTester.testDmnTable(_, engine))
-        result <- auditLogger.getDmnEvalResults(results.filter(_.nonEmpty).map(_.get))
-      } yield result
-    )
+      _ <- console.putStrLn("Let's start")
+      auditLogRef <- Ref.make(Seq.empty[EvalResult])
+      auditLogger <- UIO(AuditLogger(auditLogRef))
+      engine <- UIO(new DmnEngine(auditLogListeners = List(auditLogger)))
+      results <- ZIO.foreach(
+        dmnConfigs
+      )(dmnConfig =>
+        DmnTester
+          .testDmnTable(dmnConfig, engine)
+          .flatMap(auditLogger.getDmnEvalResults)
+          .map(Right.apply)
+          .catchAll(ex => ZIO.left(ex))
+      )
+    } yield results)
 
   /*
     override def updateConfig(item: DmnConfig): Seq[DmnConfig] =
@@ -48,25 +65,25 @@ class DmnService extends DmnApi {
           )
         } yield dmnConfigs
       )
-  */
+   */
 
   private def readConfigs(path: List[String]) = {
     ZIO(osPath(path).toIO)
       .tap(f => console.putStrLn(s"Config Path: ${f.getAbsolutePath}"))
       .mapError { ex =>
         ex.printStackTrace()
-        HandledTesterException(ex.getMessage)
+        ConfigException(ex.getMessage)
       }
       .flatMap {
         case f if !f.exists() =>
           ZIO.fail(
-            HandledTesterException(
+            ConfigException(
               s"Your provided Config Path does not exist (${f.getAbsolutePath})."
             )
           )
         case f if !f.isDirectory =>
           ZIO.fail(
-            HandledTesterException(
+            ConfigException(
               s"Your provided Config Path is not a directory (${f.getAbsolutePath})."
             )
           )
@@ -77,7 +94,7 @@ class DmnService extends DmnApi {
             )
           ).mapError { ex =>
             ex.printStackTrace()
-            HandledTesterException(ex.getMessage)
+            ConfigException(ex.getMessage)
           }
       }
   }

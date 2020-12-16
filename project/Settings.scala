@@ -74,6 +74,7 @@ object Settings {
         Deps.ammonite,
         Deps.dmnScala,
         Deps.zio,
+        Deps.zioCats,
         Deps.zioConfigHocon,
         Deps.zioConfigMagnolia,
         Deps.zioTest % Test,

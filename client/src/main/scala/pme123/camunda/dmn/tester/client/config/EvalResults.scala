@@ -1,5 +1,7 @@
 package pme123.camunda.dmn.tester.client.config
 
+import pme123.camunda.dmn.tester.shared.EvalStatus.ERROR
+import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
@@ -20,15 +22,15 @@ import scala.scalajs.js
 @react object EvalResultsCard {
 
   case class Props(
-      evalResults: Seq[DmnEvalResult],
-      isLoaded: Boolean,
-      maybeError: Option[String]
+                    evalResults: Seq[Either[EvalException, DmnEvalResult]],
+                    isLoaded: Boolean,
+                    maybeError: Option[String]
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(evalResults, isLoaded, maybeError) = props
-println(s"PROPS: $props")
+      println(s"PROPS: $props")
       Card
         .title("4. Check the Test Results.")(
           (maybeError, isLoaded) match {
@@ -64,7 +66,7 @@ class TableItem(
 @react object EvalResultsList {
 
   case class Props(
-      evalResults: Seq[DmnEvalResult]
+      evalResults: Seq[Either[EvalException, DmnEvalResult]]
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
@@ -79,8 +81,9 @@ class TableItem(
                 Empty().description("There are no Tests selected:(").build
               )
             )
-            .setRenderItem((evalResult: DmnEvalResult, _) =>
-              EvalResultsItem(evalResult)
+            .setRenderItem(
+              (evalResult: Either[EvalException, DmnEvalResult], _) =>
+                EvalResultsItem(evalResult)
             )
         )
   }
@@ -89,12 +92,20 @@ class TableItem(
 @react object EvalResultsItem {
 
   case class Props(
-      evalResult: DmnEvalResult
+      evalResult: Either[EvalException, DmnEvalResult]
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
-    props =>
-      val er @ DmnEvalResult(dmn, _, _) = props.evalResult
+    case Props(Left(EvalException(decisionId, msg))) =>
+      List.Item
+        .withKey(decisionId)
+        .className("list-item")(
+          section(
+            h2(Space(icon(ERROR), span(decisionId))),
+            pre(msg)
+          )
+        )
+    case Props(Right(er @ DmnEvalResult(dmn, _, _))) =>
       val rowCreator = createRowCreator(er)
       List.Item
         .withKey(dmn.id)
@@ -240,7 +251,16 @@ case class RowCreator(
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case EvalResult(status, _, inputMap, Nil, maybeError) =>
-        Seq(new TableRow(status, inputMap, 1, 0, Map.empty, Some(maybeError.map(_.msg).getOrElse("NOT FOUND"))))
+        Seq(
+          new TableRow(
+            status,
+            inputMap,
+            1,
+            0,
+            Map.empty,
+            Some(maybeError.map(_.msg).getOrElse("NOT FOUND"))
+          )
+        )
       case EvalResult(status, _, inputMap, matchedRules, maybeError) =>
         val errorRow = maybeError
           .map(msg =>

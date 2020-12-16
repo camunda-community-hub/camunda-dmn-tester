@@ -13,6 +13,7 @@ object Deps {
     val http4s = "0.21.12"
     val slf4j = "1.7.30"
     val zio = "1.0.3"
+    val zioCats = "2.2.0.1"
     val zioConfig = "1.0.0-RC29-1"
   }
 
@@ -22,6 +23,7 @@ object Deps {
   val ammonite = "com.lihaoyi" %% "ammonite-ops" % version.ammonite
 
   val zio = "dev.zio" %% "zio" % version.zio
+  val zioCats = "dev.zio" %% "zio-interop-cats" % version.zioCats
   val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % version.zioConfig
   val zioConfigHocon = "dev.zio" %% "zio-config-typesafe" % version.zioConfig
 
