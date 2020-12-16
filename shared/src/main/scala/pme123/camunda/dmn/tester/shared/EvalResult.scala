@@ -5,7 +5,8 @@ import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
 case class DmnEvalResult(
     dmn: Dmn,
     inputs: Seq[Map[String, String]],
-    evalResults: Seq[EvalResult]
+    evalResults: Seq[EvalResult],
+    evalMsg: EvalMsg
 ) {
   def maxEvalStatus: EvalStatus =
     evalResults.map(_.status).sorted.headOption.getOrElse(INFO)
@@ -60,6 +61,8 @@ object EvalResult {
     EvalResult(status, decisionId, inputs, matchedRules, failed)
   }
 }
+
+case class EvalMsg(status: EvalStatus, msg: String)
 
 case class MatchedRule(ruleId: String, outputs: Map[String, String])
 case class EvalError(msg: String)

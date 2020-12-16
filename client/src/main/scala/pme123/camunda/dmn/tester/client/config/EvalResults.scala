@@ -105,7 +105,7 @@ class TableItem(
             pre(msg)
           )
         )
-    case Props(Right(er @ DmnEvalResult(dmn, _, _))) =>
+    case Props(Right(er @ DmnEvalResult(dmn, _, _, evalMsg))) =>
       val rowCreator = createRowCreator(er)
       List.Item
         .withKey(dmn.id)
@@ -113,6 +113,7 @@ class TableItem(
           section(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
+            p(icon(evalMsg.status), evalMsg.msg),
             Table[TableRow]
               .bordered(true)
               .pagination(antdBooleans.`false`)
@@ -204,7 +205,7 @@ class TableItem(
   }
 
   private def createRowCreator(dmnEvalResult: DmnEvalResult) = {
-    val DmnEvalResult(dmn, ins, entries) = dmnEvalResult
+    val DmnEvalResult(dmn, ins, entries, _) = dmnEvalResult
     val inputKeys = ins.headOption.toSeq.flatMap(_.keys)
     // replace the inputs from the result entries (as these are already the evaluated inputs)
     val insEntries = ins.zip(entries).map { case (iMap, evalResult) =>

@@ -4,6 +4,7 @@ import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
+import pme123.camunda.dmn.tester.shared.EvalStatus.{INFO, WARN}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 import zio._
@@ -44,25 +45,27 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
   }
 
   def getDmnEvalResults(
-      runResults: RunResults
+      results: RunResults
   ): ZIO[Console, EvalException, DmnEvalResult] = {
     for {
       logEntries <- auditLogRef.get
-      RunResults(dmn, results) = runResults
+      RunResults(dmn, runResults) = results
       evalResults <- ZIO
         .fromOption(logEntries.groupBy(_.decisionId).get(dmn.id))
         .orElseFail(
           EvalException(dmn.id, s"There is no DMN width id: ${dmn.id}")
         )
-      results <-
+      evalMsg <- UIO(missingRules(evalResults, dmn.ruleIds))
+      dmnEvalResult <-
         UIO(
           DmnEvalResult(
             dmn,
-            results.map(_.inputs.view.mapValues(_.toString).toMap),
-            evalResults
+            runResults.map(_.inputs.view.mapValues(_.toString).toMap),
+            evalResults,
+            evalMsg
           )
         )
-    } yield results
+    } yield dmnEvalResult
   }
 
   private def unwrap(value: Val): String =
@@ -74,29 +77,25 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
       case value =>
         s"$value"
     }
-}
 
-case class RowPrinter(
-    evalResults: Seq[EvalResult],
-    inputs: Seq[String],
-    outputs: Seq[String],
-    ruleIds: Seq[String]
-) {
+  private def missingRules(
+      evalResults: Seq[EvalResult],
+      ruleIds: Seq[String]
+  ): EvalMsg = {
+    val matchedRuleIds =
+      evalResults.flatMap(_.matchedRules.map(_.ruleId)).distinct
+    def rowIndex(ruleId: String) =
+      s"${ruleIds.indexWhere(_ == ruleId) + 1}: $ruleId"
 
-  def printMissingRules(): URIO[Console, Unit] =
     ruleIds.filterNot(matchedRuleIds.contains(_)).toList match {
       case Nil =>
-        console.putStrLn(s"INFO:      All Rules matched at least ones.")
+        EvalMsg(INFO, "All Rules matched at least ones.")
       case l =>
-        printWarning(
-          s"WARN:      The following Rules never matched: [${l.map(rowIndex).mkString(", ")}]"
+        EvalMsg(
+          WARN,
+          s"The following Rules never matched: [${l.map(rowIndex).mkString(", ")}]"
         )
     }
-
-  private lazy val matchedRuleIds =
-    evalResults.flatMap(_.matchedRules.map(_.ruleId)).distinct
-
-  private def rowIndex(ruleId: String) =
-    s"${ruleIds.indexWhere(_ == ruleId) + 1}: $ruleId"
+  }
 
 }
