@@ -160,7 +160,7 @@ object Settings {
         useYarn := true,
         stIgnore := List("react-proxy"),
         Compile / npmDependencies ++= Seq(
-          "antd" -> "4.5.1",
+          "antd" -> "4.7.0",
           "@types/react" -> "16.9.42",
           "@types/react-dom" -> "16.9.8"
         )

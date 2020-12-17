@@ -9,7 +9,7 @@ import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod.{InboxOutlined, PlusOutlined}
 import typings.antd.components._
 import typings.antd.mod.message
-import typings.antd.{useFormMod, antdStrings => aStr}
+import typings.antd.{antdStrings => aStr}
 import typings.react.mod.{CSSProperties, ChangeEvent}
 
 import scala.scalajs.js.Dynamic.literal
@@ -24,10 +24,8 @@ import scala.scalajs.js.Dynamic.literal
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(basePath, onFormSubmit) = props
-      val form = useFormMod.default().head
 
       Form
-        .form(form)
         .layout(aStr.horizontal)
         .className("config-form")(
           Row

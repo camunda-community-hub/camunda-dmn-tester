@@ -7,7 +7,7 @@ import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
 import slinky.core.facade.ReactElement
-import slinky.web.html.{colSpan, _}
+import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod
 import typings.antd.components._
@@ -22,15 +22,14 @@ import scala.scalajs.js
 @react object EvalResultsCard {
 
   case class Props(
-                    evalResults: Seq[Either[EvalException, DmnEvalResult]],
-                    isLoaded: Boolean,
-                    maybeError: Option[String]
+      evalResults: Seq[Either[EvalException, DmnEvalResult]],
+      isLoaded: Boolean,
+      maybeError: Option[String]
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(evalResults, isLoaded, maybeError) = props
-      println(s"PROPS: $props")
       Card
         .title("4. Check the Test Results.")(
           (maybeError, isLoaded) match {
@@ -113,14 +112,12 @@ class TableItem(
           section(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
-            p(icon(evalMsg.status), evalMsg.msg),
+            Space(icon(evalMsg.status), evalMsg.msg),
             Table[TableRow]
               .bordered(true)
               .pagination(antdBooleans.`false`)
-              // .scroll(ScrollToFirstRowOnChange().x.setScrollToFirstRowOnChange(true))
               .dataSourceVarargs(rowCreator.resultRows: _*)
               .columnsVarargs(
-                //   s"EVALUATED: ${formatStrings(inputs)} -> ${formatStrings("Row Number / Rule ID" +: outputs)}"
                 ColumnType[TableRow]
                   .setTitle("")
                   .setDataIndex("icon")
@@ -165,7 +162,7 @@ class TableItem(
                 ColumnGroupType[TableRow](js.Array())
                   .setTitleReactElement("Outputs")
                   .setChildrenVarargs(
-                    rowCreator.outputs.zipWithIndex.map { case (out, index) =>
+                    rowCreator.outputs.map { out =>
                       ColumnType[TableRow]
                         .setTitle(out)
                         .setDataIndex(out)
