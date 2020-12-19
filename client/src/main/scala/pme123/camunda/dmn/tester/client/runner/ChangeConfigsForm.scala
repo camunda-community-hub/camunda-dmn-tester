@@ -1,4 +1,4 @@
-package pme123.camunda.dmn.tester.client.config
+package pme123.camunda.dmn.tester.client.runner
 
 import org.scalajs.dom.raw.HTMLInputElement
 import slinky.core.annotations.react

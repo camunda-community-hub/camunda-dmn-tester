@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.client
 
-import pme123.camunda.dmn.tester.client.config.containers
+import pme123.camunda.dmn.tester.client.runner.containers
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.web.html._

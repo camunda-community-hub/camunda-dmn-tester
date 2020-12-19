@@ -7,7 +7,7 @@ import pme123.camunda.dmn.tester.shared.Dmn
 import zio.console.Console
 import zio.{URIO, console}
 
-package object zzz {
+package object runner {
 
   case class RunResults(dmn: Dmn, results: Seq[RunResult])
 

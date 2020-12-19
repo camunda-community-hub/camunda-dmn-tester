@@ -1,4 +1,4 @@
-package pme123.camunda.dmn.tester.server.zzz
+package pme123.camunda.dmn.tester.server.runner
 
 import ammonite.ops._
 import pme123.camunda.dmn.tester.shared.HandledTesterException.ConfigException

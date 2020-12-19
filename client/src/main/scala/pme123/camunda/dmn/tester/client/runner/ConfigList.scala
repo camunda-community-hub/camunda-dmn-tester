@@ -1,6 +1,6 @@
-package pme123.camunda.dmn.tester.client.config
+package pme123.camunda.dmn.tester.client.runner
 
-import pme123.camunda.dmn.tester.client.config.ConfigItem.activeCheck
+import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.shared.DmnConfig
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react

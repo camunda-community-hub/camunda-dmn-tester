@@ -3,7 +3,7 @@ package pme123.camunda.dmn.tester.server
 import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
-import pme123.camunda.dmn.tester.server.zzz._
+import pme123.camunda.dmn.tester.server.runner._
 import pme123.camunda.dmn.tester.shared.HandledTesterException.{
   ConfigException,
   EvalException

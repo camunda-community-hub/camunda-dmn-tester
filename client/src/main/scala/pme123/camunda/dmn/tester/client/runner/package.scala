@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.client
 
-package object config {
+package object runner {
 
   val configPaths = Seq(
     "/dmnTester/dmn-configs",

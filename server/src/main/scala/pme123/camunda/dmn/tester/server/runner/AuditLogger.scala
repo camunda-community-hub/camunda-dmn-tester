@@ -1,4 +1,4 @@
-package pme123.camunda.dmn.tester.server.zzz
+package pme123.camunda.dmn.tester.server.runner
 
 import org.camunda.dmn.Audit
 import org.camunda.dmn.Audit.{AuditLogListener, DecisionTableEvaluationResult}

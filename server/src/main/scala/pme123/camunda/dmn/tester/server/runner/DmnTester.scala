@@ -1,4 +1,4 @@
-package pme123.camunda.dmn.tester.server.zzz
+package pme123.camunda.dmn.tester.server.runner
 
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.Failure
