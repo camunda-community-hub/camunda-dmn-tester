@@ -21,19 +21,20 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
         val maybeError = Seq(result).collectFirst { case ValError(msg) =>
           EvalError(msg)
         }
-        val ins = inputs
+        val inputMap = inputs
           .map(i => i.input.name -> unwrap(i.value))
           .toMap
         val rules = matchedRules
           .map(rule =>
             MatchedRule(
               rule.rule.id,
+              inputMap,
               rule.outputs
                 .map(out => out.output.name -> unwrap(out.value))
                 .toMap
             )
           )
-        EvalResult(log.rootEntry.id, ins, rules, maybeError)
+        EvalResult(log.rootEntry.id, rules, maybeError)
     }
     runtime.unsafeRun(
       (for {
@@ -56,12 +57,49 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
           EvalException(dmn.id, s"There is no DMN width id: ${dmn.id}")
         )
       evalMsg <- UIO(missingRules(evalResults, dmn.ruleIds))
+      testInputKeys <- UIO(runResults.headOption.toSeq.flatMap(_.inputs.view.keys))
+      inputKeys <- UIO(
+        evalResults.headOption.toSeq
+          .flatMap(_.matchedRules)
+          .headOption
+          .toSeq
+          .flatMap(_.inputs.keys)
+      )
+      outputKeys <- UIO(
+        evalResults.headOption.toSeq
+          .flatMap(_.matchedRules)
+          .headOption
+          .toSeq
+          .flatMap(_.outputs.keys)
+      )
+
+      dmnEvalRows <- UIO(runResults.zip(evalResults).map {
+        case (
+              RunResult(testInputs, _),
+              EvalResult(
+                status: EvalStatus,
+                decisionId: String,
+                matchedRules: Seq[MatchedRule],
+                failed: Option[EvalError]
+              )
+            ) =>
+          DmnEvalRowResult(
+            status,
+            decisionId,
+            testInputs.view.mapValues(_.toString).toMap,
+            matchedRules,
+            failed
+          )
+      })
+
       dmnEvalResult <-
         UIO(
           DmnEvalResult(
             dmn,
-            runResults.map(_.inputs.view.mapValues(_.toString).toMap),
-            evalResults,
+            testInputKeys,
+            inputKeys,
+            outputKeys,
+            dmnEvalRows,
             evalMsg
           )
         )

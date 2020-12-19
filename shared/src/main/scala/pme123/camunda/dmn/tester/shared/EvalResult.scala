@@ -4,52 +4,58 @@ import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
 
 case class DmnEvalResult(
     dmn: Dmn,
-    inputs: Seq[Map[String, String]],
-    evalResults: Seq[EvalResult],
+    testInputKeys: Seq[String],
+    inputKeys: Seq[String],
+    outputKeys: Seq[String],
+    evalResults: Seq[DmnEvalRowResult],
     evalMsg: EvalMsg
 ) {
   def maxEvalStatus: EvalStatus =
     evalResults.map(_.status).sorted.headOption.getOrElse(INFO)
 }
 
+case class DmnEvalRowResult(
+    status: EvalStatus,
+    decisionId: String,
+    testInputs: Map[String, String],
+    matchedRules: Seq[MatchedRule],
+    maybeError: Option[EvalError]
+)
+
 case class Dmn(id: String, hitPolicy: String, ruleIds: Seq[String])
 
 case class EvalResult(
-    status: EvalStatus,
-    decisionId: String,
-    inputs: Map[String, String],
-    matchedRules: Seq[MatchedRule],
-    failed: Option[EvalError]
+                       status: EvalStatus,
+                       decisionId: String,
+                       matchedRules: Seq[MatchedRule],
+                       failed: Option[EvalError]
 )
 
 object EvalResult {
   import EvalStatus._
 
   def failed(errorMsg: String): EvalResult =
-    apply("test", Map.empty, Seq.empty, Some(EvalError(errorMsg)))
+    apply("test", Seq.empty, Some(EvalError(errorMsg)))
 
   def successSingle(value: Any): EvalResult =
     apply(
       "test",
-      Map.empty,
-      Seq(MatchedRule("someRule", Map("single" -> value.toString))),
+      Seq(MatchedRule("someRule", Map.empty, Map("single" -> value.toString))),
       None
     )
 
   def successMap(resultMap: Map[String, Any]): EvalResult =
     apply(
       "test",
-      Map.empty,
-      Seq(MatchedRule("someRule", resultMap.view.mapValues(_.toString).toMap)),
+      Seq(MatchedRule("someRule", Map.empty, resultMap.view.mapValues(_.toString).toMap)),
       None
     )
 
   lazy val noResult: EvalResult =
-    apply("test", Map.empty, Seq.empty, None)
+    apply("test", Seq.empty, None)
 
   def apply(
       decisionId: String,
-      inputs: Map[String, String],
       matchedRules: Seq[MatchedRule],
       failed: Option[EvalError]
   ): EvalResult = {
@@ -58,13 +64,13 @@ object EvalResult {
       case (Nil, _)     => WARN
       case _            => INFO
     }
-    EvalResult(status, decisionId, inputs, matchedRules, failed)
+    EvalResult(status, decisionId, matchedRules, failed)
   }
 }
 
 case class EvalMsg(status: EvalStatus, msg: String)
 
-case class MatchedRule(ruleId: String, outputs: Map[String, String])
+case class MatchedRule(ruleId: String, inputs: Map[String, String], outputs: Map[String, String])
 case class EvalError(msg: String)
 sealed trait EvalStatus extends Comparable[EvalStatus] {
   def order: Int
