@@ -24,7 +24,7 @@ data: {
 ```
 ## Run it
 In the terminal:
- 
-`cd dmnTester`
 
 `amm testRunner.sc`
+
+See [testRunner.sc](../testRunner.sc)

@@ -10,15 +10,16 @@ For this it uses [**Scala DMN**](https://github.com/camunda/dmn-scala).
 This is work in progress, so the features it provides so far:
 * Define your test in simple Config Files (HOCON).
 * Provide a Script that runs all the Tests (Ammonite).
-* Display the result in the console:
-  ![Console Output](docs/Screenshot_console.png)
+* Select and run the Tests in a web server:
+  ![HTML Page](docs/Screenshot_html_TestRunner.png)
   * All matched Rules for its inputs.
   * A Warning if no Rule matched.
   * An Error if there is one.
   * An Error if a Rule could not be parsed.
   
 ## Next Steps / Ideas
-* Improve Exceptions (for Feel - Parsing Problems)  
+* Create the configs in the HTML client.
+* Add your paths in the Start Script. 
  
 ## Usage
 > At the moment I am waiting for this [Pull Request](https://github.com/camunda/dmn-scala/pull/16)

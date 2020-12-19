@@ -17,7 +17,7 @@ interp.repositories() ++= Seq(
 
 @
 
-import $ivy.`pme123::camunda-dmn-tester:0.2.0`
-import pme123.camunda.dmn.tester._
+import $ivy.`pme123::camunda-dmn-tester-server:0.4.1`
+import pme123.camunda.dmn.tester.server.HttpServer
 
-StandaloneTestRunner.standalone(RunnerConfig(List("dmnTester", "dmn-configs")))
+HttpServer.main(Array.empty[String])

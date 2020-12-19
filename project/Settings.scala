@@ -15,7 +15,8 @@ object Settings {
 
   lazy val projectSettings: Project => Project =
     _.settings(
-      version := "0.3.0",
+      organization := "pme123",
+      version := "0.4.1",
       scalaVersion := "2.13.2"
     )
 
@@ -109,7 +110,7 @@ object Settings {
         libraryDependencies ++= Seq(
           Deps.http4sDsl,
           Deps.http4sServer,
-          Deps.slf4j % Runtime
+          Deps.slf4j
         )
       )
 
