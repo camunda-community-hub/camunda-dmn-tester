@@ -104,8 +104,20 @@ class TableItem(
             pre(msg)
           )
         )
-    case Props(Right(er @ DmnEvalResult(dmn, _,_,_, _, evalMsg))) =>
+    case Props(
+          Right(
+            er @ DmnEvalResult(
+              dmn,
+              testInputKeys,
+              inputKeys,
+              outputKeys,
+              _,
+              evalMsg
+            )
+          )
+        ) =>
       val rowCreator = RowCreator(er)
+
       List.Item
         .withKey(dmn.id)
         .className("list-item")(
@@ -119,102 +131,96 @@ class TableItem(
               .pagination(antdBooleans.`false`)
               .dataSourceVarargs(rowCreator.resultRows: _*)
               .columnsVarargs(
-                ColumnType[TableRow]
-                  .setTitle("")
-                  .setDataIndex("icon")
-                  .setKey("icon")
-                  .setRender((_, row, _) =>
-                    RenderedCell[TableRow]()
-                      .setChildren(icon(row.status))
-                      .setProps(CellType().setRowSpan(row.inputRowSpan))
-                  ),
-                ColumnGroupType[TableRow](js.Array())
-                  .setTitleReactElement("Test Input(s)")
-                  .setChildrenVarargs(
-                    rowCreator.testInputKeys.map(in =>
-                      ColumnType[TableRow]
-                        .setTitle(in)
-                        .setDataIndex(in)
-                        .setEllipsis(true)
-                        .setKey(in)
-                        .setRender((_, row, _) =>
-                          renderTextCell(row.testInputs(in), 1)
-                            .setProps(CellType().setRowSpan(row.inputRowSpan))
-                        )
-                    ): _*
-                  ),
-                ColumnType[TableRow]
-                  .setTitle("Dmn Row")
-                  .setEllipsis(true)
-                  .setDataIndex("DmnRow")
-                  .setKey("DmnRow")
-                  .setRender { (_, row, _) =>
-                    row.outputMessage match {
-                      case Some(msg) =>
-                        val colSpan = rowCreator.inputKeys.length + rowCreator.outputKeys.length + 1
-                        renderTextCell(msg, colSpan)
-                          .setProps(
-                            CellType()
-                              .setColSpan(colSpan)
-                              .setClassName(s"${row.status}-cell")
-                          )
-                      case _ => renderTextCell(row.dmnRowIndex.toString, 1)
-                    }
-
-                  },
-                ColumnGroupType[TableRow](js.Array())
-                  .setTitleReactElement("Inputs")
-                  .setChildrenVarargs(
-                    rowCreator.inputKeys.map { in =>
-                      ColumnType[TableRow]
-                        .setTitle(in)
-                        .setEllipsis(true)
-                        .setDataIndex(in)
-                        .setKey(in)
-                        .setRender((_, row, _) => {
-                          val value =
-                            if (row.inputs.isEmpty)
-                              row.outputMessage.getOrElse("-")
-                            else row.inputs(in)
-                          val colSpan =
-                            row.outputMessage.map(_ => 0).getOrElse(1)
-                          renderTextCell(value, colSpan)
-                            .setProps(
-                              CellType()
-                                .setColSpan(colSpan)
-                            )
-                        })
-                    }: _*
-                  ),
-                ColumnGroupType[TableRow](js.Array())
-                  .setTitleReactElement("Outputs")
-                  .setChildrenVarargs(
-                    rowCreator.outputKeys.map { out =>
-                    println(s"OUT: $out")
-                      ColumnType[TableRow]
-                        .setTitle(out)
-                        .setEllipsis(true)
-                        .setDataIndex(out)
-                        .setKey(out)
-                        .setRender((_, row, _) => {
-                          println(s"out: $out - ${row.outputs}")
-                          val value =
-                            if (row.outputs.isEmpty)
-                              row.outputMessage.getOrElse("-")
-                            else row.outputs(out)
-                          val colSpan =
-                            row.outputMessage.map(_ => 0).getOrElse(1)
-                          renderTextCell(value, colSpan)
-                            .setProps(
-                              CellType()
-                                .setColSpan(colSpan)
-                            )
-                        })
-                    }: _*
-                  )
+                statusColumn,
+                testInputColumns(testInputKeys),
+                dmnRowColumn(inputKeys, outputKeys),
+                inOutColumns("Input", inputKeys, _.inputs),
+                inOutColumns("Output", outputKeys, _.outputs)
               )
           )
         )
+  }
+
+  private val statusColumn = {
+    ColumnType[TableRow]
+      .setTitle("")
+      .setDataIndex("icon")
+      .setKey("icon")
+      .setRender((_, row, _) =>
+        RenderedCell[TableRow]()
+          .setChildren(icon(row.status))
+          .setProps(CellType().setRowSpan(row.inputRowSpan))
+      )
+  }
+
+  private def testInputColumns(testInputKeys: Seq[String]) =
+    ColumnGroupType[TableRow](js.Array())
+      .setTitleReactElement("Test Input(s)")
+      .setChildrenVarargs(
+        testInputKeys.map(in =>
+          ColumnType[TableRow]
+            .setTitle(in)
+            .setDataIndex(in)
+            .setEllipsis(true)
+            .setKey(in)
+            .setRender((_, row, _) =>
+              renderTextCell(row.testInputs(in), 1)
+                .setProps(CellType().setRowSpan(row.inputRowSpan))
+            )
+        ): _*
+      )
+
+  private def dmnRowColumn(inputKeys: Seq[String], outputKeys: Seq[String]) = {
+    ColumnType[TableRow]
+      .setTitle("Dmn Row")
+      .setEllipsis(true)
+      .setDataIndex("DmnRow")
+      .setKey("DmnRow")
+      .setRender { (_, row, _) =>
+        row.outputMessage match {
+          case Some(msg) =>
+            val colSpan =
+              inputKeys.length + outputKeys.length + 1
+            renderTextCell(msg, colSpan)
+              .setProps(
+                CellType()
+                  .setColSpan(colSpan)
+                  .setClassName(s"${row.status}-cell")
+              )
+          case _ => renderTextCell(row.dmnRowIndex.toString, 1)
+        }
+      }
+  }
+
+  private def inOutColumns(
+      title: String,
+      keys: Seq[String],
+      inOutMap: TableRow => Map[String, String]
+  ) = {
+    ColumnGroupType[TableRow](js.Array())
+      .setTitleReactElement(s"$title(s)")
+      .setChildrenVarargs(
+        keys.map { key =>
+          ColumnType[TableRow]
+            .setTitle(key)
+            .setEllipsis(true)
+            .setDataIndex(key)
+            .setKey(key)
+            .setRender((_, row, _) => {
+              val value =
+                if (inOutMap(row).isEmpty)
+                  row.outputMessage.getOrElse("-")
+                else inOutMap(row)(key)
+              val colSpan =
+                row.outputMessage.map(_ => 0).getOrElse(1)
+              renderTextCell(value, colSpan)
+                .setProps(
+                  CellType()
+                    .setColSpan(colSpan)
+                )
+            })
+        }: _*
+      )
   }
 
   private def renderTextCell(text: String, colSpan: Int) = {
@@ -254,11 +260,18 @@ class TableRow(
 case class RowCreator(
     dmnEvalResult: DmnEvalResult
 ) {
-  val DmnEvalResult(dmn, testInputKeys, inputKeys, outputKeys, evalResults, evalMsg) = dmnEvalResult
+  val DmnEvalResult(
+    dmn,
+    testInputKeys,
+    inputKeys,
+    outputKeys,
+    evalResults,
+    evalMsg
+  ) = dmnEvalResult
 
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
-      case DmnEvalRowResult(status, decisionId,testInputs,Nil, maybeError) =>
+      case DmnEvalRowResult(status, decisionId, testInputs, Nil, maybeError) =>
         Seq(
           new TableRow(
             status,
@@ -270,7 +283,13 @@ case class RowCreator(
             Some(maybeError.map(_.msg).getOrElse("NOT FOUND"))
           )
         )
-      case DmnEvalRowResult(status, _, testInputMap, matchedRules, maybeError) =>
+      case DmnEvalRowResult(
+            status,
+            _,
+            testInputMap,
+            matchedRules,
+            maybeError
+          ) =>
         val errorRow = maybeError
           .map(msg =>
             new TableRow(
@@ -310,6 +329,5 @@ case class RowCreator(
 
   private def rowIndex(ruleId: String) =
     dmn.ruleIds.indexWhere(_ == ruleId) + 1
-
 
 }

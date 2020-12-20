@@ -38,7 +38,7 @@ object ReactLogo extends js.Object
           className := "App-logo",
           alt := "logo"
         ),
-        h1(className := "App-title")("Camunda DMN Tester")
+        h1(className := "App-title")("Camunda DMN Table Tester")
       ),
       Layout.Content(
         containers.DmnConfigContainer()
