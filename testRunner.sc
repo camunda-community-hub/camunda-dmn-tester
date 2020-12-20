@@ -17,7 +17,11 @@ interp.repositories() ++= Seq(
 
 @
 
-import $ivy.`pme123::camunda-dmn-tester-server:0.4.1`
+import $ivy.`pme123::camunda-dmn-tester-server:0.5.0-SNAPSHOT`
 import pme123.camunda.dmn.tester.server.HttpServer
+
+// add here your comma separated list with Paths you have your DMN Tester Configs
+sys.props.addOne("TESTER_CONFIG_PATHS",
+  "/dmnTester/dmn-configs,/core/src/test/resources/dmn-configs")
 
 HttpServer.main(Array.empty[String])

@@ -10,6 +10,7 @@ For this it uses [**Scala DMN**](https://github.com/camunda/dmn-scala).
 This is work in progress, so the features it provides so far:
 * Define your test in simple Config Files (HOCON).
 * Provide a Script that runs all the Tests (Ammonite).
+  * Add your config paths in this Script.
 * Select and run the Tests in a web server:
   ![HTML Page](docs/Screenshot_html_TestRunner.png)
   * All matched Rules for its inputs.
@@ -19,7 +20,6 @@ This is work in progress, so the features it provides so far:
   
 ## Next Steps / Ideas
 * Create the configs in the HTML client.
-* Add your paths in the Start Script. 
  
 ## Usage
 > At the moment I am waiting for this [Pull Request](https://github.com/camunda/dmn-scala/pull/16)

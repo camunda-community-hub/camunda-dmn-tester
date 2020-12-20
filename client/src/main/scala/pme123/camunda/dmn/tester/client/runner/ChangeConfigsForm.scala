@@ -1,18 +1,26 @@
 package pme123.camunda.dmn.tester.client.runner
 
+import autowire._
+import boopickle.Default._
+import org.scalablytyped.runtime.StringDictionary
 import org.scalajs.dom.raw.HTMLInputElement
+import pme123.camunda.dmn.tester.client.services.AjaxClient
+import pme123.camunda.dmn.tester.shared.DmnApi
+import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
-import slinky.core.facade.Hooks.useState
-import slinky.core.{FunctionalComponent, SyntheticEvent}
+import slinky.core.facade.Hooks.{useEffect, useState}
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod.{InboxOutlined, PlusOutlined}
 import typings.antd.components._
+import typings.antd.formFormMod.useForm
 import typings.antd.mod.message
 import typings.antd.{antdStrings => aStr}
 import typings.react.mod.{CSSProperties, ChangeEvent}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.Dynamic.literal
+import scala.util.{Failure, Success}
 
 @react object ChangeConfigsForm {
 
@@ -23,15 +31,50 @@ import scala.scalajs.js.Dynamic.literal
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
+      val (paths, setPaths) = useState[Seq[String]](Seq.empty)
       val Props(basePath, onFormSubmit) = props
+      val form = useForm().head
+
+      def setPath(path: String): Unit = {
+        form.setFieldsValue(
+          StringDictionary(
+            "path" -> path
+          )
+        )
+        onFormSubmit(path)
+      }
+
+      def onAddPath(path: String): Unit = {
+        setPaths(paths :+ path)
+        println(s"SetFieldsValue: $path")
+        setPath(path)
+      }
+
+      useEffect(
+        () => {
+          AjaxClient[DmnApi]
+            .getConfigPaths()
+            .call()
+            .onComplete {
+              case Success(paths) =>
+                setPaths(paths)
+                if (paths.nonEmpty)
+                  setPath(paths.head)
+              case Failure(ex) =>
+                message.error(s"Problem loading Config Paths: ${ex.toString}")
+            }
+        },
+        Seq.empty
+      )
 
       Form
+        .form(form)
         .layout(aStr.horizontal)
         .className("config-form")(
           Row
             .gutter(20)(
               Col.span(24)(
-                PathSelect(basePath, onFormSubmit)
+                PathSelect(basePath, paths, onAddPath, onFormSubmit)
               )
             ),
           Row
@@ -79,29 +122,30 @@ import scala.scalajs.js.Dynamic.literal
 
   case class Props(
       basePath: String,
+      configPaths: Seq[String],
+      onAddPath: String => Unit,
       onChangePath: String => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val (paths, setPaths) = useState[Seq[String]](configPaths)
+      val Props(basePath, configPaths, onAddPath, onChangePath) = props
       val (name, setName) = useState[String]("")
-      val Props(basePath, onChangePath) = props
+      val (selected, setSelected) =
+        useState[String](configPaths.headOption.getOrElse("-"))
 
+      println(s"Component called: $selected")
       def onNameChange = (event: ChangeEvent[HTMLInputElement]) => {
         setName(event.currentTarget.value)
       }
 
-      def addPath = (_: SyntheticEvent[_, _]) => {
-        setPaths(paths :+ name)
-        setName("")
-      }
-
       FormItem
         .name("path")
-        .label(if(basePath.length > 40) ".." + basePath.takeRight(40) else basePath)
-        .initialValue(paths.head)(
+        .label(
+          if (basePath.length > 40) ".." + basePath.takeRight(40) else basePath
+        )(
           Select[String]
+            .value(selected)
             .placeholder(
               "Select a path or add your own"
             )
@@ -126,7 +170,10 @@ import scala.scalajs.js.Dynamic.literal
                       display = "block",
                       cursor = "pointer"
                     ),
-                    onClick := addPath
+                    onClick := { _ =>
+                      onAddPath(name)
+                      setName("")
+                    }
                   )(
                     AntdIcon(PlusOutlined),
                     "Add Path"
@@ -137,7 +184,7 @@ import scala.scalajs.js.Dynamic.literal
             .onChange { (value, _) =>
               onChangePath(value)
             }(
-              paths.map(p => Select.Option(p).withKey(p)(p))
+              configPaths.map(p => Select.Option(p).withKey(p)(p))
             )
         )
   }

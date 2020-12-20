@@ -20,9 +20,25 @@ import java.io.File
 
 class DmnService extends DmnApi {
   private val runtime = Runtime.default
-
+  private val configPaths = Seq(
+    "/dmnTester/dmn-configs",
+    "/core/src/test/resources/dmn-configs"
+  )
   override def getBasePath(): String =
     pwd.toIO.getAbsolutePath
+
+  override def getConfigPaths(): Seq[String] = {
+    val maybeConfigs = sys.props.get("TESTER_CONFIG_PATHS")
+    println("TESTER_CONFIG_PATHS: " + maybeConfigs)
+    maybeConfigs
+      .map(
+        _.split(",")
+          .map(_.trim)
+          .filter(_.nonEmpty)
+          .toSeq
+      )
+      .getOrElse(configPaths)
+  }
 
   override def getConfigs(path: Seq[String]): Seq[DmnConfig] =
     runtime.unsafeRun(

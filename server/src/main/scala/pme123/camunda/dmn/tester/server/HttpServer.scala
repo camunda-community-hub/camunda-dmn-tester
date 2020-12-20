@@ -17,6 +17,7 @@ import java.nio.ByteBuffer
 import scala.concurrent.ExecutionContext.global
 
 object HttpServer extends IOApp {
+
   override def run(args: List[String]): IO[ExitCode] =
     IO(println("Server starting at Port 8883")) *>
       app.use(_ => IO.never).as(ExitCode.Success)

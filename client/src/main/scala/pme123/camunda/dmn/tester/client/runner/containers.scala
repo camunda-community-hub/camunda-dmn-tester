@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.client.runner
 
-import autowire.{clientCallable, _}
+import autowire._
 import boopickle.Default._
 import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
@@ -38,7 +38,6 @@ object containers {
       // this useEffect will run once
       useEffect(
         () => {
-          loadingConfigs(configPaths.head)
           AjaxClient[DmnApi]
             .getBasePath()
             .call()
