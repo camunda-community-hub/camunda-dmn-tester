@@ -4,15 +4,19 @@ import boopickle.Default._
 import boopickle.UnpickleImpl
 import cats.effect._
 import org.http4s.EntityDecoder._
+import org.http4s.EntityDecoder.textFile
 import org.http4s.EntityEncoder._
 import org.http4s.dsl.io._
+import org.http4s.multipart.Multipart
 import org.http4s.server.Server
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
 import org.http4s.{Request, StaticFile, _}
+import pme123.camunda.dmn.tester.server.config.DmnUploader
 import pme123.camunda.dmn.tester.shared.DmnApi
 
+import java.io.File
 import java.nio.ByteBuffer
 import scala.concurrent.ExecutionContext.global
 
@@ -33,6 +37,12 @@ object HttpServer extends IOApp {
         IO(Response(Ok, headers = Headers.of(Header("Allow", "OPTIONS, POST"))))
       case req if req.uri.path.startsWith("/api") =>
         autowireApi(req)
+      case req if req.uri.path.startsWith("/dmnUpload") =>
+        req.decode[Multipart[IO]]{ mp =>
+        println("MULTIPART: " + mp.parts.head.filename)
+        Ok("ok")
+        }
+
       case request @ GET -> Root =>
         static("index.html", blocker, request)
       case request @ GET -> path =>

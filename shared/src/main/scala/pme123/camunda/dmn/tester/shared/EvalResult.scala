@@ -4,7 +4,6 @@ import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
 
 case class DmnEvalResult(
     dmn: Dmn,
-    testInputKeys: Seq[String],
     inputKeys: Seq[String],
     outputKeys: Seq[String],
     evalResults: Seq[DmnEvalRowResult],
@@ -40,14 +39,14 @@ object EvalResult {
   def successSingle(value: Any): EvalResult =
     apply(
       "test",
-      Seq(MatchedRule("someRule", Map.empty, Map("single" -> value.toString))),
+      Seq(MatchedRule("someRule", Seq.empty, Map("single" -> value.toString))),
       None
     )
 
   def successMap(resultMap: Map[String, Any]): EvalResult =
     apply(
       "test",
-      Seq(MatchedRule("someRule", Map.empty, resultMap.view.mapValues(_.toString).toMap)),
+      Seq(MatchedRule("someRule", Seq.empty, resultMap.view.mapValues(_.toString).toMap)),
       None
     )
 
@@ -70,7 +69,7 @@ object EvalResult {
 
 case class EvalMsg(status: EvalStatus, msg: String)
 
-case class MatchedRule(ruleId: String, inputs: Map[String, String], outputs: Map[String, String])
+case class MatchedRule(ruleId: String, inputs: Seq[String], outputs: Map[String, String])
 case class EvalError(msg: String)
 sealed trait EvalStatus extends Comparable[EvalStatus] {
   def order: Int

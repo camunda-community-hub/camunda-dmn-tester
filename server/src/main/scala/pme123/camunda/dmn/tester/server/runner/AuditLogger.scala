@@ -17,18 +17,15 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
 
   def onEval(log: Audit.AuditLog): Unit = {
     lazy val newValue = Seq(log.rootEntry.result).collectFirst {
-      case DecisionTableEvaluationResult(inputs, matchedRules, result) =>
+      case DecisionTableEvaluationResult(_, matchedRules, result) =>
         val maybeError = Seq(result).collectFirst { case ValError(msg) =>
           EvalError(msg)
         }
-        val inputMap = inputs
-          .map(i => i.input.name -> unwrap(i.value))
-          .toMap
         val rules = matchedRules
           .map(rule =>
             MatchedRule(
               rule.rule.id,
-              inputMap,
+              rule.rule.inputEntries.map(_.text).toSeq,
               rule.outputs
                 .map(out => out.output.name -> unwrap(out.value))
                 .toMap
@@ -57,14 +54,8 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
           EvalException(dmn.id, s"There is no DMN width id: ${dmn.id}")
         )
       evalMsg <- UIO(missingRules(evalResults, dmn.ruleIds))
-      testInputKeys <- UIO(runResults.headOption.toSeq.flatMap(_.inputs.view.keys))
-      inputKeys <- UIO(
-        evalResults.headOption.toSeq
-          .flatMap(_.matchedRules)
-          .headOption
-          .toSeq
-          .flatMap(_.inputs.keys)
-      )
+      inputKeys <- UIO(runResults.headOption.toSeq.flatMap(_.inputs.view.keys))
+
       outputKeys <- UIO(
         evalResults.headOption.toSeq
           .flatMap(_.matchedRules)
@@ -96,7 +87,6 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
         UIO(
           DmnEvalResult(
             dmn,
-            testInputKeys,
             inputKeys,
             outputKeys,
             dmnEvalRows,

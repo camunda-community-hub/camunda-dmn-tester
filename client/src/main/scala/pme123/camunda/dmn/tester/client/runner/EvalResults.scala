@@ -1,5 +1,6 @@
 package pme123.camunda.dmn.tester.client.runner
 
+import pme123.camunda.dmn.tester.client.textWithTooltip
 import pme123.camunda.dmn.tester.shared.EvalStatus.ERROR
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnEvalRowResult, _}
@@ -108,7 +109,6 @@ class TableItem(
           Right(
             er @ DmnEvalResult(
               dmn,
-              testInputKeys,
               inputKeys,
               outputKeys,
               _,
@@ -132,9 +132,9 @@ class TableItem(
               .dataSourceVarargs(rowCreator.resultRows: _*)
               .columnsVarargs(
                 statusColumn,
-                testInputColumns(testInputKeys),
+                testInputColumns(inputKeys),
                 dmnRowColumn(inputKeys, outputKeys),
-                inOutColumns("Input", inputKeys, _.inputs),
+                inOutColumns("Matched Input", inputKeys, _.inputs),
                 inOutColumns("Output", outputKeys, _.outputs)
               )
           )
@@ -226,12 +226,7 @@ class TableItem(
   private def renderTextCell(text: String, colSpan: Int) = {
     RenderedCell[TableRow]()
       .setChildren(
-        Tooltip.TooltipPropsWithOverlayRefAttributes
-          .titleReactElement(text)(
-            Typography
-              .Text(text)
-          )
-          .build
+        textWithTooltip(text, text)
       )
   }
 
@@ -262,7 +257,6 @@ case class RowCreator(
 ) {
   val DmnEvalResult(
     dmn,
-    testInputKeys,
     inputKeys,
     outputKeys,
     evalResults,
@@ -307,7 +301,7 @@ case class RowCreator(
         //val outputs = outputMap(matchedRules)
         val rows =
           matchedRules.zipWithIndex.map {
-            case (MatchedRule(ruleId, inputMap, outputMap), index) =>
+            case (MatchedRule(ruleId, inputs, outputMap), index) =>
               new TableRow(
                 status,
                 testInputMap,
@@ -316,7 +310,7 @@ case class RowCreator(
                     maybeError.map(_ => 1).getOrElse(0) // add an extra row
                 else 0,
                 rowIndex(ruleId),
-                inputMap,
+                inputKeys.zip(inputs).toMap,
                 outputMap,
                 None
               )

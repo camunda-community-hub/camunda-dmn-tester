@@ -5,6 +5,7 @@ import boopickle.Default._
 import org.scalablytyped.runtime.StringDictionary
 import org.scalajs.dom.raw.HTMLInputElement
 import pme123.camunda.dmn.tester.client.services.AjaxClient
+import pme123.camunda.dmn.tester.client.{basePathStr, textWithTooltip}
 import pme123.camunda.dmn.tester.shared.DmnApi
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
@@ -142,7 +143,7 @@ import scala.util.{Failure, Success}
       FormItem
         .name("path")
         .label(
-          if (basePath.length > 40) ".." + basePath.takeRight(40) else basePath
+          basePathStr(basePath)
         )(
           Select[String]
             .value(selected)
