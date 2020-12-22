@@ -53,7 +53,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
         .orElseFail(
           EvalException(dmn.id, s"There is no DMN width id: ${dmn.id}")
         )
-      evalMsg <- UIO(missingRules(evalResults, dmn.ruleIds))
+      missingRules <- UIO(missingRules(evalResults, dmn.rules))
       inputKeys <- UIO(runResults.headOption.toSeq.flatMap(_.inputs.view.keys))
 
       outputKeys <- UIO(
@@ -90,7 +90,7 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
             inputKeys,
             outputKeys,
             dmnEvalRows,
-            evalMsg
+            missingRules
           )
         )
     } yield dmnEvalResult
@@ -102,28 +102,20 @@ case class AuditLogger(auditLogRef: Ref[Seq[EvalResult]])
       case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
       case Some(value)       => value.toString
       case None              => "NO VALUE"
-      case value =>
-        s"$value"
+      case value             => s"$value"
     }
 
   private def missingRules(
       evalResults: Seq[EvalResult],
-      ruleIds: Seq[String]
-  ): EvalMsg = {
+      rules: Seq[DmnRule]
+  ): Seq[DmnRule] = {
     val matchedRuleIds =
       evalResults.flatMap(_.matchedRules.map(_.ruleId)).distinct
-    def rowIndex(ruleId: String) =
-      s"${ruleIds.indexWhere(_ == ruleId) + 1}: $ruleId"
 
-    ruleIds.filterNot(matchedRuleIds.contains(_)).toList match {
-      case Nil =>
-        EvalMsg(INFO, "All Rules matched at least ones.")
-      case l =>
-        EvalMsg(
-          WARN,
-          s"The following Rules never matched: [${l.map(rowIndex).mkString(", ")}]"
-        )
-    }
+    def rowIndex(rule: DmnRule) =
+      s"${rule.index}: ${rule.ruleId}"
+
+    rules.filterNot(r => matchedRuleIds.contains(r.ruleId)).toList
   }
 
 }

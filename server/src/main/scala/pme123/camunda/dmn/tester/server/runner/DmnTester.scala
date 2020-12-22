@@ -36,18 +36,19 @@ case class DmnTester(
     }
     val maybeDecision = dmn.decisions
       .find(_.id == decisionId)
-    val hitPolicyAndRulIds = maybeDecision
+    val hitPolicyAndRules = maybeDecision
       .map(_.logic)
       .collect { case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
-        hitPolicy -> rules.map(_.id)
+        hitPolicy -> rules.zipWithIndex
+          .map{ case (ParsedRule(id,inputs, outputs), index) => DmnRule(index + 1, id, inputs.map(_.text).toSeq, outputs.map(_._2.text).toSeq)}
       }
     RunResults(
       Dmn(
         decisionId,
-        hitPolicyAndRulIds
+        hitPolicyAndRules
           .map { case (hitPolicy, _) => hitPolicy.toString }
           .getOrElse("NOT FOUND"),
-        hitPolicyAndRulIds.toSeq.flatMap { case (_, ruleIds) => ruleIds }
+        hitPolicyAndRules.toSeq.flatMap { case (_, rules) => rules }
       ),
       evaluated
     )

@@ -7,7 +7,7 @@ case class DmnEvalResult(
     inputKeys: Seq[String],
     outputKeys: Seq[String],
     evalResults: Seq[DmnEvalRowResult],
-    evalMsg: EvalMsg
+    missingRules: Seq[DmnRule]
 ) {
   def maxEvalStatus: EvalStatus =
     evalResults.map(_.status).sorted.headOption.getOrElse(INFO)
@@ -21,13 +21,20 @@ case class DmnEvalRowResult(
     maybeError: Option[EvalError]
 )
 
-case class Dmn(id: String, hitPolicy: String, ruleIds: Seq[String])
+case class Dmn(id: String, hitPolicy: String, rules: Seq[DmnRule])
+
+case class DmnRule(
+    index: Int,
+    ruleId: String,
+    inputs: Seq[String],
+    outputs: Seq[String]
+)
 
 case class EvalResult(
-                       status: EvalStatus,
-                       decisionId: String,
-                       matchedRules: Seq[MatchedRule],
-                       failed: Option[EvalError]
+    status: EvalStatus,
+    decisionId: String,
+    matchedRules: Seq[MatchedRule],
+    failed: Option[EvalError]
 )
 
 object EvalResult {
@@ -46,7 +53,13 @@ object EvalResult {
   def successMap(resultMap: Map[String, Any]): EvalResult =
     apply(
       "test",
-      Seq(MatchedRule("someRule", Seq.empty, resultMap.view.mapValues(_.toString).toMap)),
+      Seq(
+        MatchedRule(
+          "someRule",
+          Seq.empty,
+          resultMap.view.mapValues(_.toString).toMap
+        )
+      ),
       None
     )
 
@@ -67,9 +80,11 @@ object EvalResult {
   }
 }
 
-case class EvalMsg(status: EvalStatus, msg: String)
-
-case class MatchedRule(ruleId: String, inputs: Seq[String], outputs: Map[String, String])
+case class MatchedRule(
+    ruleId: String,
+    inputs: Seq[String],
+    outputs: Map[String, String]
+)
 case class EvalError(msg: String)
 sealed trait EvalStatus extends Comparable[EvalStatus] {
   def order: Int

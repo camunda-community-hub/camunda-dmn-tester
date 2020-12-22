@@ -112,7 +112,7 @@ class TableItem(
               inputKeys,
               outputKeys,
               _,
-              evalMsg
+              missingRules
             )
           )
         ) =>
@@ -124,7 +124,6 @@ class TableItem(
           section(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
-            Space(icon(evalMsg.status), evalMsg.msg),
             Table[TableRow]
               .tableLayout(TableLayout.fixed)
               .bordered(true)
@@ -260,12 +259,12 @@ case class RowCreator(
     inputKeys,
     outputKeys,
     evalResults,
-    evalMsg
+    missingRules
   ) = dmnEvalResult
 
   lazy val resultRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
-      case DmnEvalRowResult(status, decisionId, testInputs, Nil, maybeError) =>
+      case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
         Seq(
           new TableRow(
             status,
@@ -316,12 +315,28 @@ case class RowCreator(
               )
           }
         rows ++ errorRow
+    } ++ missingRules.flatMap{
+      case DmnRule(index, ruleId, inputs, outputs) =>
+        Seq(new TableRow(
+          EvalStatus.WARN,
+          inputKeys.map(_ -> "").toMap,
+          2,
+          index,
+          inputKeys.zip(inputs).toMap,
+          outputKeys.zip(outputs).toMap,
+          None
+        ),new TableRow(
+          EvalStatus.WARN,
+          inputKeys.map(_ -> "").toMap,
+          0,
+          index,
+          Map.empty,
+          Map.empty,
+          Some("There are no Test Inputs that match this Rule.")
+        ))
     }
 
-  private lazy val matchedRuleIds =
-    evalResults.flatMap(_.matchedRules.map(_.ruleId)).distinct
-
   private def rowIndex(ruleId: String) =
-    dmn.ruleIds.indexWhere(_ == ruleId) + 1
+    dmn.rules.find(_.ruleId == ruleId).map(_.index).getOrElse(-1)
 
 }
