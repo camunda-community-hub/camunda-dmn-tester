@@ -10,7 +10,7 @@ import slinky.core.{FunctionalComponent, SyntheticEvent, TagMod}
 import typings.antd.antdStrings.{center, middle, primary}
 import typings.antd.components._
 import typings.antd.mod.message
-
+import pme123.camunda.dmn.tester.client._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -113,14 +113,4 @@ object containers {
           )
         )
     }
-
-  private def col(card: TagMod[slinky.web.html.div.tag.type]) =
-    Col
-      .xs(23)
-      .sm(23)
-      .md(21)
-      .lg(20)
-      .xl(18)(
-        card
-      )
 }

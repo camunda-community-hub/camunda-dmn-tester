@@ -4,8 +4,8 @@ import autowire._
 import boopickle.Default._
 import org.scalablytyped.runtime.StringDictionary
 import org.scalajs.dom.raw.HTMLInputElement
+import pme123.camunda.dmn.tester.client.{basePathStr, col}
 import pme123.camunda.dmn.tester.client.services.AjaxClient
-import pme123.camunda.dmn.tester.client.{basePathStr, textWithTooltip}
 import pme123.camunda.dmn.tester.shared.DmnApi
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
@@ -74,14 +74,8 @@ import scala.util.{Failure, Success}
         .className("config-form")(
           Row
             .gutter(20)(
-              Col.span(24)(
+              col(
                 PathSelect(basePath, paths, onAddPath, onFormSubmit)
-              )
-            ),
-          Row
-            .gutter(20)(
-              Col.span(24)(
-                // UploadElement()
               )
             )
         )

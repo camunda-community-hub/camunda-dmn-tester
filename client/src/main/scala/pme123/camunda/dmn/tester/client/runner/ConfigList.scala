@@ -1,5 +1,6 @@
 package pme123.camunda.dmn.tester.client.runner
 
+import pme123.camunda.dmn.tester.client.buttonWithTooltip
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.shared.DmnConfig
 import slinky.core.FunctionalComponent
@@ -8,11 +9,12 @@ import slinky.core.facade.Hooks.useState
 import slinky.core.facade.{Fragment, ReactElement}
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
-import typings.antDesignIconsSvg.mod.{CheckOutlined, CloseOutlined}
+import typings.antDesignIconsSvg.mod.{CheckOutlined, CloseOutlined, FileAddOutlined}
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
 import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.{antdStrings => aStr}
+import typings.rcFieldForm.interfaceMod.Store
 
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.literal
@@ -29,6 +31,7 @@ import scala.scalajs.js.Dynamic.literal
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val (isActive, setIsActive) = useState(false)
+      val (isModalVisible, setIsModalVisible) = useState(false)
       val Props(configs, isLoaded, maybeError, setConfigs) = props
 
       lazy val handleConfigToggle = { (config: DmnConfig) =>
@@ -38,6 +41,11 @@ import scala.scalajs.js.Dynamic.literal
             newCF
           case c => c
         })
+      }
+
+      lazy val onCreate = (values: Store) => {
+        println(s"Received values of form: $values")
+        setIsModalVisible(false)
       }
 
       Card
@@ -52,6 +60,20 @@ import scala.scalajs.js.Dynamic.literal
                   setConfigs(configs.map(_.copy(isActive = active)))
                 }
               )
+            ),
+            DmnConfigForm(
+              isModalVisible,
+              store => onCreate(store),
+              () => setIsModalVisible(false)
+            )
+          )
+        )
+        .actions(
+          js.Array(
+            buttonWithTooltip(
+              FileAddOutlined,
+              "Create new DMN Configuration.",
+              () => setIsModalVisible(true)
             )
           )
         )(
