@@ -2,37 +2,61 @@ package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.buttonWithTooltip
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
-import pme123.camunda.dmn.tester.shared.DmnConfig
+import pme123.camunda.dmn.tester.shared.TesterValue.{
+  BooleanValue,
+  NumberValue,
+  StringValue
+}
+import pme123.camunda.dmn.tester.shared.{
+  DmnConfig,
+  TesterData,
+  TesterInput,
+  TesterValue
+}
 import slinky.core.FunctionalComponent
 import slinky.core.annotations.react
 import slinky.core.facade.Hooks.useState
 import slinky.core.facade.{Fragment, ReactElement}
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
-import typings.antDesignIconsSvg.mod.{CheckOutlined, CloseOutlined, FileAddOutlined}
+import typings.antDesignIconsSvg.mod.{
+  CheckOutlined,
+  CloseOutlined,
+  FileAddOutlined
+}
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
 import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.{antdStrings => aStr}
-import typings.rcFieldForm.interfaceMod.Store
+import typings.rcFieldForm.interfaceMod.{Store, StoreValue}
 
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.literal
+import scala.scalajs.js.JSON
 
 @react object ConfigCard {
 
   case class Props(
+      basePath: String,
       configs: Seq[DmnConfig],
       isLoaded: Boolean,
       maybeError: Option[String],
-      setConfigs: Seq[DmnConfig] => Unit
+      setConfigs: Seq[DmnConfig] => Unit,
+      onAddConfig: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val (isActive, setIsActive) = useState(false)
       val (isModalVisible, setIsModalVisible) = useState(false)
-      val Props(configs, isLoaded, maybeError, setConfigs) = props
+      val Props(
+        basePath,
+        configs,
+        isLoaded,
+        maybeError,
+        setConfigs,
+        onAddConfig
+      ) = props
 
       lazy val handleConfigToggle = { (config: DmnConfig) =>
         val newCF = config.copy(isActive = !config.isActive)
@@ -44,7 +68,39 @@ import scala.scalajs.js.Dynamic.literal
       }
 
       lazy val onCreate = (values: Store) => {
-        println(s"Received values of form: $values")
+        println(s"Received values of form: ${JSON.stringify(values)}")
+        /*
+           {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}]}
+         */
+        val json = ujson.read(JSON.stringify(values))
+
+        val testerInputs = json("testerInputs").arr.map { e =>
+          val values = e("values").str
+            .split(",")
+            .map(_.trim)
+            .filter(_.nonEmpty)
+
+          val testerValues = e("type").str match {
+            case "String"  => values.map(StringValue)
+            case "Number"  => values.map(NumberValue.apply)
+            case "Boolean" => values.map(BooleanValue.apply)
+          }
+          TesterInput(e("key").str, testerValues.toList)
+        }.toList
+
+        val dmnPath = json("pathOfDmn").str
+          .split("/")
+          .map(_.trim)
+          .filter(_.nonEmpty)
+          .toList
+
+        onAddConfig(
+          DmnConfig(
+            json("decisionId").str,
+            TesterData(testerInputs),
+            dmnPath
+          )
+        )
         setIsModalVisible(false)
       }
 
@@ -62,8 +118,9 @@ import scala.scalajs.js.Dynamic.literal
               )
             ),
             DmnConfigForm(
+              basePath,
               isModalVisible,
-              store => onCreate(store),
+              (store: Store) => onCreate(store),
               () => setIsModalVisible(false)
             )
           )

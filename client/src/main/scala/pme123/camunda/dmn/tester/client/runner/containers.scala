@@ -33,6 +33,7 @@ object containers {
       val (isEvalResultsLoaded, setIsEvalResultsLoaded) = useState(true)
       val (evalResults, setEvalResults) = useState(Seq.empty[Either[EvalException, DmnEvalResult]])
       val (basePath, setBasePath) = useState("")
+      val (activePath, setActivePath) = useState(Seq.empty[String])
 
       // Note: the empty deps array [] means
       // this useEffect will run once
@@ -71,6 +72,7 @@ object containers {
         (path: String) => {
           setIsConfigsLoaded(false)
           val pathSeq = path.split("/").filter(_.trim.nonEmpty)
+          setActivePath(pathSeq)
           AjaxClient[DmnApi]
             .getConfigs(pathSeq)
             .call()
@@ -85,6 +87,23 @@ object containers {
             }
         }
 
+      lazy val addDmnConfig = (dmnConfig: DmnConfig) => {
+        println(s"Add DmnConfig: $dmnConfig")
+        AjaxClient[DmnApi]
+          .addConfig(dmnConfig, activePath)
+          .call()
+          .onComplete {
+            case Success(configs) =>
+              setIsConfigsLoaded(true)
+              setConfigs(configs)
+              setConfigsError(None)
+            case Failure(ex) =>
+              setIsConfigsLoaded(true)
+              setConfigsError(Some(s"Problem loading DMN Configs: ${ex.toString}"))
+          }
+      }
+
+
       Row
         // .gutter(20) //[0, 20] ?
         .justify(center)
@@ -97,7 +116,7 @@ object containers {
               )
           ),
           col(
-            ConfigCard(configs, isConfigsLoaded, maybeConfigsError, setConfigs)
+            ConfigCard(basePath, configs, isConfigsLoaded, maybeConfigsError, setConfigs, addDmnConfig)
           ),
           col(
             Card

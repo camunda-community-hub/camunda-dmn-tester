@@ -4,16 +4,8 @@ import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.runner._
-import pme123.camunda.dmn.tester.shared.HandledTesterException.{
-  ConfigException,
-  EvalException
-}
-import pme123.camunda.dmn.tester.shared.{
-  DmnApi,
-  DmnConfig,
-  DmnEvalResult,
-  EvalResult
-}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException, EvalException}
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult, EvalResult}
 import zio.{Ref, Runtime, UIO, ZIO, console}
 
 import java.io.File
@@ -42,13 +34,26 @@ class DmnService extends DmnApi {
 
   override def getConfigs(path: Seq[String]): Seq[DmnConfig] =
     runtime.unsafeRun(
-      for {
-        zConfigs <- readConfigs(path.toList)
-        dmnConfigs <- ZIO.collectAll(zConfigs)
-        _ <- console.putStrLn(
-          s"Found ${dmnConfigs.size} DmnConfigs in ${pwd / path}"
-        )
-      } yield dmnConfigs
+      loadConfigs(path)
+    )
+
+  private def loadConfigs(path: Seq[String]) = {
+    for {
+      zConfigs <- readConfigs(path.toList)
+      dmnConfigs <- ZIO.collectAll(zConfigs)
+      _ <- console.putStrLn(
+        s"Found ${dmnConfigs.size} DmnConfigs in ${pwd / path}"
+      )
+    } yield dmnConfigs
+  }
+
+  override def addConfig(
+      dmnConfig: DmnConfig,
+      path: Seq[String]
+  ): Seq[DmnConfig] =
+    runtime.unsafeRun(
+      DmnConfigHandler.write(dmnConfig, path.toList) *>
+        loadConfigs(path)
     )
 
   override def runTests(

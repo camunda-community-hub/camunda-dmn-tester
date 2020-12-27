@@ -129,7 +129,6 @@ import scala.util.{Failure, Success}
       val (selected, setSelected) =
         useState[String](configPaths.headOption.getOrElse("-"))
 
-      println(s"Component called: $selected")
       def onNameChange = (event: ChangeEvent[HTMLInputElement]) => {
         setName(event.currentTarget.value)
       }

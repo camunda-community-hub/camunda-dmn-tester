@@ -53,9 +53,23 @@ object TesterValue {
   case class BooleanValue(value: Boolean) extends TesterValue {
     def normalized: Set[Any] = Set(value)
   }
-
+  object BooleanValue {
+    def apply(strValue: String): BooleanValue =
+      BooleanValue(strValue == "true")
+  }
   case class NumberValue(value: BigDecimal) extends TesterValue {
     def normalized: Set[Any] = Set(value)
+  }
+  object NumberValue {
+    def apply(strValue: String): NumberValue =
+      NumberValue(BigDecimal(strValue))
+
+    def apply(intValue: Int): NumberValue =
+      NumberValue(BigDecimal(intValue))
+
+    def apply(doubleValue: Double): NumberValue =
+      NumberValue(BigDecimal(doubleValue))
+
   }
 
   case class ValueSet(values: Set[TesterValue]) extends TesterValue {

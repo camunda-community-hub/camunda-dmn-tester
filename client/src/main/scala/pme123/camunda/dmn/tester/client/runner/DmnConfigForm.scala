@@ -2,13 +2,12 @@ package pme123.camunda.dmn.tester.client.runner
 
 import boopickle.Default._
 import pme123.camunda.dmn.tester.client._
-import slinky.core.{FunctionalComponent, TagMod}
+import slinky.core.FunctionalComponent
+import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
 import slinky.core.facade.Fragment
 import slinky.web.html.p
-import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod.{MinusCircleOutlined, PlusOutlined}
-import typings.antd.antdStrings.{add, baseline, horizontal}
 import typings.antd.components._
 import typings.antd.formFormMod.useForm
 import typings.antd.formListMod.{FormListFieldData, FormListOperation}
@@ -21,6 +20,7 @@ import scala.scalajs.js
 @react object DmnConfigForm {
 
   case class Props(
+      basePath: String,
       isModalVisible: Boolean,
       onCreate: Store => Unit,
       onCancel: () => Unit
@@ -28,7 +28,7 @@ import scala.scalajs.js
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(isModalVisible, onCreate, onCancel) = props
+      val Props(basePath, isModalVisible, onCreate, onCancel) = props
       val form = useForm().head
 
       Modal
@@ -66,11 +66,11 @@ import scala.scalajs.js
                   Input()
                 ),
               FormItem
-                .name("dmnPath")
+                .name("pathOfDmn") // dmnPath did not work!?
                 .label(
                   textWithTooltip(
-                    "DMN Path",
-                    "The relative Path of the DMN to the Base Path. Example: core/src/test/resources/numbers.dmn"
+                    s"DMN Path $basePath",
+                    s"The relative Path of the DMN to the Base Path. Example: core/src/test/resources/numbers.dmn"
                   )
                 )
                 .rulesVarargs(
@@ -92,7 +92,7 @@ import scala.scalajs.js
                         .withKey(field.key.toString)(
                           Col
                             .style(CSSProperties().setPaddingRight(10))
-                            .span(7)(
+                            .span(5)(
                               FormItem
                                 .label(
                                   textWithTooltip(
@@ -100,8 +100,8 @@ import scala.scalajs.js
                                     "The input variable key needed in the DMN Table."
                                   )
                                 )
-                                .name(field.name + "Key")
-                                .fieldKey(field.fieldKey + "Key")
+                                .nameVarargs(field.name, "key")
+                                .fieldKeyVarargs(field.fieldKey + "key")
                                 .rulesVarargs(
                                   BaseRule()
                                     .setRequired(true)
@@ -109,12 +109,32 @@ import scala.scalajs.js
                                       "The Test Input Key is required!"
                                     )
                                 )(
-                                  Input.id(field.fieldKey + "Key")()
+                                  Input()
                                 )
                             ),
                           Col
                             .style(CSSProperties().setPaddingRight(10))
-                            .span(16)(
+                            .span(5)(
+                              FormItem
+                                .label(
+                                  textWithTooltip(
+                                    "Type",
+                                    "The type of your inputs."
+                                  )
+                                )
+                                .initialValue("String")
+                                .nameVarargs(field.name, "type")
+                                .fieldKeyVarargs(field.fieldKey + "type")(
+                                  Select[String].apply(
+                                      Select.Option("String")("String"),
+                                      Select.Option("Number")("Number"),
+                                      Select.Option("Boolean")("Boolean")
+                                    )
+                                )
+                            ),
+                          Col
+                            .style(CSSProperties().setPaddingRight(10))
+                            .span(13)(
                               FormItem
                                 .label(
                                   textWithTooltip(
@@ -122,8 +142,8 @@ import scala.scalajs.js
                                     "All inputs for this input you want to test. Example: ch,fr,de,CH"
                                   )
                                 )
-                                .name(field.name + "Values")
-                                .fieldKey(field.fieldKey + "Values")
+                                .fieldKeyVarargs(field.fieldKey + "values")
+                                .nameVarargs(field.name, "values")
                                 .rulesVarargs(
                                   BaseRule()
                                     .setRequired(true)
@@ -131,7 +151,7 @@ import scala.scalajs.js
                                       "The Test Input Values is required!"
                                     )
                                 )(
-                                  Input.id(field.fieldKey + "Values")()
+                                  Input()
                                 )
                             ),
                           Col.span(1)(
@@ -142,7 +162,6 @@ import scala.scalajs.js
                             )
                           )
                         )
-                        .build
                     }.toSeq :+
                       FormItem
                         .name("addInput")(
@@ -153,9 +172,8 @@ import scala.scalajs.js
                             () => op.add()
                           )
                         )
-                        .build: _*
                   ),
-                name = "testInputs"
+                name = "testerInputs"
               )
             )
         )
