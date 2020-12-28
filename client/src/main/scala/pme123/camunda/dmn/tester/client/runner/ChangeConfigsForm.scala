@@ -45,9 +45,8 @@ import scala.util.{Failure, Success}
         onFormSubmit(path)
       }
 
-      def onAddPath(path: String): Unit = {
+      lazy val onAddPath: String => Unit = { path =>
         setPaths(paths :+ path)
-        println(s"SetFieldsValue: $path")
         setPath(path)
       }
 

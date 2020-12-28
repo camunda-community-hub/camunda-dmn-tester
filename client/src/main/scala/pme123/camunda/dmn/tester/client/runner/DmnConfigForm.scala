@@ -16,6 +16,7 @@ import typings.react.mod.CSSProperties
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
+import scala.scalajs.js.RegExp
 
 @react object DmnConfigForm {
 
@@ -30,6 +31,11 @@ import scala.scalajs.js
     props =>
       val Props(basePath, isModalVisible, onCreate, onCancel) = props
       val form = useForm().head
+
+      val identifierRule = BaseRule()
+        .setRequired(true)
+        .setPattern(RegExp("""^[^\d\W][-\w]+$""", "gm"))
+        .setMessage("This is required and must a valid Identifier!")
 
       Modal
         .title("Create new DMN Config")
@@ -55,14 +61,10 @@ import scala.scalajs.js
                 .label(
                   textWithTooltip(
                     "Decision Id",
-                    "The Id of the DMN Table you want to test."
+                    "The Id of the DMN Table you want to test. Valid examples: my-dmn, my_dmn3"
                   )
                 )
-                .rulesVarargs(
-                  BaseRule()
-                    .setRequired(true)
-                    .setMessage("The decision Id is required!")
-                )(
+                .rulesVarargs(identifierRule)(
                   Input()
                 ),
               FormItem
@@ -76,7 +78,10 @@ import scala.scalajs.js
                 .rulesVarargs(
                   BaseRule()
                     .setRequired(true)
-                    .setMessage("The DMN Path is required!")
+                    .setPattern(RegExp("""^[^\/](.+\/)*.+\.dmn$""", "gm"))
+                    .setMessage(
+                      "The DMN Path is required in the following format: path/to/dmn/my.dmn!"
+                    )
                 )(
                   Input()
                 ),
@@ -102,13 +107,7 @@ import scala.scalajs.js
                                 )
                                 .nameVarargs(field.name, "key")
                                 .fieldKeyVarargs(field.fieldKey + "key")
-                                .rulesVarargs(
-                                  BaseRule()
-                                    .setRequired(true)
-                                    .setMessage(
-                                      "The Test Input Key is required!"
-                                    )
-                                )(
+                                .rulesVarargs(identifierRule)(
                                   Input()
                                 )
                             ),
@@ -126,10 +125,10 @@ import scala.scalajs.js
                                 .nameVarargs(field.name, "type")
                                 .fieldKeyVarargs(field.fieldKey + "type")(
                                   Select[String].apply(
-                                      Select.Option("String")("String"),
-                                      Select.Option("Number")("Number"),
-                                      Select.Option("Boolean")("Boolean")
-                                    )
+                                    Select.Option("String")("String"),
+                                    Select.Option("Number")("Number"),
+                                    Select.Option("Boolean")("Boolean")
+                                  )
                                 )
                             ),
                           Col
@@ -147,6 +146,7 @@ import scala.scalajs.js
                                 .rulesVarargs(
                                   BaseRule()
                                     .setRequired(true)
+                                    .setPattern(RegExp("""^[^,]+(,[^,]+)*$""", "gm"))
                                     .setMessage(
                                       "The Test Input Values is required!"
                                     )
