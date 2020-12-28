@@ -1,34 +1,22 @@
 package pme123.camunda.dmn.tester.client.runner
 
-import pme123.camunda.dmn.tester.client.buttonWithTooltip
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
-import pme123.camunda.dmn.tester.shared.TesterValue.{
-  BooleanValue,
-  NumberValue,
-  StringValue
-}
-import pme123.camunda.dmn.tester.shared.{
-  DmnConfig,
-  TesterData,
-  TesterInput,
-  TesterValue
-}
+import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
+import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
+import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
+import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
+import slinky.core.facade.Fragment
 import slinky.core.facade.Hooks.useState
-import slinky.core.facade.{Fragment, ReactElement}
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
-import typings.antDesignIconsSvg.mod.{
-  CheckOutlined,
-  CloseOutlined,
-  FileAddOutlined
-}
+import typings.antDesignIconsSvg.mod._
+import typings.antd.antdStrings.circle
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.paginationPaginationMod.PaginationConfig
 import typings.antd.{antdStrings => aStr}
-import typings.rcFieldForm.interfaceMod.{Store, StoreValue}
+import typings.rcFieldForm.interfaceMod.Store
 
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.literal
@@ -42,7 +30,9 @@ import scala.scalajs.js.JSON
       isLoaded: Boolean,
       maybeError: Option[String],
       setConfigs: Seq[DmnConfig] => Unit,
-      onAddConfig: DmnConfig => Unit
+      onAddConfig: DmnConfig => Unit,
+      onEditConfig: DmnConfig => Unit,
+      onDeleteConfig: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
@@ -55,7 +45,9 @@ import scala.scalajs.js.JSON
         isLoaded,
         maybeError,
         setConfigs,
-        onAddConfig
+        onAddConfig,
+        onEditConfig,
+        onDeleteConfig
       ) = props
 
       lazy val handleConfigToggle = { (config: DmnConfig) =>
@@ -152,7 +144,7 @@ import scala.scalajs.js.JSON
                     .showIcon(true)
                 )
             case _ =>
-              ConfigList(configs, handleConfigToggle)
+              ConfigList(configs, onEditConfig, onDeleteConfig, handleConfigToggle)
           }
         )
   }
@@ -162,12 +154,14 @@ import scala.scalajs.js.JSON
 
   case class Props(
       configs: Seq[DmnConfig],
+      onConfigEdit: DmnConfig => Unit,
+      onConfigDelete: DmnConfig => Unit,
       onConfigToggle: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(configs, onConfigToggle) = props
+      val Props(configs, onConfigEdit, onConfigDelete, onConfigToggle) = props
       List
         .withProps(
           ListProps()
@@ -178,7 +172,7 @@ import scala.scalajs.js.JSON
               )
             )
             .setRenderItem((config: DmnConfig, _) =>
-              ConfigItem(config, onConfigToggle)
+              ConfigItem(config, onConfigEdit, onConfigDelete, onConfigToggle)
             )
         )
   }
@@ -188,25 +182,45 @@ import scala.scalajs.js.JSON
 
   case class Props(
       config: DmnConfig,
+      onConfigEdit: DmnConfig => Unit,
+      onConfigDelete: DmnConfig => Unit,
       onConfigToggle: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(config, onConfigToggle) = props
+      val Props(config, onConfigEdit, onConfigDelete, onConfigToggle) = props
       List.Item
         .withKey(config.decisionId)
         .className("list-item")
         .actions(
           js.Array(
-            Tooltip.TooltipPropsWithOverlayRefAttributes
-              .titleReactElement(
-                if (config.isActive)
-                  "Mark as inactive"
-                else "Mark as active"
-              )(
-                activeCheck(config.isActive, _ => onConfigToggle(config))
+            withTooltip(
+              s"Edit '${config.decisionId}''",
+              Button
+                .shape(circle)
+                .icon(AntdIcon(EditOutlined))
+                .onClick(_ => onConfigEdit(config))
+            ),
+            Popconfirm
+              .title(
+                build(
+                  p(s"Are you sure you want to delete '${config.decisionId}'?")
+                )
               )
+              .onConfirm(_ => onConfigDelete(config))(
+                withTooltip(
+                  s"Delete '${config.decisionId}''",
+                  Button
+                    .shape(circle)
+                    .icon(AntdIcon(DeleteOutlined))
+                )
+              ),
+            withTooltip(
+              if (config.isActive) "Mark as inactive"
+              else "Mark as active",
+              activeCheck(config.isActive, _ => onConfigToggle(config))
+            )
           )
         )(
           div(

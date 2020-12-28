@@ -9,40 +9,56 @@ import typings.antd.components.{Button, Col, Tooltip, Typography}
 
 package object client {
 
+  def withTooltip(tooltip: String, reactElement: ReactElement): ReactElement =
+    Tooltip.TooltipPropsWithOverlayRefAttributes
+      .titleReactElement(tooltip)(
+        reactElement
+      )
+      .build
+
   def textWithTooltip(text: String, tooltip: String): ReactElement =
-    Tooltip.TooltipPropsWithOverlayRefAttributes
-      .titleReactElement(tooltip)(
-        Typography
-          .Text(text)
-      )
-      .build
+    withTooltip(
+      tooltip,
+      Typography
+        .Text(text)
+    )
 
-  def buttonWithTooltip(icon: IconDefinition, tooltip: String, onClick: () => Unit): ReactElement =
-    Tooltip.TooltipPropsWithOverlayRefAttributes
-      .titleReactElement(tooltip)(
-        Button
-          .`type`(primary)
-          .shape(circle)
-          .icon(AntdIcon(icon))
-          .onClick(_ => onClick())
-      )
-      .build
+  def buttonWithTooltip(
+      icon: IconDefinition,
+      tooltip: String,
+      onClick: () => Unit
+  ): ReactElement =
+    withTooltip(
+      tooltip,
+      Button
+        .`type`(primary)
+        .shape(circle)
+        .icon(AntdIcon(icon))
+        .onClick(_ => onClick())
+    )
 
-  def buttonWithTextTooltip(icon: IconDefinition, text: String, tooltip: String, onClick: () => Unit): ReactElement =
-    Tooltip.TooltipPropsWithOverlayRefAttributes
-      .titleReactElement(tooltip)(
+  def buttonWithTextTooltip(
+      icon: IconDefinition,
+      text: String,
+      tooltip: String,
+      onClick: () => Unit
+  ): ReactElement =
+    withTooltip(tooltip,
         Button
           .`type`(dashed)
           .icon(AntdIcon(icon))
           .block(true)
           .onClick(_ => onClick())(text)
       )
-      .build
 
-  def iconWithTooltip(icon: IconDefinition, tooltip: String, onClick: () => Unit): ReactElement =
+  def iconWithTooltip(
+      icon: IconDefinition,
+      tooltip: String,
+      onClick: () => Unit
+  ): ReactElement =
     Tooltip.TooltipPropsWithOverlayRefAttributes
       .titleReactElement(tooltip)(
-      AntdIcon(icon)
+        AntdIcon(icon)
           .onClick(_ => onClick())
       )
       .build

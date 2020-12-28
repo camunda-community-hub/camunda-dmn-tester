@@ -37,11 +37,29 @@ object DmnConfigHandler {
       .flatMap { configFile =>
         hocon
           .writeConfig(dmnConfig)
-          .bimap(
-            failureMsg => ConfigException(failureMsg),
-            ops.write(configFile, _)
+          .mapError(failureMsg => ConfigException(failureMsg))
+          .flatMap(c =>
+            ZIO(ops.write(configFile, c))
+              .mapError(ex => {
+                ConfigException(
+                  s"Could not write Config '${dmnConfig.decisionId}'\n${ex.getClass.getName}: ${ex.getMessage}"
+                )
+              }
+              )
           )
       }
+  }
+
+  def delete(
+             dmnConfig: DmnConfig,
+             path: List[String]
+           ): ZIO[Console, ConfigException, Unit] = {
+    ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
+      .tap(f => console.putStrLn(s"Config Path: ${f.toIO.getAbsolutePath}")).bimap({
+      ex =>
+        ex.printStackTrace()
+        ConfigException(ex.getMessage)
+    }, p => ops.rm(p))
   }
 }
 

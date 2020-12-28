@@ -56,6 +56,19 @@ class DmnService extends DmnApi {
         loadConfigs(path)
     )
 
+  override def updateConfig(dmnConfig: DmnConfig, path: Seq[String]): Seq[DmnConfig] =
+    runtime.unsafeRun(
+      DmnConfigHandler.delete(dmnConfig, path.toList) *>
+        DmnConfigHandler.write(dmnConfig, path.toList) *>
+        loadConfigs(path)
+    )
+
+  override def deleteConfig(dmnConfig: DmnConfig, path: Seq[String]): Seq[DmnConfig] =
+    runtime.unsafeRun(
+      DmnConfigHandler.delete(dmnConfig, path.toList) *>
+        loadConfigs(path)
+    )
+
   override def runTests(
       dmnConfigs: Seq[DmnConfig]
   ): Seq[Either[EvalException, DmnEvalResult]] =

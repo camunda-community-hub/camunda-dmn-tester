@@ -6,8 +6,14 @@ trait DmnApi {
   // get DmnConfigs items
   def getConfigs(path: Seq[String]): Seq[DmnConfig]
 
-  // add DmnConfigs items
+  // add DmnConfig
   def addConfig(dmnConfig: DmnConfig, path: Seq[String]): Seq[DmnConfig]
+
+  // edit DmnConfig
+  def updateConfig(dmnConfig: DmnConfig, path: Seq[String]): Seq[DmnConfig]
+
+  // delete DmnConfig
+  def deleteConfig(dmnConfig: DmnConfig, path: Seq[String]): Seq[DmnConfig]
 
   // gets the absolute path of the server / or where you run the testRunner.sc Script
   def getBasePath(): String
