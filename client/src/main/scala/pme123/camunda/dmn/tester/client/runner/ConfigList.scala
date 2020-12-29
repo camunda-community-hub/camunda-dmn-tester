@@ -66,7 +66,7 @@ import scala.scalajs.js.JSON
         setIsModalVisible(true)
       }
 
-      lazy val onCreate = (values: Store) => {
+      lazy val onSave = (values: Store) => {
         println(s"Received values of form: ${JSON.stringify(values)}")
         /*
            {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}]}
@@ -104,8 +104,10 @@ import scala.scalajs.js.JSON
       }
 
       Card
+        .withKey("selectConfigCard")
         .title(
-          Fragment(
+          Fragment
+          .withKey("selectConfigFragment")(
             "2. Select the DMN Configurations you want to test.",
             div(style := literal(textAlign = "right", marginRight = 10))(
               activeCheck(
@@ -120,7 +122,7 @@ import scala.scalajs.js.JSON
               basePath,
               maybeDmnConfig,
               isModalVisible,
-              (store: Store) => onCreate(store),
+              (store: Store) => onSave(store),
               () => setIsModalVisible(false)
             )
           )

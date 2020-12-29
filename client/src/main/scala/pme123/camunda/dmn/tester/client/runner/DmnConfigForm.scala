@@ -3,22 +3,26 @@ package pme123.camunda.dmn.tester.client.runner
 import boopickle.Default._
 import org.scalablytyped.runtime.StringDictionary
 import pme123.camunda.dmn.tester.client._
-import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterInput}
+import pme123.camunda.dmn.tester.client.services.AjaxClient
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
 import slinky.core.facade.Fragment
+import slinky.core.facade.Hooks.useEffect
 import slinky.web.html.p
 import typings.antDesignIconsSvg.mod.{MinusCircleOutlined, PlusOutlined}
 import typings.antd.components._
 import typings.antd.formFormMod.useForm
 import typings.antd.formListMod.{FormListFieldData, FormListOperation}
+import typings.antd.mod.message
 import typings.rcFieldForm.interfaceMod.{BaseRule, Store}
 import typings.react.mod.CSSProperties
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, RegExp}
+import scala.util.{Failure, Success}
 
 @react object DmnConfigForm {
 
@@ -26,26 +30,37 @@ import scala.scalajs.js.{JSON, RegExp}
       basePath: String,
       maybeDmnConfig: Option[DmnConfig],
       isModalVisible: Boolean,
-      onCreate: Store => Unit,
+      onSave: Store => Unit,
       onCancel: () => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(basePath, maybeDmnConfig, isModalVisible, onCreate, onCancel) =
+      val Props(basePath, maybeDmnConfig, isModalVisible, onSave, onCancel) =
         props
       val form = useForm().head
 
-      form.setFieldsValue(
-        StringDictionary(
-          "decisionId" -> s"${maybeDmnConfig.map(_.decisionId).getOrElse("")}",
-          "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
-          "testerInputs" -> js.Array(maybeDmnConfig.toSeq.flatMap(_.data.inputs).map{
-            case ti @ TesterInput(key, values) => StringDictionary("key" -> key,
-              "type" -> ti.valueType,
-              "values" -> ti.valuesAsString)
-          }: _*)
-        )
+      useEffect(
+        () => {
+          if (isModalVisible)
+            form.setFieldsValue(
+              StringDictionary(
+                "decisionId" -> s"${maybeDmnConfig.map(_.decisionId).getOrElse("")}",
+                "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
+                "testerInputs" -> js.Array(
+                  maybeDmnConfig.toSeq.flatMap(_.data.inputs).map {
+                    case ti @ TesterInput(key, values) =>
+                      StringDictionary(
+                        "key" -> key,
+                        "type" -> ti.valueType,
+                        "values" -> ti.valuesAsString
+                      )
+                  }: _*
+                )
+              )
+            )
+        },
+        Seq(isModalVisible)
       )
 
       val identifierRule = BaseRule()
@@ -58,13 +73,14 @@ import scala.scalajs.js.{JSON, RegExp}
         .okText("Save")
         .width(1000)
         .visible(isModalVisible)
+        .forceRender(true)
         .onOk(_ =>
           form
             .validateFields()
             .toFuture
             .map { (values: Store) =>
               form.resetFields()
-              onCreate(values)
+              onSave(values)
               values
             }
         )
@@ -73,6 +89,7 @@ import scala.scalajs.js.{JSON, RegExp}
             .form(form)
             .className("config-form")(
               FormItem
+                .withKey("decisionIdKey")
                 .name("decisionId")
                 .label(
                   textWithTooltip(
@@ -85,6 +102,7 @@ import scala.scalajs.js.{JSON, RegExp}
                 ),
               FormItem
                 .name("pathOfDmn") // dmnPath did not work!?
+                .withKey("pathOfDmnKey")
                 .label(
                   textWithTooltip(
                     s"DMN Path $basePath",
@@ -102,7 +120,7 @@ import scala.scalajs.js.{JSON, RegExp}
                   Input()
                 ),
               p("Test Inputs"),
-              FormList (
+              FormList(
                 children = (
                     fields: js.Array[FormListFieldData],
                     op: FormListOperation
@@ -115,6 +133,7 @@ import scala.scalajs.js.{JSON, RegExp}
                             .style(CSSProperties().setPaddingRight(10))
                             .span(5)(
                               FormItem
+                                .withKey(field.fieldKey + "key")
                                 .label(
                                   textWithTooltip(
                                     "Key",
@@ -131,6 +150,7 @@ import scala.scalajs.js.{JSON, RegExp}
                             .style(CSSProperties().setPaddingRight(10))
                             .span(5)(
                               FormItem
+                                .withKey(field.fieldKey + "type")
                                 .label(
                                   textWithTooltip(
                                     "Type",
@@ -151,6 +171,7 @@ import scala.scalajs.js.{JSON, RegExp}
                             .style(CSSProperties().setPaddingRight(10))
                             .span(13)(
                               FormItem
+                                .withKey(field.fieldKey + "values")
                                 .label(
                                   textWithTooltip(
                                     "Values",
@@ -182,6 +203,7 @@ import scala.scalajs.js.{JSON, RegExp}
                         )
                     }.toSeq :+
                       FormItem
+                        .withKey("addInput")
                         .name("addInput")(
                           buttonWithTextTooltip(
                             PlusOutlined,
@@ -190,7 +212,8 @@ import scala.scalajs.js.{JSON, RegExp}
                             () => op.add()
                           )
                         )
-                  )},
+                  )
+                },
                 name = "testerInputs"
               )
             )

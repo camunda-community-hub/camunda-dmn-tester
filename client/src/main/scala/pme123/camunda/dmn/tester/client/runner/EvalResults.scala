@@ -125,6 +125,8 @@ class TableItem(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
             Table[TableRow]
+              .withKey(dmn.id + "Key")
+            //  .rowKey("dmnRowIndex")
               .tableLayout(TableLayout.fixed)
               .bordered(true)
               .pagination(antdBooleans.`false`)
@@ -163,7 +165,7 @@ class TableItem(
             .setEllipsis(true)
             .setKey(in)
             .setRender((_, row, _) =>
-              renderTextCell(row.testInputs(in), 1)
+              renderTextCell(row.testInputs(in))
                 .setProps(CellType().setRowSpan(row.inputRowSpan))
             )
         ): _*
@@ -180,13 +182,13 @@ class TableItem(
           case Some(msg) =>
             val colSpan =
               inputKeys.length + outputKeys.length + 1
-            renderTextCell(msg, colSpan)
+            renderTextCell(msg)
               .setProps(
                 CellType()
                   .setColSpan(colSpan)
                   .setClassName(s"${row.status}-cell")
               )
-          case _ => renderTextCell(row.dmnRowIndex.toString, 1)
+          case _ => renderTextCell(row.dmnRowIndex.toString)
         }
       }
   }
@@ -212,7 +214,7 @@ class TableItem(
                 else inOutMap(row)(key)
               val colSpan =
                 row.outputMessage.map(_ => 0).getOrElse(1)
-              renderTextCell(value, colSpan)
+              renderTextCell(value)
                 .setProps(
                   CellType()
                     .setColSpan(colSpan)
@@ -222,7 +224,7 @@ class TableItem(
       )
   }
 
-  private def renderTextCell(text: String, colSpan: Int) = {
+  private def renderTextCell(text: String) = {
     RenderedCell[TableRow]()
       .setChildren(
         textWithTooltip(text, text)
