@@ -34,6 +34,11 @@ case class TesterData(
 }
 
 case class TesterInput(key: String, values: List[TesterValue]) {
+
+  val valuesAsString: String = values.map(_.valueStr).mkString(", ")
+
+  def valueType: String = values.headOption.map(_.valueType).getOrElse("String")
+
   def normalize(): (String, List[Any]) = {
     val allValues: List[Any] = values.flatMap(_.normalized)
     key -> allValues
@@ -41,16 +46,22 @@ case class TesterInput(key: String, values: List[TesterValue]) {
 }
 
 sealed trait TesterValue {
+  def valueStr: String
+  def valueType: String
   def normalized: Set[Any]
 }
 
 object TesterValue {
 
   case class StringValue(value: String) extends TesterValue {
-    def normalized: Set[Any] = Set(value)
+    val valueStr: String = value
+    val valueType: String = "String"
+    val normalized: Set[Any] = Set(value)
   }
 
   case class BooleanValue(value: Boolean) extends TesterValue {
+    val valueStr: String = value.toString
+    val valueType: String = "Boolean"
     def normalized: Set[Any] = Set(value)
   }
   object BooleanValue {
@@ -58,6 +69,8 @@ object TesterValue {
       BooleanValue(strValue == "true")
   }
   case class NumberValue(value: BigDecimal) extends TesterValue {
+    val valueStr: String = value.toString()
+    val valueType: String = "Number"
     def normalized: Set[Any] = Set(value)
   }
   object NumberValue {
@@ -73,6 +86,8 @@ object TesterValue {
   }
 
   case class ValueSet(values: Set[TesterValue]) extends TesterValue {
+    val valueStr: String = values.map(_.valueStr).mkString(",")
+    val valueType: String = "Set"
     def normalized: Set[Any] = values.flatMap(_.normalized)
   }
 }

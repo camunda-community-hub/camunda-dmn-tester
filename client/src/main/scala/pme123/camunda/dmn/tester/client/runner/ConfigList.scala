@@ -1,9 +1,10 @@
 package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
+import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
 import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
-import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
+import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
@@ -39,6 +40,7 @@ import scala.scalajs.js.JSON
     props =>
       val (isActive, setIsActive) = useState(false)
       val (isModalVisible, setIsModalVisible) = useState(false)
+      val (maybeDmnConfig, setMaybeDmnConfig) = useState[Option[DmnConfig]](None)
       val Props(
         basePath,
         configs,
@@ -57,6 +59,11 @@ import scala.scalajs.js.JSON
             newCF
           case c => c
         })
+      }
+
+      lazy val editDmnConfig = (dmnConfig: DmnConfig) => {
+        setMaybeDmnConfig(Some(dmnConfig))
+        setIsModalVisible(true)
       }
 
       lazy val onCreate = (values: Store) => {
@@ -79,21 +86,21 @@ import scala.scalajs.js.JSON
           }
           TesterInput(e("key").str, testerValues.toList)
         }.toList
-
+        setIsModalVisible(false)
         val dmnPath = json("pathOfDmn").str
           .split("/")
           .map(_.trim)
           .filter(_.nonEmpty)
           .toList
-
-        onAddConfig(
-          DmnConfig(
-            json("decisionId").str,
-            TesterData(testerInputs),
-            dmnPath
-          )
+        val dmnConfig = DmnConfig(
+          json("decisionId").str,
+          TesterData(testerInputs),
+          dmnPath
         )
-        setIsModalVisible(false)
+        maybeDmnConfig
+          .map(_ => onEditConfig(dmnConfig ))
+          .getOrElse(onAddConfig(dmnConfig))
+
       }
 
       Card
@@ -111,6 +118,7 @@ import scala.scalajs.js.JSON
             ),
             DmnConfigForm(
               basePath,
+              maybeDmnConfig,
               isModalVisible,
               (store: Store) => onCreate(store),
               () => setIsModalVisible(false)
@@ -144,7 +152,7 @@ import scala.scalajs.js.JSON
                     .showIcon(true)
                 )
             case _ =>
-              ConfigList(configs, onEditConfig, onDeleteConfig, handleConfigToggle)
+              ConfigList(configs, editDmnConfig, onDeleteConfig, handleConfigToggle)
           }
         )
   }
