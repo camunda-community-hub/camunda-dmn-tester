@@ -61,30 +61,6 @@ object Settings {
       packagedArtifacts := Map.empty
     ) // doesn't work - https://github.com/sbt/sbt-pgp/issues/42
 
-  object core {
-
-    lazy val settings: Project => Project = _.settings(
-      name := projectName,
-      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-      resolvers += Resolver.mavenLocal // only needed for dmn-engine SNAPSHOT
-      //    crossScalaVersions := Deps.supportedScalaVersions
-    )
-
-    lazy val deps: Project => Project = _.settings(
-      libraryDependencies ++= Seq(
-        Deps.ammonite,
-        Deps.dmnScala,
-        Deps.zio,
-        Deps.zioCats,
-        Deps.zioConfigHocon,
-        Deps.zioConfigMagnolia,
-        Deps.zioTest % Test,
-        Deps.zioTestSbt % Test
-      )
-    )
-
-  }
-
   object shared {
     lazy val deps: Project => Project =
       _.settings(
@@ -106,7 +82,7 @@ object Settings {
       //    crossScalaVersions := Deps.supportedScalaVersions
     )
 
-    lazy val deps: Project => Project =
+    lazy val serverDeps: Project => Project =
       _.settings(
         libraryDependencies ++= Seq(
           Deps.http4sDsl,
@@ -114,6 +90,19 @@ object Settings {
           Deps.slf4j
         )
       )
+
+    lazy val deps: Project => Project = _.settings(
+      libraryDependencies ++= Seq(
+        Deps.ammonite,
+        Deps.dmnScala,
+        Deps.zio,
+        Deps.zioCats,
+        Deps.zioConfigHocon,
+        Deps.zioConfigMagnolia,
+        Deps.zioTest % Test,
+        Deps.zioTestSbt % Test
+      )
+    )
 
     lazy val docker: Project => Project =
       _.settings(

@@ -1,4 +1,4 @@
-import Settings.{client => cli, core => cor, server => ser, shared => sha, _}
+import Settings.{client => cli, server => ser, shared => sha, _}
 
 lazy val root = project
   .settings(name := s"$projectName-root", commands += ReleaseCmd)
@@ -7,14 +7,6 @@ lazy val root = project
   .configure(
     projectSettings,
     preventPublication
-  )
-
-lazy val core = project
-  .configure(
-    projectSettings,
-    preventPublication,
-    cor.settings,
-    cor.deps
   )
 
 lazy val shared =
@@ -51,8 +43,8 @@ lazy val server =
     .configure(
       projectSettings,
       ser.settings,
-      ser.deps,
-      cor.deps, // must be moved?
+      ser.serverDeps,
+      ser.deps, // must be moved?
       ser.docker,
       sha.deps,
       publicationSettings
