@@ -168,7 +168,7 @@ class TableItem(
             .setKey(in)
             .setRender((_, row, _) =>
               renderTextCell(row.testInputs(in))
-                .setProps(CellType().setRowSpan( row.totalRowSpan))
+                .setProps(CellType().setRowSpan(row.totalRowSpan))
             )
         ): _*
       )
@@ -259,8 +259,7 @@ class TableRow(
 
   def totalRowSpan: Double = children.size + inputRowSpan
 
-
-  def toParentRow(children: Seq[TableRow] ): TableRow = {
+  def toParentRow(children: Seq[TableRow]): TableRow = {
     this.children = js.Array(children: _*)
     this
   }
@@ -281,7 +280,7 @@ case class RowCreator(
     missingRules
   ) = dmnEvalResult
 
-  private lazy val allRows: Seq[TableRow] =
+  private lazy val evaluatedRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
         Seq(
@@ -311,7 +310,8 @@ case class RowCreator(
                 testInputs.values.mkString("-") + index,
                 status,
                 testInputs,
-                1,/* if (index == 0)
+                1,
+                /* if (index == 0)
                   matchedRules.size +
                     maybeError.map(_ => 1).getOrElse(0) // add an extra row
                 else 0,*/
@@ -324,34 +324,36 @@ case class RowCreator(
           }
         maybeError
           .map(msg =>
-            Seq(new TableRow(
-              testInputs.values.mkString("-") + "_error",
-              status,
-              testInputs,
-              1,
-              1,
-              Map.empty,
-              Map.empty,
-              Some(msg.msg),
-             js.Array(rows.map(_.toChildRow()): _*)
-            ))
-          ).getOrElse(rows)
+            Seq(
+              new TableRow(
+                testInputs.values.mkString("-") + "_error",
+                status,
+                testInputs,
+                1,
+                1,
+                Map.empty,
+                Map.empty,
+                Some(msg.msg),
+                js.Array(rows.map(_.toChildRow()): _*)
+              )
+            )
+          )
+          .getOrElse(rows)
 
-        //val outputs = outputMap(matchedRules)
-
-
-    } ++ missingRules.map{
-      case DmnRule(index, ruleId, inputs, outputs) =>
-        new TableRow(
-          ruleId + index + "Warn",
-          EvalStatus.WARN,
-          inputKeys.map(_ -> "").toMap,
-          1,
-          index,
-          Map.empty,
-          Map.empty,
-          Some("There are no Test Inputs that match this Rule."),
-          js.Array(new TableRow(
+    }
+  private lazy val missingRows =
+    missingRules.map { case DmnRule(index, ruleId, inputs, outputs) =>
+      new TableRow(
+        ruleId + index + "Warn",
+        EvalStatus.WARN,
+        inputKeys.map(_ -> "").toMap,
+        1,
+        index,
+        Map.empty,
+        Map.empty,
+        Some("There are no Test Inputs that match this Rule."),
+        js.Array(
+          new TableRow(
             ruleId + index,
             EvalStatus.WARN,
             inputKeys.map(_ -> "").toMap,
@@ -361,18 +363,18 @@ case class RowCreator(
             outputKeys.zip(outputs).toMap,
             None,
             js.Array()
-          ))
+          )
         )
+      )
     }
-println(s"HITPOLICY: ${dmn.hitPolicy}")
-  //if(dmn.hitPolicy == "COLLECT")
-  val resultRows: Seq[TableRow] = {
-    allRows.groupBy(_.testInputs.values.toSeq).map {
+
+  lazy val resultRows: Seq[TableRow] = ({
+    evaluatedRows.groupBy(_.testInputs.values.toSeq).map {
       case (_, rows) if rows.size > 1 & rows.head.children.length == 0 =>
         rows.head.toParentRow(rows.tail.map(_.toChildRow()))
       case (_, others) => others.head
     }
-  }.toSeq
+  }.toSeq ++ missingRows).sortBy(_.dmnRowIndex).sortBy(_.status)
 
   private def rowIndex(ruleId: String) =
     dmn.rules.find(_.ruleId == ruleId).map(_.index).getOrElse(-1)
