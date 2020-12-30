@@ -17,10 +17,12 @@ import typings.antd.components._
 import typings.antd.formFormMod.useForm
 import typings.antd.mod.message
 import typings.antd.{antdStrings => aStr}
+import typings.rcFieldForm.interfaceMod.BaseRule
 import typings.react.mod.{CSSProperties, ChangeEvent}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js.Dynamic.literal
+import scala.scalajs.js.RegExp
 import scala.util.{Failure, Success}
 
 @react object ChangeConfigsForm {
@@ -82,36 +84,6 @@ import scala.util.{Failure, Success}
 
 }
 
-@react object UploadElement {
-
-  case class Props(
-  )
-
-  val component: FunctionalComponent[Props] = FunctionalComponent[Props] { _ =>
-    Upload
-      .name("file")
-      .multiple(false)
-      .action("https://www.mocky.io/v2/5cc8019d300000980a055e76")
-      .onChange { info =>
-        info.file.status.toString match {
-          case "uploading" =>
-            println(s"Uploading ${info.file}")
-          case "done" =>
-            message
-              .success(s"${info.file.name} file uploaded successfully.")
-          case "error" =>
-            message.error(s"${info.file.name} file upload failed.")
-        }
-      }(
-        p(className := "ant-upload-drag-icon")(AntdIcon(InboxOutlined)),
-        p(className := "ant-upload-text")(
-          "Click or drag a DMN Config to this area to upload"
-        ),
-        p(className := "ant-upload-hint")("Support for a single upload.")
-      )
-  }
-}
-
 @react object PathSelect {
 
   case class Props(
@@ -138,7 +110,6 @@ import scala.util.{Failure, Success}
           basePathStr(basePath)
         )(
           Select[String]
-            .value(selected)
             .placeholder(
               "Select a path or add your own"
             )
