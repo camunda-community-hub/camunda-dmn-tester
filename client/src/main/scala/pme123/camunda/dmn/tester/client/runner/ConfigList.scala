@@ -154,7 +154,7 @@ import scala.scalajs.js.JSON
                     .showIcon(true)
                 )
             case _ =>
-              ConfigList(configs, editDmnConfig, onDeleteConfig, handleConfigToggle)
+              ConfigList(configs.sortBy(_.dmnPath.toString).sortBy(_.decisionId), editDmnConfig, onDeleteConfig, handleConfigToggle)
           }
         )
   }
