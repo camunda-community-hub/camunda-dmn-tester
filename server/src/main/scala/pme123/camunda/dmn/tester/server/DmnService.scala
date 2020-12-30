@@ -123,7 +123,7 @@ class DmnService extends DmnApi {
           )
         case file =>
           ZIO(
-            getRecursively(file).map(f =>
+            getConfigFiles(file).map(f =>
               DmnConfigHandler.read(ops.Path(f).toIO)
             )
           ).mapError { ex =>
@@ -133,10 +133,7 @@ class DmnService extends DmnApi {
       }
   }
 
-  private def getRecursively(f: File): Seq[File] = {
-    f.listFiles
-      .filter(_.isDirectory)
-      .flatMap(getRecursively) ++
+  private def getConfigFiles(f: File): Seq[File] = {
       f.listFiles.filter(_.getName.endsWith(".conf"))
   }
 }
