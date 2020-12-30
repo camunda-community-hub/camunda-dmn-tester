@@ -112,7 +112,7 @@ class TableItem(
               inputKeys,
               outputKeys,
               _,
-              missingRules
+              _
             )
           )
         ) =>
@@ -126,7 +126,8 @@ class TableItem(
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
             Table[TableRow]
               .withKey(dmn.id + "Key")
-            //  .rowKey("dmnRowIndex")
+              .defaultExpandAllRows(true)
+              .expandIcon(_ => "")
               .tableLayout(TableLayout.fixed)
               .bordered(true)
               .pagination(antdBooleans.`false`)
@@ -150,7 +151,7 @@ class TableItem(
       .setRender((_, row, _) =>
         RenderedCell[TableRow]()
           .setChildren(icon(row.status))
-          .setProps(CellType().setRowSpan(row.inputRowSpan))
+          .setProps(CellType().setRowSpan(row.totalRowSpan))
       )
   }
 
@@ -166,7 +167,7 @@ class TableItem(
             .setKey(in)
             .setRender((_, row, _) =>
               renderTextCell(row.testInputs(in))
-                .setProps(CellType().setRowSpan(row.inputRowSpan))
+                .setProps(CellType().setRowSpan( row.totalRowSpan))
             )
         ): _*
       )
@@ -244,14 +245,25 @@ class TableItem(
 }
 
 class TableRow(
+    val key: String,
     val status: EvalStatus,
     val testInputs: Map[String, String],
-    val inputRowSpan: Int,
+    var inputRowSpan: Int,
     val dmnRowIndex: Int,
     val inputs: Map[String, String],
     val outputs: Map[String, String],
-    val outputMessage: Option[String]
-) extends js.Object
+    val outputMessage: Option[String],
+    val children: js.Array[TableRow]
+) extends js.Object {
+
+  def totalRowSpan: Double = children.size + inputRowSpan
+
+
+  def toChildRow(): TableRow = {
+    this.inputRowSpan = 0
+    this
+  }
+}
 
 case class RowCreator(
     dmnEvalResult: DmnEvalResult
@@ -269,73 +281,83 @@ case class RowCreator(
       case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
         Seq(
           new TableRow(
+            testInputs.values.mkString("-"),
             status,
             testInputs,
             1,
             0,
             Map.empty,
             Map.empty,
-            Some(maybeError.map(_.msg).getOrElse("NOT FOUND"))
+            Some(maybeError.map(_.msg).getOrElse("NOT FOUND")),
+            js.Array()
           )
         )
       case DmnEvalRowResult(
             status,
             _,
-            testInputMap,
+            testInputs,
             matchedRules,
             maybeError
           ) =>
-        val errorRow = maybeError
-          .map(msg =>
-            new TableRow(
-              status,
-              testInputMap,
-              0,
-              0,
-              Map.empty,
-              Map.empty,
-              Some(msg.msg)
-            )
-          )
-          .toSeq
-
-        //val outputs = outputMap(matchedRules)
         val rows =
           matchedRules.zipWithIndex.map {
             case (MatchedRule(ruleId, inputs, outputMap), index) =>
               new TableRow(
+                testInputs.values.mkString("-") + index,
                 status,
-                testInputMap,
-                if (index == 0)
+                testInputs,
+                1,/* if (index == 0)
                   matchedRules.size +
                     maybeError.map(_ => 1).getOrElse(0) // add an extra row
-                else 0,
+                else 0,*/
                 rowIndex(ruleId),
                 inputKeys.zip(inputs).toMap,
                 outputMap,
-                None
+                None,
+                js.Array()
               )
           }
-        rows ++ errorRow
-    } ++ missingRules.flatMap{
+        maybeError
+          .map(msg =>
+            Seq(new TableRow(
+              testInputs.values.mkString("-") + "_error",
+              status,
+              testInputs,
+              1,
+              1,
+              Map.empty,
+              Map.empty,
+              Some(msg.msg),
+             js.Array(rows.map(_.toChildRow()): _*)
+            ))
+          ).getOrElse(rows)
+
+        //val outputs = outputMap(matchedRules)
+
+
+    } ++ missingRules.map{
       case DmnRule(index, ruleId, inputs, outputs) =>
-        Seq(new TableRow(
+        new TableRow(
+          ruleId + index + "Warn",
           EvalStatus.WARN,
           inputKeys.map(_ -> "").toMap,
-          2,
-          index,
-          inputKeys.zip(inputs).toMap,
-          outputKeys.zip(outputs).toMap,
-          None
-        ),new TableRow(
-          EvalStatus.WARN,
-          inputKeys.map(_ -> "").toMap,
-          0,
+          1,
           index,
           Map.empty,
           Map.empty,
-          Some("There are no Test Inputs that match this Rule.")
-        ))
+          Some("There are no Test Inputs that match this Rule."),
+          js.Array(new TableRow(
+            ruleId + index,
+            EvalStatus.WARN,
+            inputKeys.map(_ -> "").toMap,
+            0,
+            index,
+            inputKeys.zip(inputs).toMap,
+            outputKeys.zip(outputs).toMap,
+            None,
+            js.Array()
+          ))
+        )
     }
 
   private def rowIndex(ruleId: String) =
