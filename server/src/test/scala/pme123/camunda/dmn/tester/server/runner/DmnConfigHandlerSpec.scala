@@ -12,7 +12,7 @@ object DmnConfigHandlerSpec extends DefaultRunnableSpec {
   val config =
     """
       |decisionId: country-risk,
-      |dmnPath: [core, src, test, resources, country-risk.dmn],
+      |dmnPath: [server, src, test, resources, country-risk.dmn],
       |data: {
       |  inputs: [{
       |    key: currentCountry,
@@ -29,7 +29,7 @@ object DmnConfigHandlerSpec extends DefaultRunnableSpec {
 
   val config1 = DmnConfig("country-risk",
     TesterData(List(TesterInput("currentCountry", List("CH", "ch", "DE", "OTHER", "an awful long Input that should be cutted")))),
-    List("core", "src", "test", "resources", "country-risk.dmn"))
+    List("server", "src", "test", "resources", "country-risk.dmn"))
 
   def spec =
     suite("DmnConfigHandlerSpec")(

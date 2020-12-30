@@ -18,6 +18,7 @@ import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
 
+import scala.collection.immutable
 import scala.scalajs.js
 
 @react object EvalResultsCard {
@@ -253,12 +254,16 @@ class TableRow(
     val inputs: Map[String, String],
     val outputs: Map[String, String],
     val outputMessage: Option[String],
-    val children: js.Array[TableRow]
+    var children: js.Array[TableRow]
 ) extends js.Object {
 
   def totalRowSpan: Double = children.size + inputRowSpan
 
 
+  def toParentRow(children: Seq[TableRow] ): TableRow = {
+    this.children = js.Array(children: _*)
+    this
+  }
   def toChildRow(): TableRow = {
     this.inputRowSpan = 0
     this
@@ -276,7 +281,7 @@ case class RowCreator(
     missingRules
   ) = dmnEvalResult
 
-  lazy val resultRows: Seq[TableRow] =
+  private lazy val allRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
         Seq(
@@ -359,6 +364,15 @@ case class RowCreator(
           ))
         )
     }
+println(s"HITPOLICY: ${dmn.hitPolicy}")
+  //if(dmn.hitPolicy == "COLLECT")
+  val resultRows: Seq[TableRow] = {
+    allRows.groupBy(_.testInputs.values.toSeq).map {
+      case (_, rows) if rows.size > 1 & rows.head.children.length == 0 =>
+        rows.head.toParentRow(rows.tail.map(_.toChildRow()))
+      case (_, others) => others.head
+    }
+  }.toSeq
 
   private def rowIndex(ruleId: String) =
     dmn.rules.find(_.ruleId == ruleId).map(_.index).getOrElse(-1)

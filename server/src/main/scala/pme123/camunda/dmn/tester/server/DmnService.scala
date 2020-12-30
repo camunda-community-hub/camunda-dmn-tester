@@ -14,7 +14,7 @@ class DmnService extends DmnApi {
   private val runtime = Runtime.default
   private val configPaths = Seq(
     "/dmnTester/dmn-configs",
-    "/core/src/test/resources/dmn-configs"
+    "/server/src/test/resources/dmn-configs"
   )
   override def getBasePath(): String =
     pwd.toIO.getAbsolutePath
