@@ -73,10 +73,19 @@ class TableItem(
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(evalResults) = props
+      // sort first exceptions - then decisionId
+      val sortedResults = evalResults.sortWith {
+        case (a: Right[_, _], b: Left[_, _]) => false
+        case (a: Left[_, _], b: Right[_, _]) => true
+        case (Right(a), Right(b)) =>
+          a.dmn.id < b.dmn.id
+        case (Left(a), Left(b)) =>
+          a.decisionId < b.decisionId
+      }
       List
         .withProps(
           ListProps()
-            .setDataSource(js.Array(evalResults: _*))
+            .setDataSource(js.Array(sortedResults: _*))
             .setLocale(
               ListLocale().setEmptyText(
                 Empty().description("There are no Tests selected:(").build
