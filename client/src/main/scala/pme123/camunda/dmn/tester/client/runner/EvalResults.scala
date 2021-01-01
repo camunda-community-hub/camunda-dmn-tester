@@ -1,12 +1,14 @@
 package pme123.camunda.dmn.tester.client.runner
 
-import pme123.camunda.dmn.tester.client.textWithTooltip
+import pme123.camunda.dmn.tester.client.{textWithTooltip, withTooltip}
 import pme123.camunda.dmn.tester.shared.EvalStatus.ERROR
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
+import pme123.camunda.dmn.tester.shared.TesterValue.StringValue
 import pme123.camunda.dmn.tester.shared.{DmnEvalRowResult, _}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
+import slinky.core.facade.Hooks.useState
 import slinky.core.facade.ReactElement
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
@@ -14,14 +16,11 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{
-  ColumnGroupType,
-  ColumnType,
-  TableRowSelection
-}
+import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
+import typings.std.global.^.JSON
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -31,12 +30,13 @@ import scala.scalajs.js.|
   case class Props(
       evalResults: Seq[Either[EvalException, DmnEvalResult]],
       isLoaded: Boolean,
-      maybeError: Option[String]
+      maybeError: Option[String],
+      onCreateTestCases: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(evalResults, isLoaded, maybeError) = props
+      val Props(evalResults, isLoaded, maybeError, onCreateTestCases) = props
       Card
         .title("4. Check the Test Results.")(
           (maybeError, isLoaded) match {
@@ -57,7 +57,7 @@ import scala.scalajs.js.|
                     .showIcon(true)
                 )
             case _ =>
-              EvalResultsList(evalResults)
+              EvalResultsList(evalResults, onCreateTestCases)
           }
         )
   }
@@ -72,12 +72,13 @@ class TableItem(
 @react object EvalResultsList {
 
   case class Props(
-      evalResults: Seq[Either[EvalException, DmnEvalResult]]
+      evalResults: Seq[Either[EvalException, DmnEvalResult]],
+      onCreateTestCases: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
-      val Props(evalResults) = props
+      val Props(evalResults, onCreateTestCases) = props
       // sort first exceptions - then decisionId
       val sortedResults = evalResults.sortWith {
         case (a: Right[_, _], b: Left[_, _]) => false
@@ -98,7 +99,7 @@ class TableItem(
             )
             .setRenderItem(
               (evalResult: Either[EvalException, DmnEvalResult], _) =>
-                EvalResultsItem(evalResult)
+                EvalResultsItem(evalResult, onCreateTestCases)
             )
         )
   }
@@ -109,11 +110,12 @@ class TableItem(
   val outputTitle = "Output"
 
   case class Props(
-      evalResult: Either[EvalException, DmnEvalResult]
+      evalResult: Either[EvalException, DmnEvalResult],
+      onCreateTestCases: DmnConfig => Unit
   )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
-    case Props(Left(EvalException(decisionId, msg))) =>
+    case Props(Left(EvalException(decisionId, msg)), _) =>
       List.Item
         .withKey(decisionId)
         .className("list-item")(
@@ -131,9 +133,46 @@ class TableItem(
               _,
               _
             )
-          )
+          ),
+          onCreateTestCases
         ) =>
       val rowCreator = RowCreator(er)
+      val (selectedRows, setSelectedRows) = useState(Seq.empty[TableRow])
+
+      def evalTable = {
+        Table[TableRow]
+          .withKey(dmn.id + "Key")
+          .defaultExpandAllRows(true)
+          .expandIcon(_ => "")
+          .rowSelection(
+            TableRowSelection[TableRow]()
+              .setHideSelectAll(true)
+              .setRenderCell((_, row, _, ele) => {
+                if (row.status == EvalStatus.INFO)
+                  ele
+                else
+                  build(span(""))
+              })
+              .setCheckStrictly(false)
+              .setOnSelect((row, selected, allSelected, _) =>
+                if (selected)
+                  setSelectedRows(selectedRows :+ row)
+                else
+                  setSelectedRows(selectedRows.filterNot(_.key == row.key))
+              )
+          )
+          .tableLayout(TableLayout.fixed)
+          .bordered(true)
+          .pagination(antdBooleans.`false`)
+          .dataSourceVarargs(rowCreator.resultRows: _*)
+          .columnsVarargs(
+            statusColumn,
+            testInputColumns(inputKeys),
+            dmnRowColumn(inputKeys, outputKeys),
+            inOutColumns("Matched Input", inputKeys, _.inputs),
+            inOutColumns(outputTitle, outputKeys, _.outputs)
+          )
+      }
 
       List.Item
         .withKey(dmn.id)
@@ -141,38 +180,25 @@ class TableItem(
           section(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
-            Table[TableRow]
-              .withKey(dmn.id + "Key")
-              .defaultExpandAllRows(true)
-              .expandIcon(_ => "")
-              .rowSelection(
-                TableRowSelection[TableRow]()
-                  .setHideSelectAll(true)
-                  .setRenderCell((_, row, _, ele) => {
-                    if (row.status == EvalStatus.INFO)
-                      ele //(Checkbox(ele).checked(row.maybeTestCase.nonEmpty).build)
-                    else
-                      build(span(""))
-                  })
-                  .setCheckStrictly(false)
-              )
-              .tableLayout(TableLayout.fixed)
-              .bordered(true)
-              .pagination(antdBooleans.`false`)
-              .dataSourceVarargs(rowCreator.resultRows: _*)
-              .columnsVarargs(
-                statusColumn,
-                testInputColumns(inputKeys),
-                dmnRowColumn(inputKeys, outputKeys),
-                inOutColumns("Matched Input", inputKeys, _.inputs),
-                inOutColumns(outputTitle, outputKeys, _.outputs)
-              ),
-            Button
-              .`type`(primary)
-              .block(true)
-              .onClick(_ => println("Create Test Cases"))(
-                "Create Test Cases from the checked Rows"
-              )
+            evalTable,
+            withTooltip(
+              "BE AWARE that this overwrites all existing Test Cases!",
+              Button
+                .`type`(primary)
+                .block(true)
+                .onClick { _ =>
+                  val exConfig = dmn.dmnConfig
+
+                  val newConfig = exConfig.copy(data =
+                    exConfig.data.copy(testCases = selectedRows.map { row =>
+                      TestCase(TesterValue.valueMap(row.testInputs), row.dmnRowIndex, TesterValue.valueMap(row.outputs))
+                    }.toList)
+                  )
+                  onCreateTestCases(newConfig)
+                }(
+                  "Create Test Cases from the checked Rows"
+                )
+            )
           )
         )
   }

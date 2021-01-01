@@ -160,7 +160,8 @@ object containers {
             EvalResultsCard(
               evalResults,
               isEvalResultsLoaded,
-              maybeEvalResultsError
+              maybeEvalResultsError,
+              editDmnConfig
             )
           )
         )

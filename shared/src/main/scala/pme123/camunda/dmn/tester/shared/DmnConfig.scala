@@ -59,10 +59,23 @@ case class TesterInput(key: String, values: List[TesterValue]) {
 sealed trait TesterValue {
   def valueStr: String
   def valueType: String
+  def value: Any
   def normalized: Set[Any]
 }
 
 object TesterValue {
+
+  def fromString(valueStr: String): TesterValue =
+    valueStr.toBooleanOption
+      .map(BooleanValue.apply) orElse
+      valueStr.toDoubleOption
+        .map(NumberValue.apply) orElse
+      valueStr.toLongOption
+        .map(NumberValue.apply) getOrElse
+      StringValue(valueStr)
+
+  def valueMap(inputs: Map[String, String]): Map[String, TesterValue] =
+    inputs.view.mapValues(fromString).toMap
 
   case class StringValue(value: String) extends TesterValue {
     val valueStr: String = value
@@ -91,12 +104,16 @@ object TesterValue {
     def apply(intValue: Int): NumberValue =
       NumberValue(BigDecimal(intValue))
 
+    def apply(longValue: Long): NumberValue =
+      NumberValue(BigDecimal(longValue))
+
     def apply(doubleValue: Double): NumberValue =
       NumberValue(BigDecimal(doubleValue))
 
   }
 
   case class ValueSet(values: Set[TesterValue]) extends TesterValue {
+    val value: Set[TesterValue] = values
     val valueStr: String = values.map(_.valueStr).mkString(",")
     val valueType: String = "Set"
     def normalized: Set[Any] = values.flatMap(_.normalized)
