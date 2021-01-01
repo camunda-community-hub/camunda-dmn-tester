@@ -154,7 +154,7 @@ class TableItem(
                   build(span(""))
               })
               .setCheckStrictly(false)
-              .setOnSelectAll((selected, _, rows)=>
+              .setOnSelectAll((selected, _, rows) =>
                 if (selected)
                   setSelectedRows(rows.toSeq.filter(_.status == EvalStatus.INFO))
                 else
