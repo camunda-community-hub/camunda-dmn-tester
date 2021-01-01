@@ -146,7 +146,7 @@ class TableItem(
           .expandIcon(_ => "")
           .rowSelection(
             TableRowSelection[TableRow]()
-              .setHideSelectAll(true)
+              //.setHideSelectAll(true)
               .setRenderCell((_, row, _, ele) => {
                 if (row.status == EvalStatus.INFO)
                   ele
@@ -154,7 +154,13 @@ class TableItem(
                   build(span(""))
               })
               .setCheckStrictly(false)
-              .setOnSelect((row, selected, allSelected, _) =>
+              .setOnSelectAll((selected, _, rows)=>
+                if (selected)
+                  setSelectedRows(rows.toSeq.filter(_.status == EvalStatus.INFO))
+                else
+                  setSelectedRows(Seq.empty)
+              )
+              .setOnSelect((row, selected, _, _) =>
                 if (selected)
                   setSelectedRows(selectedRows :+ row)
                 else
@@ -188,7 +194,6 @@ class TableItem(
                 .block(true)
                 .onClick { _ =>
                   val exConfig = dmn.dmnConfig
-
                   val newConfig = exConfig.copy(data =
                     exConfig.data.copy(testCases = selectedRows.map { row =>
                       TestCase(TesterValue.valueMap(row.testInputs), row.dmnRowIndex, TesterValue.valueMap(row.outputs))

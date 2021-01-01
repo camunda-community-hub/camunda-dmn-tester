@@ -2,15 +2,15 @@ package pme123.camunda.dmn.tester.client.runner
 
 import autowire._
 import boopickle.Default._
+import pme123.camunda.dmn.tester.client._
 import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult}
 import slinky.core.facade.Hooks.{useEffect, useState}
-import slinky.core.{FunctionalComponent, SyntheticEvent, TagMod}
+import slinky.core.{FunctionalComponent, SyntheticEvent}
 import typings.antd.antdStrings.{center, middle, primary}
 import typings.antd.components._
 import typings.antd.mod.message
-import pme123.camunda.dmn.tester.client._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
