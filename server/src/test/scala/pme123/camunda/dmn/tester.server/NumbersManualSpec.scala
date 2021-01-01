@@ -1,7 +1,7 @@
 package pme123.camunda.dmn.tester.server
 
 import pme123.camunda.dmn.tester.server.runner.DmnTester
-import pme123.camunda.dmn.tester.shared.EvalResult
+import pme123.camunda.dmn.tester.shared.{DmnConfig, EvalResult, TesterData}
 import pme123.camunda.dmn.tester.shared.EvalResult.{noResult, successMap}
 import zio.test.Assertion.isNonEmptyString
 import zio.test.{DefaultRunnableSpec, assertM, suite, testM}
@@ -15,7 +15,13 @@ object NumbersManualSpec extends DefaultRunnableSpec {
   val otherResult = "otherResult"
 
   val tester =
-    DmnTester(numbers, TestProps.baseDmnPath :+ "numbers.dmn")
+    DmnTester(
+      DmnConfig(
+        numbers,
+        TesterData(List.empty),
+        TestProps.baseDmnPath :+ "numbers.dmn"
+      )
+    )
 
   def spec = suite("CountryRiskManualSpec")(
     testM("const") {

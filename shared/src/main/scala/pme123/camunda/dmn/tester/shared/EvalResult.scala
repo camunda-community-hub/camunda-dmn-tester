@@ -21,7 +21,7 @@ case class DmnEvalRowResult(
     maybeError: Option[EvalError]
 )
 
-case class Dmn(id: String, hitPolicy: String, rules: Seq[DmnRule])
+case class Dmn(id: String, hitPolicy: String, dmnConfig: DmnConfig, rules: Seq[DmnRule])
 
 case class DmnRule(
     index: Int,

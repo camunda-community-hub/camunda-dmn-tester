@@ -8,10 +8,15 @@ case class DmnConfig(
     data: TesterData,
     dmnPath: List[String],
     isActive: Boolean = false
-)
+) {
+
+  def findTestCase(testInputs: Map[String, String]): Option[TestCase] = data.findTestCase(testInputs)
+
+}
 
 case class TesterData(
-    inputs: List[TesterInput]
+    inputs: List[TesterInput],
+    testCases: List[TestCase] = List.empty
 ) {
 
   lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _) => k }
@@ -31,6 +36,12 @@ case class TesterData(
       case (key, v) :: t =>
         for (xh <- v; xt <- cartesianProduct(t)) yield (key -> xh) :: xt
     }
+
+  def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
+    testCases.find{tc=>
+      tc.inputs.view.mapValues(_.valueStr).toMap == testInputs
+    }
+
 }
 
 case class TesterInput(key: String, values: List[TesterValue]) {
@@ -91,6 +102,8 @@ object TesterValue {
     def normalized: Set[Any] = values.flatMap(_.normalized)
   }
 }
+
+case class TestCase(inputs: Map[String, TesterValue], rowIndex: Int, outputs: Map[String, TesterValue])
 
 object conversions {
 

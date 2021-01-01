@@ -44,22 +44,24 @@ object DmnConfigHandler {
                 ConfigException(
                   s"Could not write Config '${dmnConfig.decisionId}'\n${ex.getClass.getName}: ${ex.getMessage}"
                 )
-              }
-              )
+              })
           )
       }
   }
 
   def delete(
-             dmnConfig: DmnConfig,
-             path: List[String]
-           ): ZIO[Console, ConfigException, Unit] = {
+      dmnConfig: DmnConfig,
+      path: List[String]
+  ): ZIO[Console, ConfigException, Unit] = {
     ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f => console.putStrLn(s"Config Path: ${f.toIO.getAbsolutePath}")).bimap({
-      ex =>
-        ex.printStackTrace()
-        ConfigException(ex.getMessage)
-    }, p => ops.rm(p))
+      .tap(f => console.putStrLn(s"Config Path: ${f.toIO.getAbsolutePath}"))
+      .bimap(
+        { ex =>
+          ex.printStackTrace()
+          ConfigException(ex.getMessage)
+        },
+        p => ops.rm(p)
+      )
   }
 }
 
@@ -100,13 +102,25 @@ object hocon {
         }
     ).asInstanceOf[ConfigDescriptor[TesterValue]]
 
+  val testerValue: _root_.zio.config.ConfigDescriptor[TesterValue] =
+    bigDecimalValue orElse booleanValue orElse stringValue
+
   val testerInput: ConfigDescriptor[TesterInput] =
-    (string("key") |@| list("values")(
-      bigDecimalValue orElse booleanValue orElse stringValue
-    ))(TesterInput.apply, TesterInput.unapply)
+    (string("key") |@| list("values")(testerValue))(
+      TesterInput.apply,
+      TesterInput.unapply
+    )
+
+  val testCases: ConfigDescriptor[TestCase] =
+    (map("inputs")(testerValue) |@| int("rowIndex") |@|
+      map("outputs")(testerValue))(TestCase.apply, TestCase.unapply)
 
   val testerData: ConfigDescriptor[TesterData] =
-    list("inputs")(testerInput)(TesterData.apply, TesterData.unapply)
+    (list("inputs")(testerInput) |@|
+      list("testCases")(testCases).default(List.empty))(
+      TesterData.apply,
+      TesterData.unapply
+    )
 
   val dmnConfig: ConfigDescriptor[DmnConfig] =
     (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(

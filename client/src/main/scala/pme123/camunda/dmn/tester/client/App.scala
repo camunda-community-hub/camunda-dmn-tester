@@ -1,6 +1,5 @@
 package pme123.camunda.dmn.tester.client
 
-import pme123.camunda.dmn.tester.client.config.containers
 import slinky.core._
 import slinky.core.annotations.react
 import slinky.web.html._
@@ -41,7 +40,6 @@ object ReactLogo extends js.Object
         h1(className := "App-title")("Camunda DMN Table Tester")
       ),
       Layout.Content(
-    //    containers.DmnConfigContainer()
         runner.containers.DmnConfigContainer()
       ),
       Layout.Footer(className := "App-footer")(

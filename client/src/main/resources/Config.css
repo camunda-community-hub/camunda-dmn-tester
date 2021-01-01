@@ -29,9 +29,14 @@
   color: rgba(0,0,0,.25);
 }
 
-.ERROR-cell {
-  background-color: #fad9d9;
+.SUCCESS-cell {
+  background-color: #dffad9;
+}
+.INFO-cell {
 }
 .WARN-cell {
   background-color: #faf2df;
+}
+.ERROR-cell {
+  background-color: #fad9d9;
 }

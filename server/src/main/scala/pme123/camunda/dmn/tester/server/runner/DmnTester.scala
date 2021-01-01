@@ -13,16 +13,15 @@ import java.io.InputStream
 import scala.language.implicitConversions
 
 case class DmnTester(
-    decisionId: String,
-    dmnPath: List[String],
+    dmnConfig: DmnConfig,
     engine: DmnEngine = new DmnEngine()
 ) {
+  val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
 
-  def run(data: TesterData): ZIO[Any, EvalException, RunResults] =
-    parsedDmn().map(run(data, _))
+  def run(): ZIO[Any, EvalException, RunResults] =
+    parsedDmn().map(run)
 
   def run(
-      data: TesterData,
       dmn: ParsedDmn
   ): RunResults = {
     val allInputs: Seq[Map[String, Any]] = data.normalize()
@@ -40,7 +39,14 @@ case class DmnTester(
       .map(_.logic)
       .collect { case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
         hitPolicy -> rules.zipWithIndex
-          .map{ case (ParsedRule(id,inputs, outputs), index) => DmnRule(index + 1, id, inputs.map(_.text).toSeq, outputs.map(_._2.text).toSeq)}
+          .map { case (ParsedRule(id, inputs, outputs), index) =>
+            DmnRule(
+              index + 1,
+              id,
+              inputs.map(_.text).toSeq,
+              outputs.map(_._2.text).toSeq
+            )
+          }
       }
     RunResults(
       Dmn(
@@ -48,6 +54,7 @@ case class DmnTester(
         hitPolicyAndRules
           .map { case (hitPolicy, _) => hitPolicy.toString }
           .getOrElse("NOT FOUND"),
+        dmnConfig,
         hitPolicyAndRules.toSeq.flatMap { case (_, rules) => rules }
       ),
       evaluated
@@ -131,11 +138,11 @@ object DmnTester {
       dmnConfig: DmnConfig,
       engine: DmnEngine
   ): ZIO[Console, EvalException, RunResults] = {
-    val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
+    val DmnConfig(decisionId, _, dmnPath, _) = dmnConfig
     console.putStrLn(
       s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"
     ) *>
-      DmnTester(decisionId, dmnPath, engine)
-        .run(data)
+      DmnTester(dmnConfig, engine)
+        .run()
   }
 }

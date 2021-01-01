@@ -11,15 +11,20 @@ import slinky.core.facade.ReactElement
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod
+import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType}
+import typings.antd.tableInterfaceMod.{
+  ColumnGroupType,
+  ColumnType,
+  TableRowSelection
+}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
 
-import scala.collection.immutable
 import scala.scalajs.js
+import scala.scalajs.js.|
 
 @react object EvalResultsCard {
 
@@ -101,6 +106,8 @@ class TableItem(
 
 @react object EvalResultsItem {
 
+  val outputTitle = "Output"
+
   case class Props(
       evalResult: Either[EvalException, DmnEvalResult]
   )
@@ -138,6 +145,17 @@ class TableItem(
               .withKey(dmn.id + "Key")
               .defaultExpandAllRows(true)
               .expandIcon(_ => "")
+              .rowSelection(
+                TableRowSelection[TableRow]()
+                  .setHideSelectAll(true)
+                  .setRenderCell((_, row, _, ele) => {
+                    if (row.status == EvalStatus.INFO)
+                      ele //(Checkbox(ele).checked(row.maybeTestCase.nonEmpty).build)
+                    else
+                      build(span(""))
+                  })
+                  .setCheckStrictly(false)
+              )
               .tableLayout(TableLayout.fixed)
               .bordered(true)
               .pagination(antdBooleans.`false`)
@@ -147,7 +165,13 @@ class TableItem(
                 testInputColumns(inputKeys),
                 dmnRowColumn(inputKeys, outputKeys),
                 inOutColumns("Matched Input", inputKeys, _.inputs),
-                inOutColumns("Output", outputKeys, _.outputs)
+                inOutColumns(outputTitle, outputKeys, _.outputs)
+              ),
+            Button
+              .`type`(primary)
+              .block(true)
+              .onClick(_ => println("Create Test Cases"))(
+                "Create Test Cases from the checked Rows"
               )
           )
         )
@@ -189,18 +213,7 @@ class TableItem(
       .setDataIndex("DmnRow")
       .setKey("DmnRow")
       .setRender { (_, row, _) =>
-        row.outputMessage match {
-          case Some(msg) =>
-            val colSpan =
-              inputKeys.length + outputKeys.length + 1
-            renderTextCell(msg)
-              .setProps(
-                CellType()
-                  .setColSpan(colSpan)
-                  .setClassName(s"${row.status}-cell")
-              )
-          case _ => renderTextCell(row.dmnRowIndex.toString)
-        }
+        row.renderRowIndexCol(inputKeys, outputKeys)
       }
   }
 
@@ -218,27 +231,13 @@ class TableItem(
             .setEllipsis(true)
             .setDataIndex(key)
             .setKey(key)
-            .setRender((_, row, _) => {
-              val value =
-                if (inOutMap(row).isEmpty)
-                  row.outputMessage.getOrElse("-")
-                else inOutMap(row)(key)
-              val colSpan =
-                row.outputMessage.map(_ => 0).getOrElse(1)
-              renderTextCell(value)
-                .setProps(
-                  CellType()
-                    .setColSpan(colSpan)
-                )
-            })
+            .setRender((_, row, _) =>
+              if (title == outputTitle)
+                row.renderOutCell(key, inOutMap(row))
+              else
+                row.renderInCell(key, inOutMap(row))
+            )
         }: _*
-      )
-  }
-
-  private def renderTextCell(text: String) = {
-    RenderedCell[TableRow]()
-      .setChildren(
-        textWithTooltip(text, text)
       )
   }
 
@@ -263,7 +262,8 @@ class TableRow(
     val inputs: Map[String, String],
     val outputs: Map[String, String],
     val outputMessage: Option[String],
-    var children: js.Array[TableRow]
+    var children: js.Array[TableRow],
+    var maybeTestCase: Option[TestCase] = None
 ) extends js.Object {
 
   def totalRowSpan: Double = children.size + inputRowSpan
@@ -276,6 +276,96 @@ class TableRow(
     this.inputRowSpan = 0
     this
   }
+
+  def renderRowIndexCol(
+      inputKeys: Seq[String],
+      outputKeys: Seq[String]
+  ): ReactElement | RenderedCell[TableRow] =
+    outputMessage match {
+      case Some(msg) =>
+        val colSpan =
+          inputKeys.length + outputKeys.length + 1
+        RenderedCell[TableRow]()
+          .setChildren(
+            textWithTooltip(msg, msg)
+          )
+          .setProps(
+            CellType()
+              .setColSpan(colSpan)
+              .setClassName(s"$status-cell")
+          )
+      case _ =>
+        testedCell(
+          1,
+          dmnRowIndex.toString,
+          tc => tc.rowIndex.toString
+        )
+
+    }
+
+  def renderInCell(
+      key: String,
+      inOutMap: Map[String, String]
+  ): RenderedCell[TableRow] = {
+    val (value, colSpan) = inOutValueColSpan(key, inOutMap)
+    renderTextCell(value)
+      .setProps(
+        CellType()
+          .setColSpan(colSpan)
+      )
+  }
+
+  def renderOutCell(
+      key: String,
+      inOutMap: Map[String, String]
+  ): RenderedCell[TableRow] = {
+    val (value, colSpan) = inOutValueColSpan(key, inOutMap)
+    testedCell(
+      colSpan,
+      value,
+      tc =>
+        tc.outputs
+          .get(key)
+          .map(_.valueStr)
+          .getOrElse(s"There is no Output Key '$key''")
+    )
+  }
+
+  private def inOutValueColSpan(
+      key: String,
+      inOutMap: Map[String, String]
+  ): (String, Int) =
+    (if (inOutMap.isEmpty)
+       outputMessage.getOrElse("-")
+     else inOutMap(key)) ->
+      outputMessage.map(_ => 0).getOrElse(1)
+
+  private def testedCell(
+      colSpan: Int,
+      actualVal: String,
+      expVal: TestCase => String
+  ) = {
+    val (cssClass, tooltip) = maybeTestCase
+      .map { testCase =>
+        if (actualVal == expVal(testCase))
+          "SUCCESS-cell" -> actualVal
+        else
+          "ERROR-cell" -> s"$actualVal did not match the expected one: ${expVal(testCase)}"
+
+      }
+      .getOrElse(s"INFO-cell" -> actualVal)
+
+    RenderedCell[TableRow]()
+      .setChildren(
+        textWithTooltip(actualVal.toString, tooltip.toString)
+      )
+      .setProps(
+        CellType()
+          .setColSpan(colSpan)
+          .setClassName(cssClass)
+      )
+  }
+
 }
 
 case class RowCreator(
@@ -328,7 +418,8 @@ case class RowCreator(
                 inputKeys.zip(inputs).toMap,
                 outputMap,
                 None,
-                js.Array()
+                js.Array(),
+                dmn.dmnConfig.findTestCase(testInputs)
               )
           }
         maybeError
