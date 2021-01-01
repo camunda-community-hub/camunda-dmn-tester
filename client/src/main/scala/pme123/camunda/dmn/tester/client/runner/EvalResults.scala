@@ -3,7 +3,6 @@ package pme123.camunda.dmn.tester.client.runner
 import pme123.camunda.dmn.tester.client.{textWithTooltip, withTooltip}
 import pme123.camunda.dmn.tester.shared.EvalStatus.ERROR
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
-import pme123.camunda.dmn.tester.shared.TesterValue.StringValue
 import pme123.camunda.dmn.tester.shared.{DmnEvalRowResult, _}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
@@ -20,7 +19,6 @@ import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSele
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
-import typings.std.global.^.JSON
 
 import scala.scalajs.js
 import scala.scalajs.js.|
@@ -81,8 +79,8 @@ class TableItem(
       val Props(evalResults, onCreateTestCases) = props
       // sort first exceptions - then decisionId
       val sortedResults = evalResults.sortWith {
-        case (a: Right[_, _], b: Left[_, _]) => false
-        case (a: Left[_, _], b: Right[_, _]) => true
+        case (_: Right[_, _], _: Left[_, _]) => false
+        case (_: Left[_, _], _: Right[_, _]) => true
         case (Right(a), Right(b)) =>
           a.dmn.id < b.dmn.id
         case (Left(a), Left(b)) =>
@@ -186,6 +184,7 @@ class TableItem(
           section(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
+            p("DMN: " + dmn.dmnConfig.dmnPath.mkString("/")),
             evalTable,
             withTooltip(
               "BE AWARE that this overwrites all existing Test Cases!",
