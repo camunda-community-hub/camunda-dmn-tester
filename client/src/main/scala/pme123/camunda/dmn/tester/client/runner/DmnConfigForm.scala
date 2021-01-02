@@ -70,7 +70,7 @@ import scala.util.{Failure, Success}
 
       Modal
         .title("DMN Config Editor")
-        .okText("Save")
+        .okText(textWithTooltip("Save", "BE AWARE, that this will delete all TestCases of an existing DmnConfig."))
         .width(1000)
         .visible(isModalVisible)
         .forceRender(true)
