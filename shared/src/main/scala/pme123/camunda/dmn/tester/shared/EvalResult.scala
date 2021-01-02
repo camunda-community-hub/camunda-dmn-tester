@@ -9,9 +9,10 @@ case class DmnEvalResult(
     evalResults: Seq[DmnEvalRowResult],
     missingRules: Seq[DmnRule]
 ) {
-  def maxEvalStatus: EvalStatus =
-    evalResults.map(_.status).sorted.headOption.getOrElse(INFO)
-}
+  def maxEvalStatus: EvalStatus = {
+    val status = evalResults.map(_.status) ++ missingRules.headOption.map(_ => EvalStatus.WARN)
+    status.sorted.headOption.getOrElse(INFO)
+  }}
 
 case class DmnEvalRowResult(
     status: EvalStatus,
