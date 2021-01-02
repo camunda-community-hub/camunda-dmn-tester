@@ -15,7 +15,11 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
+import typings.antd.tableInterfaceMod.{
+  ColumnGroupType,
+  ColumnType,
+  TableRowSelection
+}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
@@ -151,10 +155,12 @@ class TableItem(
                 else
                   build(span(""))
               })
-              .setCheckStrictly(false)
+           //   .setCheckStrictly(false)
               .setOnSelectAll((selected, _, rows) =>
                 if (selected)
-                  setSelectedRows(rows.toSeq.filter(_.status == EvalStatus.INFO))
+                  setSelectedRows(
+                    rows.toSeq.filter(_.status == EvalStatus.INFO)
+                  )
                 else
                   setSelectedRows(Seq.empty)
               )
@@ -194,9 +200,19 @@ class TableItem(
                 .onClick { _ =>
                   val exConfig = dmn.dmnConfig
                   val newConfig = exConfig.copy(data =
-                    exConfig.data.copy(testCases = selectedRows.map { row =>
-                      TestCase(TesterValue.valueMap(row.testInputs), row.dmnRowIndex, TesterValue.valueMap(row.outputs))
-                    }.toList)
+                    exConfig.data.copy(testCases =
+                      selectedRows
+                        .groupBy(_.testInputs.values.toSeq)
+                        .map { case (ins, rows) =>
+                          val row = rows.head
+                          val outputs = rows.map(r => TestResult(r.dmnRowIndex, TesterValue.valueMap(r.outputs))).toList
+                            TestCase(
+                              TesterValue.valueMap(row.testInputs),
+                              outputs
+                          )
+                        }
+                        .toList
+                    )
                   )
                   onCreateTestCases(newConfig)
                 }(
@@ -353,8 +369,8 @@ class TableRow(
     testedCell(
       colSpan,
       value,
-      tc =>
-        tc.outputs
+      testResult =>
+        testResult.outputs
           .get(key)
           .map(_.valueStr)
           .getOrElse(s"There is no Output Key '$key''")
@@ -373,14 +389,15 @@ class TableRow(
   private def testedCell(
       colSpan: Int,
       actualVal: String,
-      expVal: TestCase => String
+      expVal: TestResult => String
   ) = {
     val (cssClass, tooltip) = maybeTestCase
-      .map { testCase =>
-        if (actualVal == expVal(testCase))
+      .flatMap(_.results.find(_.rowIndex == dmnRowIndex))
+      .map { testResult =>
+        if (actualVal == expVal(testResult))
           "SUCCESS-cell" -> actualVal
         else
-          "ERROR-cell" -> s"$actualVal did not match the expected one: ${expVal(testCase)}"
+          "ERROR-cell" -> s"$actualVal did not match the expected one: ${expVal(testResult)}"
 
       }
       .getOrElse(s"INFO-cell" -> actualVal)

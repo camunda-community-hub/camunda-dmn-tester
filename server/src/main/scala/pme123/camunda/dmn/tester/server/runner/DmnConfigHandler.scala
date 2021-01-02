@@ -111,9 +111,13 @@ object hocon {
       TesterInput.unapply
     )
 
+  val testResult: ConfigDescriptor[TestResult] =
+    (int("rowIndex") |@|
+      map("outputs")(testerValue))(TestResult.apply, TestResult.unapply)
+
   val testCases: ConfigDescriptor[TestCase] =
-    (map("inputs")(testerValue) |@| int("rowIndex") |@|
-      map("outputs")(testerValue))(TestCase.apply, TestCase.unapply)
+    (map("inputs")(testerValue) |@|
+      list("results")(testResult))(TestCase.apply, TestCase.unapply)
 
   val testerData: ConfigDescriptor[TesterData] =
     (list("inputs")(testerInput) |@|

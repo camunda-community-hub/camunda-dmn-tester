@@ -10,7 +10,8 @@ case class DmnConfig(
     isActive: Boolean = false
 ) {
 
-  def findTestCase(testInputs: Map[String, String]): Option[TestCase] = data.findTestCase(testInputs)
+  def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
+    data.findTestCase(testInputs)
 
 }
 
@@ -38,7 +39,7 @@ case class TesterData(
     }
 
   def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
-    testCases.find{tc=>
+    testCases.find { tc =>
       tc.inputs.view.mapValues(_.valueStr).toMap == testInputs
     }
 
@@ -120,7 +121,8 @@ object TesterValue {
   }
 }
 
-case class TestCase(inputs: Map[String, TesterValue], rowIndex: Int, outputs: Map[String, TesterValue])
+case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult])
+case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue])
 
 object conversions {
 
