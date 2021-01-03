@@ -4,7 +4,6 @@ import boopickle.Default._
 import boopickle.UnpickleImpl
 import cats.effect._
 import org.http4s.EntityDecoder._
-import org.http4s.EntityDecoder.textFile
 import org.http4s.EntityEncoder._
 import org.http4s.dsl.io._
 import org.http4s.multipart.Multipart
@@ -13,10 +12,8 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
 import org.http4s.{Request, StaticFile, _}
-import pme123.camunda.dmn.tester.server.config.DmnUploader
 import pme123.camunda.dmn.tester.shared.DmnApi
 
-import java.io.File
 import java.nio.ByteBuffer
 import scala.concurrent.ExecutionContext.global
 

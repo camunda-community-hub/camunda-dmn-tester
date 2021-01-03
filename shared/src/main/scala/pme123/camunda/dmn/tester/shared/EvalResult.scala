@@ -10,9 +10,12 @@ case class DmnEvalResult(
     missingRules: Seq[DmnRule]
 ) {
   def maxEvalStatus: EvalStatus = {
-    val status = evalResults.map(_.status) ++ missingRules.headOption.map(_ => EvalStatus.WARN)
+    val status = evalResults.map(_.status) ++ missingRules.headOption.map(_ =>
+      EvalStatus.WARN
+    )
     status.sorted.headOption.getOrElse(INFO)
-  }}
+  }
+}
 
 case class DmnEvalRowResult(
     status: EvalStatus,
@@ -22,7 +25,12 @@ case class DmnEvalRowResult(
     maybeError: Option[EvalError]
 )
 
-case class Dmn(id: String, hitPolicy: String, dmnConfig: DmnConfig, rules: Seq[DmnRule])
+case class Dmn(
+    id: String,
+    hitPolicy: String,
+    dmnConfig: DmnConfig,
+    rules: Seq[DmnRule]
+)
 
 case class DmnRule(
     index: Int,

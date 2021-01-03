@@ -21,7 +21,7 @@ import $ivy.`pme123::camunda-dmn-tester-server:0.5.0-SNAPSHOT`
 import pme123.camunda.dmn.tester.server.HttpServer
 
 // add here your comma separated list with Paths you have your DMN Tester Configs
-val configPaths = "/dmnTester/dmn-configs,/core/src/test/resources/dmn-configs"
+val configPaths = "/dmnConfigs"
 
 sys.props.addOne("TESTER_CONFIG_PATHS",  configPaths)
 

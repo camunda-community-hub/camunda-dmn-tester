@@ -2,6 +2,7 @@ package pme123.camunda.dmn.tester.server
 
 import ammonite.ops.{pwd, up}
 import org.camunda.dmn.DmnEngine
+import org.camunda.feel.syntaxtree.Val
 import os.Path
 import pme123.camunda.dmn.tester.shared.Dmn
 import zio.console.Console
@@ -13,7 +14,7 @@ package object runner {
 
   case class RunResult(
       inputs: Map[String, Any],
-      result: Either[DmnEngine.Failure, DmnEngine.EvalResult]
+      result: Either[DmnEngine.Failure, Val]
   )
 
   def formatStrings(strings: Seq[String]): String = {
