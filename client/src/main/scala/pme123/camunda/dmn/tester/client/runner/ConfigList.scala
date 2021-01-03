@@ -1,10 +1,9 @@
 package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
-import pme123.camunda.dmn.tester.client.services.AjaxClient
 import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
 import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, TesterData, TesterInput}
+import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react

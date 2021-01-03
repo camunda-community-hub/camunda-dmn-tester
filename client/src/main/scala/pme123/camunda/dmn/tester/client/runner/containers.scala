@@ -114,7 +114,7 @@ object containers {
           .onComplete {
             case Success(configs) =>
               setIsConfigsLoaded(true)
-              setConfigs(configs)
+              setConfigs(configs.map(_.copy(isActive = false))) // by default every Config is not active
               setConfigsError(None)
             case Failure(ex) =>
               setIsConfigsLoaded(true)
