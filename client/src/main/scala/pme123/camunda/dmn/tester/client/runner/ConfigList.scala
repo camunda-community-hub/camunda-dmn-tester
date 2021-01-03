@@ -132,7 +132,10 @@ import scala.scalajs.js.JSON
             buttonWithTooltip(
               FileAddOutlined,
               "Create new DMN Configuration.",
-              () => setIsModalVisible(true)
+              () => {
+                setMaybeDmnConfig(None)
+                setIsModalVisible(true)
+              }
             )
           )
         )(

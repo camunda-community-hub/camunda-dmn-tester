@@ -3,8 +3,7 @@ package pme123.camunda.dmn.tester.client.runner
 import boopickle.Default._
 import org.scalablytyped.runtime.StringDictionary
 import pme123.camunda.dmn.tester.client._
-import pme123.camunda.dmn.tester.client.services.AjaxClient
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, TesterInput}
+import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
 import slinky.core.annotations.react
@@ -15,14 +14,12 @@ import typings.antDesignIconsSvg.mod.{MinusCircleOutlined, PlusOutlined}
 import typings.antd.components._
 import typings.antd.formFormMod.useForm
 import typings.antd.formListMod.{FormListFieldData, FormListOperation}
-import typings.antd.mod.message
 import typings.rcFieldForm.interfaceMod.{BaseRule, Store}
 import typings.react.mod.CSSProperties
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, RegExp}
-import scala.util.{Failure, Success}
+import scala.scalajs.js.RegExp
 
 @react object DmnConfigForm {
 
@@ -49,7 +46,7 @@ import scala.util.{Failure, Success}
                 "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
                 "testerInputs" -> js.Array(
                   maybeDmnConfig.toSeq.flatMap(_.data.inputs).map {
-                    case ti @ TesterInput(key, values) =>
+                    case ti @ TesterInput(key, _) =>
                       StringDictionary(
                         "key" -> key,
                         "type" -> ti.valueType,
