@@ -9,7 +9,7 @@ interp.repositories() ++= Seq(
 
 @
 
-import $ivy.`pme123::camunda-dmn-tester-server:0.5.0-SNAPSHOT`
+import $ivy.`pme123::camunda-dmn-tester-server:0.5.0`
 import pme123.camunda.dmn.tester.server.HttpServer
 
 // add here your comma separated list with Paths you have your DMN Tester Configs
