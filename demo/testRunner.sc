@@ -1,15 +1,7 @@
 #!/usr/bin/env amm
 
-/** HOW TO USE
-  * see README.md
-  */
-
-// only used for tmp dmn-scala
+// repo for DMN Tester
 interp.repositories() ++= Seq(
-  coursierapi.MavenRepository.of(
-    "file://" + java.lang.System.getProperties
-      .get("user.home") + "/.m2/repository/"
-  ),
   coursierapi.MavenRepository.of("https://dl.bintray.com/pme123/maven")
 )
 
