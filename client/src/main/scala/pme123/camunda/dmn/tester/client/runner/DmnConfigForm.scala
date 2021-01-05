@@ -67,7 +67,7 @@ import scala.scalajs.js.RegExp
 
       Modal
         .title("DMN Config Editor")
-        .okText(textWithTooltip("Save", "BE AWARE, that this will delete all TestCases of an existing DmnConfig."))
+        .okText(textWithTooltip("Save", "Persist your changes. Existing TestCases are not lost."))
         .width(1000)
         .visible(isModalVisible)
         .forceRender(true)

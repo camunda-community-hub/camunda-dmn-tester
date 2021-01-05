@@ -15,17 +15,13 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{
-  ColumnGroupType,
-  ColumnType,
-  TableRowSelection
-}
+import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
 
 import scala.scalajs.js
-import scala.scalajs.js.|
+import scala.scalajs.js.{JSON, |}
 
 @react object EvalResultsCard {
 
@@ -35,7 +31,6 @@ import scala.scalajs.js.|
       maybeError: Option[String],
       onCreateTestCases: DmnConfig => Unit
   )
-
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
       val Props(evalResults, isLoaded, maybeError, onCreateTestCases) = props
@@ -398,19 +393,19 @@ class TableRow(
       actualVal: String,
       expVal: TestResult => String
   ) = {
-    println(s"maybeTestCase: ${maybeTestCase
-      .map(_.inputs.view.mapValues(_.valueStr).toMap)} - $testInputs")
     val (cssClass: String, tooltip: String) = maybeTestCase
       .find(_.inputs.view.mapValues(_.valueStr).toMap == testInputs)
-      .map( testCase =>
-        testCase.results.find(expVal(_) == actualVal)
-          .map(_=>  "SUCCESS-cell" -> actualVal)
+      .map(testCase =>
+        testCase.results
+          .find(expVal(_) == actualVal)
+          .map(_ => "SUCCESS-cell" -> actualVal)
           .getOrElse(
-              "ERROR-cell" -> s"$actualVal did not match an expected one: ${testCase.results.map(expVal).mkString("[",", ","]")}"
+            "ERROR-cell" -> s"$actualVal did not match an expected one: ${testCase.results
+              .map(expVal)
+              .mkString("[", ", ", "]")}"
           )
       )
       .getOrElse(s"INFO-cell" -> actualVal)
-println(s"ACTUAL VAL $actualVal - $tooltip")
     RenderedCell[TableRow]()
       .setChildren(
         textWithTooltip(actualVal, tooltip)
@@ -466,10 +461,6 @@ case class RowCreator(
                 status,
                 testInputs,
                 1,
-                /* if (index == 0)
-                  matchedRules.size +
-                    maybeError.map(_ => 1).getOrElse(0) // add an extra row
-                else 0,*/
                 rowIndex(ruleId),
                 inputKeys.zip(inputs).toMap,
                 outputMap,

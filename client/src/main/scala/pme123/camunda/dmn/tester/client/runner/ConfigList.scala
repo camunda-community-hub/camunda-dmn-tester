@@ -2,7 +2,11 @@ package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
-import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
+import pme123.camunda.dmn.tester.shared.TesterValue.{
+  BooleanValue,
+  NumberValue,
+  StringValue
+}
 import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
@@ -39,7 +43,8 @@ import scala.scalajs.js.JSON
     props =>
       val (isActive, setIsActive) = useState(false)
       val (isModalVisible, setIsModalVisible) = useState(false)
-      val (maybeDmnConfig, setMaybeDmnConfig) = useState[Option[DmnConfig]](None)
+      val (maybeDmnConfig, setMaybeDmnConfig) =
+        useState[Option[DmnConfig]](None)
       val Props(
         basePath,
         configs,
@@ -97,7 +102,13 @@ import scala.scalajs.js.JSON
           dmnPath
         )
         maybeDmnConfig
-          .map(_ => onEditConfig(dmnConfig ))
+          .map(existingConfig =>
+            onEditConfig( // take existing Test Cases
+              dmnConfig.copy(data =
+                dmnConfig.data.copy(testCases = existingConfig.data.testCases)
+              )
+            )
+          )
           .getOrElse(onAddConfig(dmnConfig))
 
       }
@@ -106,25 +117,25 @@ import scala.scalajs.js.JSON
         .withKey("selectConfigCard")
         .title(
           Fragment
-          .withKey("selectConfigFragment")(
-            "2. Select the DMN Configurations you want to test.",
-            div(style := literal(textAlign = "right", marginRight = 10))(
-              activeCheck(
-                isActive = isActive,
-                active => {
-                  setIsActive(active)
-                  setConfigs(configs.map(_.copy(isActive = active)))
-                }
+            .withKey("selectConfigFragment")(
+              "2. Select the DMN Configurations you want to test.",
+              div(style := literal(textAlign = "right", marginRight = 10))(
+                activeCheck(
+                  isActive = isActive,
+                  active => {
+                    setIsActive(active)
+                    setConfigs(configs.map(_.copy(isActive = active)))
+                  }
+                )
+              ),
+              DmnConfigForm(
+                basePath,
+                maybeDmnConfig,
+                isModalVisible,
+                (store: Store) => onSave(store),
+                () => setIsModalVisible(false)
               )
-            ),
-            DmnConfigForm(
-              basePath,
-              maybeDmnConfig,
-              isModalVisible,
-              (store: Store) => onSave(store),
-              () => setIsModalVisible(false)
             )
-          )
         )
         .actions(
           js.Array(
@@ -156,7 +167,12 @@ import scala.scalajs.js.JSON
                     .showIcon(true)
                 )
             case _ =>
-              ConfigList(configs.sortBy(_.dmnPath.toString).sortBy(_.decisionId), editDmnConfig, onDeleteConfig, handleConfigToggle)
+              ConfigList(
+                configs.sortBy(_.dmnPath.toString).sortBy(_.decisionId),
+                editDmnConfig,
+                onDeleteConfig,
+                handleConfigToggle
+              )
           }
         )
   }
