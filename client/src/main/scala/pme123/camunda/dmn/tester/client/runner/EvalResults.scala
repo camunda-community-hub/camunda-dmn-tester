@@ -155,7 +155,7 @@ class TableItem(
                 else
                   build(span(""))
               })
-           //   .setCheckStrictly(false)
+              //   .setCheckStrictly(false)
               .setOnSelectAll((selected, _, rows) =>
                 if (selected)
                   setSelectedRows(
@@ -203,12 +203,19 @@ class TableItem(
                     exConfig.data.copy(testCases =
                       selectedRows
                         .groupBy(_.testInputs.values.toSeq)
-                        .map { case (ins, rows) =>
+                        .map { case (_, rows) =>
                           val row = rows.head
-                          val outputs = rows.map(r => TestResult(r.dmnRowIndex, TesterValue.valueMap(r.outputs))).toList
-                            TestCase(
-                              TesterValue.valueMap(row.testInputs),
-                              outputs
+                          val outputs = rows
+                            .map(r =>
+                              TestResult(
+                                r.dmnRowIndex,
+                                TesterValue.valueMap(r.outputs)
+                              )
+                            )
+                            .toList
+                          TestCase(
+                            TesterValue.valueMap(row.testInputs),
+                            outputs
                           )
                         }
                         .toList
@@ -391,20 +398,22 @@ class TableRow(
       actualVal: String,
       expVal: TestResult => String
   ) = {
-    val (cssClass, tooltip) = maybeTestCase
-      .flatMap(_.results.find(_.rowIndex == dmnRowIndex))
-      .map { testResult =>
-        if (actualVal == expVal(testResult))
-          "SUCCESS-cell" -> actualVal
-        else
-          "ERROR-cell" -> s"$actualVal did not match the expected one: ${expVal(testResult)}"
-
-      }
+    println(s"maybeTestCase: ${maybeTestCase
+      .map(_.inputs.view.mapValues(_.valueStr).toMap)} - $testInputs")
+    val (cssClass: String, tooltip: String) = maybeTestCase
+      .find(_.inputs.view.mapValues(_.valueStr).toMap == testInputs)
+      .map( testCase =>
+        testCase.results.find(expVal(_) == actualVal)
+          .map(_=>  "SUCCESS-cell" -> actualVal)
+          .getOrElse(
+              "ERROR-cell" -> s"$actualVal did not match an expected one: ${testCase.results.map(expVal).mkString("[",", ","]")}"
+          )
+      )
       .getOrElse(s"INFO-cell" -> actualVal)
-
+println(s"ACTUAL VAL $actualVal - $tooltip")
     RenderedCell[TableRow]()
       .setChildren(
-        textWithTooltip(actualVal.toString, tooltip.toString)
+        textWithTooltip(actualVal, tooltip)
       )
       .setProps(
         CellType()
