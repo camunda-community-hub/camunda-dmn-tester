@@ -9,7 +9,7 @@ object Deps {
 
   object version {
     val ammonite = "2.2.0"
-    val dmnScala = "1.5.0"
+    val dmnScala = "1.6.0"
     val http4s = "0.21.12"
     val slf4j = "1.7.30"
     val zio = "1.0.3"
