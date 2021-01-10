@@ -61,7 +61,7 @@ This will watch all your changes in the client and automatically refresh your Br
 Open in the Browser **http://localhost:8024**.
 
 ## Releasing
-
+### Library
 At the moment there are 2 steps:
 1. Build the Client (full optimization) and the Server:
 
@@ -69,3 +69,13 @@ At the moment there are 2 steps:
 2. Publish: 
    
    `sbt publishLocal` or `sbt publish`
+### Docker
+`sbt server/docker:publishLocal`
+## Try it out
+I provided a Docker Compose File that works for the Demo.
+
+`cd demo`
+
+`docker-compose -f docker-compose.yml --project-directory . -p camunda-dmn-tester up`
+
+

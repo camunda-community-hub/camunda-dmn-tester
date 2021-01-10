@@ -16,7 +16,7 @@ object Settings {
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "pme123",
-      version := "0.7.0-SNAPSHOT",
+      version := "0.8.0-SNAPSHOT",
       scalaVersion := "2.13.2"
     )
 
@@ -108,7 +108,8 @@ object Settings {
       _.settings(
         dockerExposedPorts ++= Seq(8883),
         packageName in Docker := projectName,
-        dockerUsername := Some("pame")
+        dockerUsername := Some("pame"),
+        dockerUpdateLatest := true
       ).enablePlugins(DockerPlugin)
   }
 

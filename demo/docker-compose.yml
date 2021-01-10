@@ -1,0 +1,13 @@
+# docker-compose -f docker-compose.yml --project-directory . -p camunda-dmn-tester up
+version: "3.7"
+
+services:
+  camunda-dmn-tester:
+    image: pame/camunda-dmn-tester:latest
+    environment:
+      TESTER_CONFIG_PATHS: "/dmnConfigs"
+    volumes:
+      - ./dmns:/opt/docker/dmns
+      - ./dmnConfigs:/opt/docker/dmnConfigs
+    ports:
+      - "8883:8883"

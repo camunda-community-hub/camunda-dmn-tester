@@ -19,7 +19,7 @@ class DmnService extends DmnApi {
     pwd.toIO.getAbsolutePath
 
   override def getConfigPaths(): Seq[String] = {
-    val maybeConfigs = sys.props.get("TESTER_CONFIG_PATHS")
+    val maybeConfigs = sys.props.get("TESTER_CONFIG_PATHS") orElse sys.env.get("TESTER_CONFIG_PATHS")
     println("TESTER_CONFIG_PATHS: " + maybeConfigs)
     maybeConfigs
       .map(
