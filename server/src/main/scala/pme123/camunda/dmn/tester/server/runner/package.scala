@@ -29,8 +29,10 @@ package object runner {
   }
 
   def osPath(path: List[String]): Path = path match {
-    case ".." :: tail => pwd / up / tail
-    case other        => pwd / other
+    case ".." :: tail =>
+      pwd / up / tail
+    case other        =>
+      pwd / other
   }
 
   def printError(msg: String): URIO[Console, Unit] =
