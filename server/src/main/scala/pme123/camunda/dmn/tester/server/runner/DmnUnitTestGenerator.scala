@@ -42,8 +42,11 @@ case class DmnUnitTestGenerator(
       case Right(result) =>
         for {
           name <- className(result.dmn.id)
-          testMethod <- testMethods(result)
-          _ <- testFile(name, testMethod: _*)
+          testMethods <- testMethods(result)
+          missingMethods <- ZIO.foreach(result.missingRules)(r =>
+            missingRuleMethod(r, result.inputKeys)
+          )
+          _ <- testFile(name, testMethods ++ missingMethods: _*)
         } yield ()
     }
 
@@ -59,6 +62,23 @@ case class DmnUnitTestGenerator(
       testMethod(dmnEvalRow, dmnEvalResult)
     }
   }
+
+  private[runner] def missingRuleMethod(
+      dmnRule: DmnRule,
+      inputKeys: Seq[String]
+  ): UIO[String] =
+    UIO(
+      testMethod(
+        s"missing_${dmnRule.index}_${dmnRule.inputs.map(_.replaceAll("""[\W]""", "_")).mkString("__")}",
+        s"""fail(\"\"\"There is no Rule that matched for these Inputs:
+                       |${inputKeys
+          .zip(dmnRule.inputs)
+          .map { case (k: String, v: String) =>
+            s"|- $k: $v"
+          }
+          .mkString("\n")}\"\"\".stripMargin)""".stripMargin
+      )
+    )
 
   private[runner] def info(
       dmnEvalRow: DmnEvalRowResult,
