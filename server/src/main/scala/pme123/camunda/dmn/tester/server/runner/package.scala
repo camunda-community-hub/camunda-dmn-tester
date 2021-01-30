@@ -10,6 +10,10 @@ import zio.{URIO, console}
 
 package object runner {
 
+   val defaultConfigPaths = Seq(
+    "/server/src/test/resources/dmn-configs"
+  )
+
   case class RunResults(dmn: Dmn, results: Seq[RunResult])
 
   case class RunResult(

@@ -69,9 +69,9 @@ object TesterValue {
   def fromString(valueStr: String): TesterValue =
     valueStr.toBooleanOption
       .map(BooleanValue.apply) orElse
-      valueStr.toDoubleOption
-        .map(NumberValue.apply) orElse
       valueStr.toLongOption
+        .map(NumberValue.apply) orElse
+      valueStr.toDoubleOption
         .map(NumberValue.apply) getOrElse
       StringValue(valueStr)
 

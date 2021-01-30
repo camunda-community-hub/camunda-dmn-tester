@@ -100,7 +100,8 @@ object Settings {
         Deps.zioConfigHocon,
         Deps.zioConfigMagnolia,
         Deps.zioTest % Test,
-        Deps.zioTestSbt % Test
+        Deps.zioTestSbt % Test,
+        Deps.jUnit % Test
       )
     )
 

@@ -15,7 +15,11 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
+import typings.antd.tableInterfaceMod.{
+  ColumnGroupType,
+  ColumnType,
+  TableRowSelection
+}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
@@ -394,7 +398,6 @@ class TableRow(
       expVal: TestResult => String
   ) = {
     val (cssClass: String, tooltip: String) = maybeTestCase
-      .find(_.inputs.view.mapValues(_.valueStr).toMap == testInputs)
       .map(testCase =>
         testCase.results
           .find(expVal(_) == actualVal)

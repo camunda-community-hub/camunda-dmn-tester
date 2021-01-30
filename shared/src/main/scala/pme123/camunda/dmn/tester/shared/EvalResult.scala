@@ -27,7 +27,7 @@ case class DmnEvalRowResult(
 
 case class Dmn(
     id: String,
-    hitPolicy: String,
+    hitPolicy: HitPolicy,
     dmnConfig: DmnConfig,
     rules: Seq[DmnRule]
 )
@@ -95,6 +95,7 @@ case class MatchedRule(
     outputs: Map[String, String]
 )
 case class EvalError(msg: String)
+
 sealed trait EvalStatus extends Comparable[EvalStatus] {
   def order: Int
   override def compareTo(o: EvalStatus): Int = order.compareTo(o.order)
@@ -111,4 +112,21 @@ object EvalStatus {
   case object ERROR extends EvalStatus {
     val order = 1
   }
+}
+
+sealed trait HitPolicy
+
+object HitPolicy {
+  case object UNIQUE extends HitPolicy
+  case object FIRST extends HitPolicy
+  case object ANY extends HitPolicy
+  case object COLLECT extends HitPolicy
+
+  def apply(value: String): HitPolicy =
+    value.toUpperCase match {
+      case "UNIQUE"  => UNIQUE
+      case "FIRST"   => FIRST
+      case "ANY"     => ANY
+      case "COLLECT" => COLLECT
+    }
 }

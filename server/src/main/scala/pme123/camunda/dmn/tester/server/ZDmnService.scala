@@ -4,7 +4,10 @@ import ammonite.ops
 import ammonite.ops.pwd
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.runner._
-import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException, EvalException}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{
+  ConfigException,
+  EvalException
+}
 import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult}
 import zio.console.Console
 import zio.{Task, UIO, ZIO, console}
@@ -12,16 +15,14 @@ import zio.{Task, UIO, ZIO, console}
 import java.io.File
 
 object ZDmnService {
-  private val configPaths = Seq(
-    "/server/src/test/resources/dmn-configs"
-  )
+
   def basePath(): Task[String] =
     ZIO(pwd.toIO.getAbsolutePath)
 
   def loadConfigPaths(): Task[Seq[String]] = UIO {
-    val maybeConfigs = sys.props.get("TESTER_CONFIG_PATHS") orElse sys.env.get(
-      "TESTER_CONFIG_PATHS"
-    )
+    val maybeConfigs =
+      sys.props.get("TESTER_CONFIG_PATHS") orElse
+        sys.env.get("TESTER_CONFIG_PATHS")
     maybeConfigs
       .map(
         _.split(",")
@@ -29,7 +30,7 @@ object ZDmnService {
           .filter(_.nonEmpty)
           .toSeq
       )
-      .getOrElse(configPaths)
+      .getOrElse(defaultConfigPaths)
   }
 
   def loadConfigs(
@@ -65,6 +66,8 @@ object ZDmnService {
     DmnConfigHandler.delete(dmnConfig, path.toList) *>
       loadConfigs(path)
 
+  /** for a DmnConfig -> Either[EvalException, DmnEvalResult]
+    */
   def runTests(
       dmnConfigs: Seq[DmnConfig]
   ): ZIO[Console, Nothing, Seq[Either[EvalException, DmnEvalResult]]] =

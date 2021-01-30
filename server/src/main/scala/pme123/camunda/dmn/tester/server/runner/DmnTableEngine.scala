@@ -47,7 +47,7 @@ case class DmnTableEngine(
       (hitPolicy, rules) = hitPolicyAndRules(decision)
       dmn = Dmn(
         dmnConfig.decisionId,
-        hitPolicy.toString,
+        HitPolicy(hitPolicy.toString),
         dmnConfig,
         rules
       )
