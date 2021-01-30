@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "DMN Table Tester",
+  "name": "Camunda DMN Table Tester",
   "icons": [
     {
       "src": "favicon.ico",
