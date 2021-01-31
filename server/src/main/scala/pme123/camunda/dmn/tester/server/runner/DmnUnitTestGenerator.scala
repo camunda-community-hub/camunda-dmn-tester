@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import ammonite.ops.{Callable1Implicit, rm}
+import ammonite.ops.{Callable1Implicit, pwd, rm}
 import os.write
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException

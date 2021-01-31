@@ -21,7 +21,6 @@ object AjaxClient extends autowire.Client[ByteBuffer, Pickler, Pickler] {
     else ""
 
   override def doCall(req: Request): Future[ByteBuffer] = {
-    println(s"API URL: $url")
     Ajax.post(
       url = s"$url/api/" + req.path.mkString("/"),
       data = Pickle.intoBytes(req.args),

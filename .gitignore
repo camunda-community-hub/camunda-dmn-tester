@@ -19,3 +19,5 @@ yarn.lock
 /shared/.js/
 /shared/.jvm/
 /server/target/
+/demo/project/target/
+/demo/target/
