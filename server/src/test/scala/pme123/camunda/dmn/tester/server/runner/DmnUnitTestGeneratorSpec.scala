@@ -25,6 +25,18 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
           equalTo("test__in1__hello_Pete__in2__4_5")
         )
       },
+      test("check Test Case successful") {
+        assert(generator.checkTestCase(infoRowResultTestCase, testCase.resultsOutputMap, "INFO"))(
+          containsString("assertTrue") &&
+            containsString("INFO")
+        )
+      },
+      test("check Test Case failed") {
+        assert(generator.checkTestCase(infoRowResultTestCase, testCase.resultsOutputMap.takeRight(1), "INFO"))(
+          containsString("fail") &&
+            containsString("INFO")
+        )
+      },
       testM("create EvalException Test Method") {
         for {
           result <- evalExceptionTestMethod
@@ -85,6 +97,10 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
       }
     )
 
+  private val testCase: TestCase = TestCase(
+    TesterValue.valueMap(infoRowResultTestCase.testInputs),
+    List(TestResult(1, Map("out1" -> "val1", "out2" -> "val2")),TestResult(1, Map("out1" -> "val1", "out2" -> "val3")))
+  )
   private lazy val dmnConfig = DmnConfig(
     decisionId,
     TesterData(
@@ -93,10 +109,7 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
         TesterInput("in2", List(3.5, 4))
       ),
       List(
-        TestCase(
-          TesterValue.valueMap(infoRowResult.testInputs),
-          List(TestResult(1, Map("out1" -> "val1", "out2" -> "val2")))
-        )
+        testCase
       )
     ),
     List.empty

@@ -131,19 +131,8 @@ case class DmnUnitTestGenerator(
             case EvalStatus.INFO =>
               dmnEvalResult.dmn.dmnConfig
                 .findTestCase(dmnEvalRow.testInputs)
-                .map { case TestCase(_, results) =>
-                  (for {
-                    MatchedRule(_, _, outputs) <- dmnEvalRow.matchedRules
-                    TestResult(_, resultOutputs) <- results
-                    test <- outputs.map { case (key, v) =>
-                      val value = resultOutputs
-                        .get(key)
-                        .map(_.valueStr)
-                        .getOrElse(s"There is no Output Key '$key''")
-                      s"""assertEquals(\"\"\"$info\"\"\", "$value", "$v")"""
-                    }
-
-                  } yield test).mkString("\n")
+                .map { testCase =>
+                  checkTestCase(dmnEvalRow, testCase.resultsOutputMap, info)
                 }
                 .getOrElse(
                   s"""assertTrue(\"\"\"$info\"\"\", true)"""
@@ -154,6 +143,25 @@ case class DmnUnitTestGenerator(
           }
         )
       )
+
+  private[runner] def checkTestCase(
+      dmnEvalRow: DmnEvalRowResult,
+      resultsOutputMap: Seq[Map[String, String]],
+      info: String
+  ) = {
+    dmnEvalRow.matchedRules
+      .map { case MatchedRule(_, _, outputs) =>
+        if (resultsOutputMap.contains(outputs))
+          s"""assertTrue(\"\"\"$info\"\"\", true)"""
+        else
+          s"""fail(\"\"\"The Test Case does not match a Result.
+             |TestCase(s): $resultsOutputMap
+             |Result: $outputs
+             |$info\"\"\")
+          """.stripMargin
+      }
+      .mkString("\n")
+  }
 
   private[runner] def methodName(testInputs: Map[String, String]) = {
     "test__" + testInputs

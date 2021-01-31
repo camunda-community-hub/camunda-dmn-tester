@@ -121,7 +121,10 @@ object TesterValue {
   }
 }
 
-case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult])
+case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult]) {
+  lazy val resultsOutputMap: Seq[Map[String, String]] =
+    results.map(_.outputs.view.mapValues(_.valueStr).toMap)
+}
 case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue])
 
 object conversions {
