@@ -15,17 +15,13 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{
-  ColumnGroupType,
-  ColumnType,
-  TableRowSelection
-}
+import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
 
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, |}
+import scala.scalajs.js.|
 
 @react object EvalResultsCard {
 
@@ -140,36 +136,35 @@ class TableItem(
       val rowCreator = RowCreator(er)
       val (selectedRows, setSelectedRows) = useState(Seq.empty[TableRow])
 
-      def evalTable = {
+      lazy val tableRowSelection = TableRowSelection[TableRow]()
+        .setRenderCell((_, row, _, ele: ReactElement) => {
+          if (row.status == EvalStatus.INFO) {
+            ele
+          } else
+            build(span(""))
+        })
+        .setOnSelectAll((selected, _, rows) =>
+          if (selected)
+            setSelectedRows(
+              rows.toSeq.filter(_.status == EvalStatus.INFO)
+            )
+          else
+            setSelectedRows(Seq.empty)
+        )
+        .setOnSelect((row, selected, obj, e) => {
+          println(s"Selected $row")
+          if (selected)
+            setSelectedRows(selectedRows :+ row)
+          else
+            setSelectedRows(selectedRows.filterNot(_.key == row.key))
+        })
+
+      def evalTable =
         Table[TableRow]
           .withKey(dmn.id + "Key")
           .defaultExpandAllRows(true)
           .expandIcon(_ => "")
-          .rowSelection(
-            TableRowSelection[TableRow]()
-              //.setHideSelectAll(true)
-              .setRenderCell((_, row, _, ele) => {
-                if (row.status == EvalStatus.INFO)
-                  ele
-                else
-                  build(span(""))
-              })
-              //   .setCheckStrictly(false)
-              .setOnSelectAll((selected, _, rows) =>
-                if (selected)
-                  setSelectedRows(
-                    rows.toSeq.filter(_.status == EvalStatus.INFO)
-                  )
-                else
-                  setSelectedRows(Seq.empty)
-              )
-              .setOnSelect((row, selected, _, _) =>
-                if (selected)
-                  setSelectedRows(selectedRows :+ row)
-                else
-                  setSelectedRows(selectedRows.filterNot(_.key == row.key))
-              )
-          )
+          .rowSelection(tableRowSelection)
           .tableLayout(TableLayout.fixed)
           .bordered(true)
           .pagination(antdBooleans.`false`)
@@ -181,7 +176,6 @@ class TableItem(
             inOutColumns("Matched Input", inputKeys, _.inputs),
             inOutColumns(outputTitle, outputKeys, _.outputs)
           )
-      }
 
       List.Item
         .withKey(dmn.id)
