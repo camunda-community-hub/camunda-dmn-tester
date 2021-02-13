@@ -2,12 +2,17 @@
 version: "3.7"
 
 services:
+
   camunda-dmn-tester:
-    image: pame/camunda-dmn-tester:latest
+    image: pame/camunda-dmn-tester:0.9.0-SNAPSHOT
     environment:
       TESTER_CONFIG_PATHS: "/dmnConfigs"
     volumes:
-      - ./dmns:/opt/docker/dmns
-      - ./dmnConfigs:/opt/docker/dmnConfigs
+      - .:/opt/workspace
+      - $HOME/.ivy2:/root/.ivy2
+    entrypoint:
+      - ./amm
+      - testRunner.sc
+#      - unitTestRunner.sc
     ports:
       - "8883:8883"

@@ -55,7 +55,7 @@ case class DmnUnitTestGenerator(
       .split("""[\W]""")
       .filter(_.trim.nonEmpty)
       .map(n => n.capitalize)
-      .mkString}Test")
+      .mkString}Suite")
 
   private[runner] def testMethods(dmnEvalResult: DmnEvalResult) = {
     ZIO.foreach(dmnEvalResult.evalResults) { dmnEvalRow =>
@@ -135,7 +135,10 @@ case class DmnUnitTestGenerator(
                   checkTestCase(dmnEvalRow, testCase.resultsOutputMap, info)
                 }
                 .getOrElse(
-                  s"""assertTrue(\"\"\"$info\"\"\", true)"""
+                  s"""assert(true)
+                     |/*
+                     |$info
+                     |*/""".stripMargin
                 )
             case status =>
               s"""fail(\"\"\"Dmn Table '${dmnEvalRow.decisionId}' failed with Status $status:
@@ -152,7 +155,10 @@ case class DmnUnitTestGenerator(
     dmnEvalRow.matchedRules
       .map { case MatchedRule(_, _, outputs) =>
         if (resultsOutputMap.contains(outputs))
-          s"""assertTrue(\"\"\"$info\"\"\", true)"""
+          s"""assert(true)
+             |/*
+             |$info
+             |*/""".stripMargin
         else
           s"""fail(\"\"\"The Test Case does not match a Result.
              |TestCase(s): $resultsOutputMap
@@ -164,11 +170,11 @@ case class DmnUnitTestGenerator(
   }
 
   private[runner] def methodName(testInputs: Map[String, String]) = {
-    "test__" + testInputs
+    "Test Inputs: " + testInputs
       .map { case (k, v) =>
-        s"${k}__${v.replaceAll("""[\W]""", "_").take(10)}"
+        s"${k} -> ${v.take(12)}"
       }
-      .mkString("__")
+      .mkString(" | ")
   }
 
   private[runner] def testMethod(evalException: EvalException): UIO[String] =
@@ -180,8 +186,7 @@ case class DmnUnitTestGenerator(
     )
 
   private[runner] def testMethod(name: String, content: String) =
-    s"""  @Test
-         |  def $name(): Unit = {
+        s"""  test ("$name") {
          |    $content
          |  }
          |""".stripMargin
@@ -193,10 +198,9 @@ case class DmnUnitTestGenerator(
     for {
       genClass <- UIO(s"""package ${config.packageName}
                          |
-                         |import org.junit.Assert._
-                         |import org.junit.Test
+                         |import org.scalatest.funsuite.AnyFunSuite
                          |
-                         |class $className {
+                         |class $className extends AnyFunSuite {
                          |
                          |${testMethods.mkString("\n")}
                          |}""".stripMargin)

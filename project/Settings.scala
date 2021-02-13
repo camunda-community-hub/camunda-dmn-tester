@@ -1,6 +1,6 @@
 import bintray.BintrayPlugin.autoImport.bintrayRepository
 import com.typesafe.sbt.packager.Keys._
-import com.typesafe.sbt.packager.docker.DockerPlugin
+import com.typesafe.sbt.packager.docker.{Cmd, DockerPlugin, ExecCmd}
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import org.scalablytyped.converter.plugin.ScalablyTypedPluginBase.autoImport._
@@ -16,7 +16,7 @@ object Settings {
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "pme123",
-      version := "0.8.0-SNAPSHOT",
+      version := "0.9.0-SNAPSHOT",
       scalaVersion := "2.13.2"
     )
 
@@ -33,16 +33,16 @@ object Settings {
     homepage := Some(new URL("https://github.com/pme123/camunda-dmn-tester")),
     startYear := Some(2020),
     pomExtra := <scm>
-        <connection>scm:git:github.com:/pme123/camunda-dmn-tester</connection>
-        <developerConnection>scm:git:git@github.com:pme123/camunda-dmn-tester.git</developerConnection>
-        <url>github.com:pme123/camunda-dmn-tester.git</url>
-      </scm>
-        <developers>
-          <developer>
-            <id>pme123</id>
-            <name>Pascal Mengelt</name>
-          </developer>
-        </developers>,
+      <connection>scm:git:github.com:/pme123/camunda-dmn-tester</connection>
+      <developerConnection>scm:git:git@github.com:pme123/camunda-dmn-tester.git</developerConnection>
+      <url>github.com:pme123/camunda-dmn-tester.git</url>
+    </scm>
+      <developers>
+        <developer>
+          <id>pme123</id>
+          <name>Pascal Mengelt</name>
+        </developer>
+      </developers>,
     licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
     bintrayRepository := {
       if (isSnapshot.value) "maven-snapshots" else "maven"
@@ -78,8 +78,9 @@ object Settings {
       name := s"$projectName-server",
       Compile / unmanagedResourceDirectories += baseDirectory.value / "../client/target/build",
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-      resolvers += Resolver.mavenLocal // only needed for dmn-engine SNAPSHOT
+      resolvers += Resolver.mavenLocal, // only needed for dmn-engine SNAPSHOT
       //    crossScalaVersions := Deps.supportedScalaVersions
+      Test / unmanagedSourceDirectories += baseDirectory.value / "target" / "generated-src"
     )
 
     lazy val serverDeps: Project => Project =
@@ -87,7 +88,7 @@ object Settings {
         libraryDependencies ++= Seq(
           Deps.http4sDsl,
           Deps.http4sServer,
-          Deps.slf4j
+          Deps.logback
         )
       )
 
@@ -101,12 +102,19 @@ object Settings {
         Deps.zioConfigMagnolia,
         Deps.zioTest % Test,
         Deps.zioTestSbt % Test,
-        Deps.jUnit % Test
+        Deps.scalaTest % Test
       )
     )
 
     lazy val docker: Project => Project =
       _.settings(
+        dockerCommands := Seq(
+          Cmd("FROM", "eed3si9n/sbt:jdk11-alpine"),
+          Cmd("LABEL", s"""MAINTAINER="${maintainer.value}""""),
+          ExecCmd("RUN", "apk", "add", "--no-cache", "curl"),
+          ExecCmd("ENTRYPOINT", "/bin/bash")
+        ),
+        maintainer := "pme123",
         dockerExposedPorts ++= Seq(8883),
         packageName in Docker := projectName,
         dockerUsername := Some("pame"),

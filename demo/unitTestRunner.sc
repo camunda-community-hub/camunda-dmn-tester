@@ -20,13 +20,14 @@ DmnUnitTestGenerator(UnitTestGeneratorConfig(
   List("target", "generated-src")
 )).run()
 
-%.sbt(
-  "-mem",
-  "3000",
-  "test"
-)
+try {
+  %.sbt(
+    "-mem",
+    "3000",
+    "test"
+  )
+} catch{ case ex: Exception =>
+  println("Check the Test Report! There are failed Tests.")
+  println("You find the Report here: target/test-reports/index.html")
+}
 
-// start the server
-import pme123.camunda.dmn.tester.server.HttpServer
-
-HttpServer.main(Array.empty[String])

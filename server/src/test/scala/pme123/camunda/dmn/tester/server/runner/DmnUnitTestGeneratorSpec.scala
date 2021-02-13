@@ -17,17 +17,17 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
     suite("DmnUnitTestGeneratorSpec")(
       testM("create Class Name") {
         assertM(generator.className("ed.af-bf_rf 6f"))(
-          equalTo("EdAfBf_rf6fTest")
+          equalTo("EdAfBf_rf6fSuite")
         )
       },
       test("create Method Name") {
         assert(generator.methodName(infoRowResult.testInputs))(
-          equalTo("test__in1__hello_Pete__in2__4_5")
+          equalTo("Test Inputs: in1 -> hello Peter! | in2 -> 4.5")
         )
       },
       test("check Test Case successful") {
         assert(generator.checkTestCase(infoRowResultTestCase, testCase.resultsOutputMap, "INFO"))(
-          containsString("assertTrue") &&
+          containsString("assert") &&
             containsString("INFO")
         )
       },
@@ -80,7 +80,7 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
           testMethod2 <- resultWarnTestMethod
           testMethod3 <- resultInfoTestMethodTestCase
           result <- generator.testFile(
-            "MyDecisionTest_12",
+            "MyDecision_12Suite",
             testMethod,
             testMethod1,
             testMethod2,
@@ -89,7 +89,7 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
           _ <- console.putStrLn(s"Result:\n$result")
         } yield assert(result)(
           containsString("package pme123.camunda.dmn.tester.test") &&
-            containsString("class MyDecisionTest")
+            containsString("class MyDecision_12Suite")
         )
       },
       testM("generate Tests") {

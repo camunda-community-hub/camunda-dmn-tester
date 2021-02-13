@@ -21,3 +21,4 @@ yarn.lock
 /server/target/
 /demo/project/target/
 /demo/target/
+/demo/demo.iml

@@ -11,11 +11,11 @@ object Deps {
     val ammonite = "2.2.0"
     val dmnScala = "1.6.0"
     val http4s = "0.21.12"
-    val slf4j = "1.7.30"
+    val logback = "1.2.3"
     val zio = "1.0.3"
     val zioCats = "2.2.0.1"
     val zioConfig = "1.0.0-RC31-1"
-    val jUnit = "4.13.1"
+    val scalaTest = "3.2.2"
   }
 
   val dmnScala =
@@ -33,7 +33,7 @@ object Deps {
 
   lazy val http4sDsl = "org.http4s" %% "http4s-dsl" % version.http4s
   lazy val http4sServer = "org.http4s" %% "http4s-blaze-server" % version.http4s
-  lazy val slf4j = "org.slf4j" % "slf4j-simple" % version.slf4j
-  lazy val jUnit = "junit" % "junit" % version.jUnit
+  lazy val logback = "ch.qos.logback"  %  "logback-classic"     % version.logback
+  lazy val scalaTest = "org.scalatest" %% "scalatest-funsuite" % version.scalaTest
 
 }
