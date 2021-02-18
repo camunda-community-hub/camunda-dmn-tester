@@ -73,52 +73,18 @@ At the moment there are 2 steps:
    `sbt publishLocal` or `sbt publish`
 
 ### Docker
+There are 2 Docker Images:
 
-`sbt server/docker:publishLocal` creates a Docker Image - see also next chapter.
+1. The DMN Tester App:
 
+   `sbt server/docker:publishLocal` creates a Docker Image - see also next chapter.
+
+2. The Unit Test Creator:
+   See its [README.md](docker/README.md)
+   
 ## Try it out
-There is a Docker Image you can use with the according Scripts in the `demo` directory.
+There are Docker Images you can use with an example in the `demo` directory.
 
 `cd demo`
 
-We support 2 Scenarios.
-
-### Create DMN Table Tests
-Use the following command:
-```bash
-docker run \
-  --name camunda-dmn-tester \
-   --rm \
-   -e TESTER_CONFIG_PATHS:="/dmnConfigs" \
-   -p 8883:8883 \
-   -v $(pwd):/opt/workspace \
-   -v $HOME/.ivy2:/root/.ivy2 \
-   pame/camunda-dmn-tester:0.9.0-SNAPSHOT \
-   ./amm testRunner.sc
-```
-Now open in your Browser: http://localhost:8883
-
-### Run the Unit Tests
-If you have configured your DMN tests, you can use the following Docker command to run them:
-
-```bash
-docker run \
-  --name camunda-dmn-tester \
-   --rm \
-   -e TESTER_CONFIG_PATHS:="/dmnConfigs" \
-   -v $(pwd):/opt/workspace \
-   -v $HOME/.ivy2:/root/.ivy2 \
-   pame/camunda-dmn-tester:0.9.0-SNAPSHOT \
-   ./amm unitTestRunner.sc
-```
-
-This creates automatically Unit Tests of your DMN Tests and runs them with `sbt`.
-
-In the end you will have the Test Reports (`target/test-reports`) you can show, for example in your CI-Tool.
-
-### docker-compose
-I provided a Docker Compose File that works for the Demo.
-
-`docker-compose -f docker-compose.yml --project-directory . -p camunda-dmn-tester up`
-
-
+See the according [README](demo/README.md)

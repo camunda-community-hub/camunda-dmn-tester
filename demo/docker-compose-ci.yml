@@ -1,0 +1,13 @@
+# docker-compose -f docker-compose-ci.yml --project-directory . -p camunda-dmn-tester-ci up
+version: "3.7"
+
+services:
+  camunda-dmn-tester:
+    image: pame/camunda-dmn-tester-ci:latest
+    environment:
+      TESTER_CONFIG_PATHS: "/dmnConfigs"
+    volumes:
+      - ./target:/opt/workspace/target
+      - ./dmnConfigs:/opt/workspace/dmnConfigs
+      - $HOME/.ivy2:/root/.ivy2
+

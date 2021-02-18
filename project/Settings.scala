@@ -1,4 +1,5 @@
 import bintray.BintrayPlugin.autoImport.bintrayRepository
+import com.typesafe.sbt.SbtNativePackager.Universal
 import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.docker.{Cmd, DockerPlugin, ExecCmd}
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
@@ -108,13 +109,7 @@ object Settings {
 
     lazy val docker: Project => Project =
       _.settings(
-        dockerCommands := Seq(
-          Cmd("FROM", "eed3si9n/sbt:jdk11-alpine"),
-          Cmd("LABEL", s"""MAINTAINER="${maintainer.value}""""),
-          ExecCmd("RUN", "apk", "add", "--no-cache", "curl"),
-          ExecCmd("ENTRYPOINT", "/bin/bash")
-        ),
-        maintainer := "pme123",
+        dockerBaseImage := "openjdk:11", //eed3si9n/sbt:jdk11-alpine",
         dockerExposedPorts ++= Seq(8883),
         packageName in Docker := projectName,
         dockerUsername := Some("pame"),
