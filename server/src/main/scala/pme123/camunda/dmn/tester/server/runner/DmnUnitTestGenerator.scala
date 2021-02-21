@@ -127,44 +127,21 @@ case class DmnUnitTestGenerator(
           methodName(dmnEvalRow.testInputs),
           dmnEvalRow.status match {
             case EvalStatus.INFO =>
-              dmnEvalResult.dmn.dmnConfig
-                .findTestCase(dmnEvalRow.testInputs)
-                .map { testCase =>
-                  checkTestCase(dmnEvalRow, testCase.resultsOutputMap, info)
-                }
-                .getOrElse(
-                  s"""assert(true)
-                     |/*
-                     |$info
-                     |*/""".stripMargin
-                )
+                  successfulTestCase(info)
             case status =>
-              s"""fail(\"\"\"Dmn Table '${dmnEvalRow.decisionId}' failed with Status $status:
+              s"""fail(\"\"\"Dmn Row of'${dmnEvalRow.decisionId}' failed with Status $status:
                |$info\"\"\")""".stripMargin
           }
         )
       )
 
-  private[runner] def checkTestCase(
-      dmnEvalRow: DmnEvalRowResult,
-      resultsOutputMap: Seq[Map[String, String]],
+  private[runner] def successfulTestCase(
       info: String
   ) = {
-    dmnEvalRow.matchedRules
-      .map { case MatchedRule(_, _, _, outputs) =>
-        if (resultsOutputMap.contains(outputs))
-          s"""assert(true)
+      s"""assert(true)
              |/*
              |$info
              |*/""".stripMargin
-        else
-          s"""fail(\"\"\"The Test Case does not match a Result.
-             |TestCase(s): $resultsOutputMap
-             |Result: $outputs
-             |$info\"\"\")
-          """.stripMargin
-      }
-      .mkString("\n")
   }
 
   private[runner] def methodName(testInputs: Map[String, String]) = {

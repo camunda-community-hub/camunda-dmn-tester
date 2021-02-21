@@ -26,14 +26,8 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
         )
       },
       test("check Test Case successful") {
-        assert(generator.checkTestCase(infoRowResultTestCase, testCase.resultsOutputMap, "INFO"))(
-          containsString("assert") &&
-            containsString("INFO")
-        )
-      },
-      test("check Test Case failed") {
-        assert(generator.checkTestCase(infoRowResultTestCase, testCase.resultsOutputMap.takeRight(1), "INFO"))(
-          containsString("fail") &&
+        assert(generator.successfulTestCase("INFO"))(
+          containsString("assert(true)") &&
             containsString("INFO")
         )
       },

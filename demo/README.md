@@ -34,6 +34,7 @@ docker run \
    -it \
    -e TESTER_CONFIG_PATHS="/dmnConfigs" \
    -v $(pwd)/dmnConfigs:/opt/workspace/dmnConfigs \
+   -v $(pwd)/dmns:/opt/workspace/dmns \
    -v $(pwd)/target:/opt/workspace/target \
    -v $HOME/.ivy2:/root/.ivy2 \
    pame/camunda-dmn-tester-ci
