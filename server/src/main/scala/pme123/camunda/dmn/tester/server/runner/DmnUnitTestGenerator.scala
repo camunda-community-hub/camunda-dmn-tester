@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import ammonite.ops.{Callable1Implicit, pwd, rm}
+import ammonite.ops.{Callable1Implicit, rm}
 import os.write
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
@@ -85,8 +85,6 @@ case class DmnUnitTestGenerator(
       dmnEvalResult: DmnEvalResult
   ): UIO[String] =
     UIO {
-      val DmnEvalResult(dmn, inputKeys, outputKeys, evalResults, missingRules) =
-        dmnEvalResult
       val DmnEvalRowResult(
         status,
         decisionId,
@@ -96,9 +94,9 @@ case class DmnUnitTestGenerator(
       ) = dmnEvalRow
       val inset: String = "   "
       def matchRule(rule: MatchedRule): String = {
-        val MatchedRule(ruleId, inputs, outputs) = rule
-        s"""- Matched Rule: $ruleId
-           |$inset- Inputs:${inputKeys
+        val MatchedRule(ruleId, ruleIndex, inputs, outputs) = rule
+        s"""- Matched Rule: $ruleId (${ruleIndex.intValue})
+           |$inset- Inputs:${dmnEvalResult.inputKeys
           .zip(inputs)
           .map { case (k, v) => s"\n$inset$inset- $k: $v" }
           .mkString}
@@ -153,7 +151,7 @@ case class DmnUnitTestGenerator(
       info: String
   ) = {
     dmnEvalRow.matchedRules
-      .map { case MatchedRule(_, _, outputs) =>
+      .map { case MatchedRule(_, _, _, outputs) =>
         if (resultsOutputMap.contains(outputs))
           s"""assert(true)
              |/*
@@ -172,7 +170,7 @@ case class DmnUnitTestGenerator(
   private[runner] def methodName(testInputs: Map[String, String]) = {
     "Test Inputs: " + testInputs
       .map { case (k, v) =>
-        s"${k} -> ${v.take(12)}"
+        s"$k -> ${v.take(12)}"
       }
       .mkString(" | ")
   }

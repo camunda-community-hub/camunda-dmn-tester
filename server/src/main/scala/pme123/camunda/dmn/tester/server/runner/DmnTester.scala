@@ -13,9 +13,9 @@ import java.io.InputStream
 import scala.language.implicitConversions
 
 case class DmnTester(
-    dmnConfig: DmnConfig,
-    engine: DmnEngine = new DmnEngine()
-) {
+                      dmnConfig: DmnConfig,
+                      engine: DmnEngine = new DmnEngine()
+                    ) {
   val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
 
   def run(): ZIO[Any, EvalException, DmnEvalResult] =
@@ -24,9 +24,12 @@ case class DmnTester(
   def run(
            dmn: ParsedDmn
          ): ZIO[Any, EvalException, DmnEvalResult] = {
-    val allInputs: Seq[Map[String, Any]] = data.normalize()
+    val allInputs: Seq[Map[String, Any]] = data.allInputs()
     val engine = DmnTableEngine(dmn, dmnConfig)
-    engine.evalDecision(allInputs)
+    for {
+      decision <- engine.evalDecision(allInputs)
+      // _ = engine.checkTestCases()
+    } yield decision
   }
 
   def parsedDmn(): IO[EvalException, ParsedDmn] =
@@ -67,9 +70,9 @@ case class DmnTester(
 object DmnTester {
 
   def testDmnTable(
-      dmnConfig: DmnConfig,
-      engine: DmnEngine
-  ): ZIO[Console, EvalException, DmnEvalResult] = {
+                    dmnConfig: DmnConfig,
+                    engine: DmnEngine
+                  ): ZIO[Console, EvalException, DmnEvalResult] = {
     val DmnConfig(decisionId, _, dmnPath, _) = dmnConfig
     console.putStrLn(
       s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"

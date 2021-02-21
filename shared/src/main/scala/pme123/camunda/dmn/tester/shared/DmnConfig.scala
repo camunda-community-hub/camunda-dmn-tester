@@ -4,11 +4,11 @@ import scala.language.implicitConversions
 import scala.math.BigDecimal
 
 case class DmnConfig(
-    decisionId: String,
-    data: TesterData,
-    dmnPath: List[String],
-    isActive: Boolean = false
-) {
+                      decisionId: String,
+                      data: TesterData,
+                      dmnPath: List[String],
+                      isActive: Boolean = false
+                    ) {
 
   def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
     data.findTestCase(testInputs)
@@ -16,22 +16,22 @@ case class DmnConfig(
 }
 
 case class TesterData(
-    inputs: List[TesterInput],
-    testCases: List[TestCase] = List.empty
-) {
+                       inputs: List[TesterInput],
+                       testCases: List[TestCase] = List.empty
+                     ) {
 
   lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _) => k }
 
-  def normalize(): List[Map[String, Any]] = {
-    val data = inputs.map(_.normalize())
+  def allInputs(): List[Map[String, Any]] = {
+    val data = inputs.map(_.asValues())
     cartesianProduct(data).map(_.toMap)
   }
 
   /** this creates all variations of the inputs you provide
-    */
+   */
   def cartesianProduct(
-      xss: List[(String, List[Any])]
-  ): List[List[(String, Any)]] =
+                        xss: List[(String, List[Any])]
+                      ): List[List[(String, Any)]] =
     xss match {
       case Nil => List(Nil)
       case (key, v) :: t =>
@@ -51,17 +51,18 @@ case class TesterInput(key: String, values: List[TesterValue]) {
 
   def valueType: String = values.headOption.map(_.valueType).getOrElse("String")
 
-  def normalize(): (String, List[Any]) = {
-    val allValues: List[Any] = values.flatMap(_.normalized)
+  def asValues(): (String, List[Any]) = {
+    val allValues: List[Any] = values.map(_.value)
     key -> allValues
   }
 }
 
 sealed trait TesterValue {
   def valueStr: String
+
   def valueType: String
+
   def value: Any
-  def normalized: Set[Any]
 }
 
 object TesterValue {
@@ -81,23 +82,23 @@ object TesterValue {
   case class StringValue(value: String) extends TesterValue {
     val valueStr: String = value
     val valueType: String = "String"
-    val normalized: Set[Any] = Set(value)
   }
 
   case class BooleanValue(value: Boolean) extends TesterValue {
     val valueStr: String = value.toString
     val valueType: String = "Boolean"
-    def normalized: Set[Any] = Set(value)
   }
+
   object BooleanValue {
     def apply(strValue: String): BooleanValue =
       BooleanValue(strValue == "true")
   }
+
   case class NumberValue(value: BigDecimal) extends TesterValue {
     val valueStr: String = value.toString()
     val valueType: String = "Number"
-    def normalized: Set[Any] = Set(value)
   }
+
   object NumberValue {
     def apply(strValue: String): NumberValue =
       NumberValue(BigDecimal(strValue))
@@ -113,19 +114,40 @@ object TesterValue {
 
   }
 
-  case class ValueSet(values: Set[TesterValue]) extends TesterValue {
-    val value: Set[TesterValue] = values
-    val valueStr: String = values.map(_.valueStr).mkString(",")
-    val valueType: String = "Set"
-    def normalized: Set[Any] = values.flatMap(_.normalized)
-  }
 }
 
 case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult]) {
+
+
   lazy val resultsOutputMap: Seq[Map[String, String]] =
     results.map(_.outputs.view.mapValues(_.valueStr).toMap)
+
+  def checkIndex(rowIndex: Int): TestedValue =
+    if (results.exists(_.rowIndex == rowIndex))
+      TestSuccess(s"$rowIndex")
+    else
+      TestFailure(s"There is no Output with the Index $rowIndex")
+
+  def checkOut(rowIndex: Int, outputKey: String, value: String): TestedValue =
+    results.find(_.rowIndex == rowIndex)
+      .map(_.checkOut(outputKey, value))
+      .getOrElse(TestFailure(s"There is no Output with the Index $rowIndex"))
+
 }
-case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue])
+
+case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
+
+  def checkOut(outputKey: String, value: String): TestedValue =
+    outputs.get(outputKey)
+      .map(v =>
+        if (v.valueStr == value)
+          TestSuccess(value)
+        else
+          TestFailure(value, s"The output '$outputKey' did not succeed: \n- expected: '${v.valueStr}'\nactual : '$value'")
+      )
+      .getOrElse(TestFailure(s"There is no Output with Key '$outputKey'"))
+
+}
 
 object conversions {
 

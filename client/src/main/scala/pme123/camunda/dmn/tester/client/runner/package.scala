@@ -1,5 +1,6 @@
 package pme123.camunda.dmn.tester.client
 
+import pme123.camunda.dmn.tester.shared.TestedValue
 import typings.rcTable.interfaceMod.RenderedCell
 
 package object runner {
