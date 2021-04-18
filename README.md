@@ -7,11 +7,11 @@
 > * They can easily adjust the tests to the dynamic nature of DMN Tables.
 
 ## Usage
-I wrote a blog article that explains how you can use it:
+I wrote two blog article that explains how you can use it:
 
 [Testing (Camunda)-DMN Tables automatically](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-713497ab57e6)
 
-I plan to write another Blog to show how you can use the DMN Tester for continuous integration CI.
+[Use the DMN Tester for Continuous Integration CI](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-part-2-d3931ed38f51)
 
 ## Technologies
 This projects builds on cool Open Source Projects. So my thanks go to:
