@@ -24,6 +24,6 @@ try {
   println("Tests all successful")
 } catch{ case ex: Exception =>
   println("Check the Test Report! There are failed Tests.")
-  println("You find the Report here: target/test-reports/index.html")
 }
+println("You find the Report here: target/test-reports/index.html")
 

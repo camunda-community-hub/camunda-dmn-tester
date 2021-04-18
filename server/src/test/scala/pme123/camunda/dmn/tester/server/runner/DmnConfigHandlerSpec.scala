@@ -24,6 +24,7 @@ object DmnConfigHandlerSpec extends DefaultRunnableSpec {
       |    key: someBoolean,
       |    values: [true, false]
       |  }]
+      |  variables: []
       |}
       |""".stripMargin
 

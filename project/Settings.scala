@@ -17,7 +17,7 @@ object Settings {
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "pme123",
-      version := "0.10.0-SNAPSHOT",
+      version := "0.10.0",
       scalaVersion := "2.13.4"
     )
 
