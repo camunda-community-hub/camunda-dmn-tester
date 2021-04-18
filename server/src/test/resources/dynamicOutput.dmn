@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="Definitions_0h38p41" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <decision id="dynamicOutputDmn" name="Decision 1">
+    <decisionTable id="DecisionTable_0s5pjgp">
+      <input id="Input_1" label="season">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>season</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1hwe5i6" label="numberOfGuests">
+        <inputExpression id="LiteralExpression_1o572rw" typeRef="integer">
+          <text>numberOfGuests</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="dish" name="dish" typeRef="string" />
+      <rule id="DecisionRule_1tx3ctf">
+        <inputEntry id="UnaryTests_0sdmcn1">
+          <text>fall</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0ijsy3d">
+          <text>&lt;= 8</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1lt1pkr">
+          <text>"Raclette "  + kind</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="dynamicOutputDmn">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

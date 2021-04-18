@@ -58,6 +58,7 @@ case class DmnTester(
                 |Hints:\n
                 |> All outputs need a value.\n
                 |> Did you miss to wrap Strings in " - e.g. "TEXT"?\n
+                |> Check if there is an 'empty' Rule you accidently created.\n
                 |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/\n""".stripMargin
           )
         case Failure(msg) =>
