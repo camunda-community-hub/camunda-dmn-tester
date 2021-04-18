@@ -5,6 +5,9 @@ import typings.rcTable.interfaceMod.RenderedCell
 
 package object runner {
 
+  val testInputsKey = "testInputs"
+  val variablesKey = "variables"
+
   def renderTextCell(text: String): RenderedCell[TableRow] = {
     RenderedCell[TableRow]()
       .setChildren(

@@ -120,6 +120,7 @@ object hocon {
 
   val testerData: ConfigDescriptor[TesterData] =
     (list("inputs")(testerInput) |@|
+      list("variables")(testerInput) |@|
       list("testCases")(testCases).default(List.empty))(
       TesterData.apply,
       TesterData.unapply

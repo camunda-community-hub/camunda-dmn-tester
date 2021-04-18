@@ -175,7 +175,7 @@ class TableItem(
             statusColumn,
             testInputColumns(inputKeys),
             dmnRowColumn(inputKeys, outputKeys),
-            inOutColumns("Matched Input", er.matchedInputKeys, _.inputs, _.outputs),
+            inOutColumns("Matched Input", dmn.dmnConfig.data.inputKeys, _.inputs, _.outputs),
             inOutColumns(outputTitle, outputKeys, _.inputs, _.outputs)
           )
 
@@ -186,6 +186,7 @@ class TableItem(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
             p("DMN: " + dmn.dmnConfig.dmnPath.mkString("/")),
+            p("Variables: " + dmn.dmnConfig.data.variables.map(_.key).mkString(", ")),
             evalTable,
             withTooltip(
               "BE AWARE that this overwrites all existing Test Cases!",
@@ -271,7 +272,6 @@ class TableItem(
                             inMap: TableRow => Map[String, String],
                             outMap: TableRow => Map[String, TestedValue]
                           ) = {
-    println(s"KEYS: $keys")
     ColumnGroupType[TableRow](js.Array())
       .setTitleReactElement(s"$title(s)")
       .setChildrenVarargs(

@@ -102,6 +102,7 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
         TesterInput("in1", List("hello3", "hello")),
         TesterInput("in2", List(3.5, 4))
       ),
+      List.empty,
       List(
         testCase
       )

@@ -25,9 +25,10 @@ case class DmnTester(
            dmn: ParsedDmn
          ): ZIO[Any, EvalException, DmnEvalResult] = {
     val allInputs: Seq[Map[String, Any]] = data.allInputs()
+
     val engine = DmnTableEngine(dmn, dmnConfig)
     for {
-      decision <- engine.evalDecision(allInputs)
+      decision <- engine.evalDecision(dmnConfig.data.inputKeys, allInputs)
       // _ = engine.checkTestCases()
     } yield decision
   }

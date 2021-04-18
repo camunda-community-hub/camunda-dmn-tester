@@ -3,7 +3,12 @@ package pme123.camunda.dmn.tester.server.runner
 import org.camunda.dmn.Audit.{AuditLog, DecisionTableEvaluationResult}
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.EvalContext
-import org.camunda.dmn.parser.{ParsedDecision, ParsedDecisionTable, ParsedDmn, ParsedRule}
+import org.camunda.dmn.parser.{
+  ParsedDecision,
+  ParsedDecisionTable,
+  ParsedDmn,
+  ParsedRule
+}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
@@ -11,15 +16,14 @@ import pme123.camunda.dmn.tester.shared._
 import zio.{IO, UIO, ZIO}
 
 case class DmnTableEngine(
-                           parsedDmn: ParsedDmn,
-                           dmnConfig: DmnConfig,
-                           engine: DmnEngine = new DmnEngine()
-                         ) {
-  val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
+    parsedDmn: ParsedDmn,
+    dmnConfig: DmnConfig,
+    engine: DmnEngine = new DmnEngine()
+) {
+  val DmnConfig(decisionId, _, dmnPath, _) = dmnConfig
 
-  /**
-   * this removes all dependent Decisions - so we can Unit Test it.
-   */
+  /** this removes all dependent Decisions - so we can Unit Test it.
+    */
   lazy val pureDecision: IO[EvalException, ParsedDecision] =
     parsedDmn.decisionsById
       .get(decisionId)
@@ -36,8 +40,9 @@ case class DmnTableEngine(
       )
 
   def evalDecision(
-                    allInputs: Seq[Map[String, Any]]
-                  ): ZIO[Any, EvalException, DmnEvalResult] = {
+      inputKeys: Seq[String],
+      allInputs: Seq[Map[String, Any]]
+  ): ZIO[Any, EvalException, DmnEvalResult] = {
     for {
       decision <- pureDecision
       (hitPolicy, rules) = hitPolicyAndRules(decision)
@@ -55,7 +60,6 @@ case class DmnTableEngine(
         rules
       )
       missingRs = missingRules(matchedRules, rules)
-      inputKeys = dmnEvalRows.headOption.toSeq.flatMap(_.testInputs.keys)
       outputKeys = matchedRules.headOption.toSeq.flatMap(_.outputs.keys)
     } yield DmnEvalResult(
       dmn,
@@ -67,26 +71,34 @@ case class DmnTableEngine(
   }
 
   private def evalDecisionRow(
-                               parsedDecision: ParsedDecision,
-                               context: EvalContext,
-                               rules: Seq[DmnRule]
-                             ): ZIO[Any, EvalException, DmnEvalRowResult] =
+      parsedDecision: ParsedDecision,
+      context: EvalContext,
+      rules: Seq[DmnRule]
+  ): ZIO[Any, EvalException, DmnEvalRowResult] =
     for {
       _ <- UIO(
         engine.decisionEval
-          .eval(parsedDecision, context) // this is not used - only the AuditLog from the context
+          .eval(
+            parsedDecision,
+            context
+          ) // this is not used - only the AuditLog from the context
       )
       evalResult <- ZIO
-        .fromOption(evalResult(AuditLog(context.dmn, context.auditLog.toList), rules, context.variables))
+        .fromOption(
+          evalResult(
+            AuditLog(context.dmn, context.auditLog.toList),
+            rules,
+            context.variables
+          )
+        )
         .orElseFail(EvalException(decisionId, "No Evaluation Result"))
-    } yield
-      DmnEvalRowResult(
-        evalResult.status,
-        decisionId,
-        context.variables.view.mapValues(_.toString).toMap,
-        evalResult.matchedRules,
-        evalResult.failed
-      )
+    } yield DmnEvalRowResult(
+      evalResult.status,
+      decisionId,
+      context.variables.view.mapValues(_.toString).toMap,
+      evalResult.matchedRules,
+      evalResult.failed
+    )
 
   private def hitPolicyAndRules(decision: ParsedDecision) = {
     decision.logic match {
@@ -104,10 +116,16 @@ case class DmnTableEngine(
     }
   }
 
-
-  private def evalResult(log: AuditLog, rules: Seq[DmnRule], inputMap: Map[String, Any]) = {
+  private def evalResult(
+      log: AuditLog,
+      rules: Seq[DmnRule],
+      inputMap: Map[String, Any]
+  ) = {
     def rowIndex(ruleId: String) =
-      rules.find(_.ruleId == ruleId).map(r => checkIndex(r.index, inputMap)).getOrElse(TestFailure(s"No Rule ID $ruleId found!"))
+      rules
+        .find(_.ruleId == ruleId)
+        .map(r => checkIndex(r.index, inputMap))
+        .getOrElse(TestFailure(s"No Rule ID $ruleId found!"))
 
     Seq(log.rootEntry.result).collectFirst {
       case DecisionTableEvaluationResult(_, matchedRules, result) =>
@@ -122,36 +140,41 @@ case class DmnTableEngine(
               rule.rule.id,
               testedIndex,
               rule.rule.inputEntries.map(_.text).toSeq,
-              checkOutputs(inputMap, testedIndex, rule.outputs
-                .map(out => out.output.name -> unwrap(out.value))
-                .toMap)
+              checkOutputs(
+                inputMap,
+                testedIndex,
+                rule.outputs
+                  .map(out => out.output.name -> unwrap(out.value))
+                  .toMap
+              )
             )
-          }
-          )
+          })
         EvalResult(log.rootEntry.id, rules, maybeError)
     }
   }
 
-  private def checkOutputs(inputMap: Map[String, Any],
-                           rowIndex: TestedValue,
-                           outputs: Map[String, String]) = {
+  private def checkOutputs(
+      inputMap: Map[String, Any],
+      rowIndex: TestedValue,
+      outputs: Map[String, String]
+  ) = {
     if (rowIndex.isError)
-      outputs.map {
-        case (k, v) =>
-          k -> NotTested(v)
+      outputs.map { case (k, v) =>
+        k -> NotTested(v)
       }
     else
-      outputs.map {
-        case (k, v) =>
-          val maybeTestCase = dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
-          k -> maybeTestCase
-            .map(_.checkOut(rowIndex.intValue, k, v))
-            .getOrElse(NotTested(v))
+      outputs.map { case (k, v) =>
+        val maybeTestCase =
+          dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
+        k -> maybeTestCase
+          .map(_.checkOut(rowIndex.intValue, k, v))
+          .getOrElse(NotTested(v))
       }
   }
 
   private def checkIndex(rowIndex: Int, inputMap: Map[String, Any]) = {
-    val maybeTestCase = dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
+    val maybeTestCase =
+      dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
     maybeTestCase
       .map(_.checkIndex(rowIndex))
       .getOrElse(NotTested(rowIndex.toString))
@@ -161,15 +184,15 @@ case class DmnTableEngine(
     ValueMapper.defaultValueMapper
       .unpackVal(value) match {
       case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
-      case Some(value) => value.toString
-      case None => "NO VALUE"
-      case value => s"$value"
+      case Some(value)       => value.toString
+      case None              => "NO VALUE"
+      case value             => s"$value"
     }
 
   private def missingRules(
-                            matchedRules: Seq[MatchedRule],
-                            rules: Seq[DmnRule]
-                          ): Seq[DmnRule] = {
+      matchedRules: Seq[MatchedRule],
+      rules: Seq[DmnRule]
+  ): Seq[DmnRule] = {
     val matchedRuleIds = matchedRules.map(_.ruleId).distinct
     rules.filterNot(r => matchedRuleIds.contains(r.ruleId)).toList
   }

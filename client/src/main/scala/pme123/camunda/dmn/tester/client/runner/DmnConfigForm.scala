@@ -44,30 +44,22 @@ import scala.scalajs.js.RegExp
               StringDictionary(
                 "decisionId" -> s"${maybeDmnConfig.map(_.decisionId).getOrElse("")}",
                 "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
-                "testerInputs" -> js.Array(
-                  maybeDmnConfig.toSeq.flatMap(_.data.inputs).map {
-                    case ti @ TesterInput(key, _) =>
-                      StringDictionary(
-                        "key" -> key,
-                        "type" -> ti.valueType,
-                        "values" -> ti.valuesAsString
-                      )
-                  }: _*
-                )
+                testInputsKey -> inputVariablesDictionary(maybeDmnConfig.toList.flatMap(_.data.inputs)),
+                variablesKey -> inputVariablesDictionary(maybeDmnConfig.toList.flatMap(_.data.variables))
               )
             )
         },
         Seq(isModalVisible)
       )
 
-      val identifierRule = BaseRule()
-        .setRequired(true)
-        .setPattern(RegExp("""^[^\d\W][-\w]+$""", "gm"))
-        .setMessage("This is required and must a valid Identifier!")
-
       Modal
         .title("DMN Config Editor")
-        .okText(textWithTooltip("Save", "Persist your changes. Existing TestCases are not lost."))
+        .okText(
+          textWithTooltip(
+            "Save",
+            "Persist your changes. Existing TestCases are not lost."
+          )
+        )
         .width(1000)
         .visible(isModalVisible)
         .forceRender(true)
@@ -117,104 +109,129 @@ import scala.scalajs.js.RegExp
                   Input()
                 ),
               p("Test Inputs"),
-              FormList(
-                children = (
-                    fields: js.Array[FormListFieldData],
-                    op: FormListOperation
-                ) => {
-                  Fragment.withKey("testInputsKey")(
-                    fields.map { field =>
-                      Row
-                        .withKey(field.key.toString)(
-                          Col
-                            .style(CSSProperties().setPaddingRight(10))
-                            .span(5)(
-                              FormItem
-                                .withKey(field.fieldKey + "key")
-                                .label(
-                                  textWithTooltip(
-                                    "Key",
-                                    "The input variable key needed in the DMN Table."
-                                  )
-                                )
-                                .nameVarargs(field.name, "key")
-                                .fieldKeyVarargs(field.fieldKey + "key")
-                                .rulesVarargs(identifierRule)(
-                                  Input()
-                                )
-                            ),
-                          Col
-                            .style(CSSProperties().setPaddingRight(10))
-                            .span(5)(
-                              FormItem
-                                .withKey(field.fieldKey + "type")
-                                .label(
-                                  textWithTooltip(
-                                    "Type",
-                                    "The type of your inputs."
-                                  )
-                                )
-                                .initialValue("String")
-                                .nameVarargs(field.name, "type")
-                                .fieldKeyVarargs(field.fieldKey + "type")(
-                                  Select[String].apply(
-                                    Select.Option("String")("String"),
-                                    Select.Option("Number")("Number"),
-                                    Select.Option("Boolean")("Boolean")
-                                  )
-                                )
-                            ),
-                          Col
-                            .style(CSSProperties().setPaddingRight(10))
-                            .span(13)(
-                              FormItem
-                                .withKey(field.fieldKey + "values")
-                                .label(
-                                  textWithTooltip(
-                                    "Values",
-                                    "All inputs for this input you want to test. Example: ch,fr,de,CH"
-                                  )
-                                )
-                                .fieldKeyVarargs(field.fieldKey + "values")
-                                .nameVarargs(field.name, "values")
-                                .rulesVarargs(
-                                  BaseRule()
-                                    .setRequired(true)
-                                    .setPattern(
-                                      RegExp("""^[^,]+(,[^,]+)*$""", "gm")
-                                    )
-                                    .setMessage(
-                                      "The Test Input Values is required!"
-                                    )
-                                )(
-                                  Input()
-                                )
-                            ),
-                          Col.span(1)(
-                            iconWithTooltip(
-                              MinusCircleOutlined,
-                              "Delete this Test Input.",
-                              () => op.remove(field.name)
-                            )
-                          )
-                        )
-                    }.toSeq :+
-                      FormItem
-                        .withKey("addInput")
-                        .name("addInput")(
-                          buttonWithTextTooltip(
-                            PlusOutlined,
-                            "Add Input",
-                            "Add an Input of the DMN Table.",
-                            () => op.add()
-                          )
-                        )
-                  )
-                },
-                name = "testerInputs"
-              )
+              testInputForm(testInputsKey, "Test Input"),
+              p("Test Variables used in Inpts and Outputs"),
+              testInputForm(variablesKey, "Variable")
             )
         )
   }
+
+  private def inputVariablesDictionary(inputsOrVars: List[TesterInput]) = {
+    js.Array(
+      inputsOrVars.map {
+        case ti@TesterInput(key, _) =>
+          StringDictionary(
+            "key" -> key,
+            "type" -> ti.valueType,
+            "values" -> ti.valuesAsString
+          )
+      }: _*
+    )
+  }
+
+  private def testInputForm(key: String,
+                            label: String) = {
+    FormList(
+      children = (
+          fields: js.Array[FormListFieldData],
+          op: FormListOperation
+      ) => {
+        Fragment.withKey(s"${key}Key")(
+          fields.map { field =>
+            Row
+              .withKey(field.key.toString)(
+                Col
+                  .style(CSSProperties().setPaddingRight(10))
+                  .span(5)(
+                    FormItem
+                      .withKey(field.fieldKey + "key")
+                      .label(
+                        textWithTooltip(
+                          "Key",
+                          "The key used in the DMN Table."
+                        )
+                      )
+                      .nameVarargs(field.name, "key")
+                      .fieldKeyVarargs(field.fieldKey + "key")
+                      .rulesVarargs(identifierRule)(
+                        Input()
+                      )
+                  ),
+                Col
+                  .style(CSSProperties().setPaddingRight(10))
+                  .span(5)(
+                    FormItem
+                      .withKey(field.fieldKey + "type")
+                      .label(
+                        textWithTooltip(
+                          "Type",
+                          s"The type of your $label."
+                        )
+                      )
+                      .initialValue("String")
+                      .nameVarargs(field.name, "type")
+                      .fieldKeyVarargs(field.fieldKey + "type")(
+                        Select[String].apply(
+                          Select.Option("String")("String"),
+                          Select.Option("Number")("Number"),
+                          Select.Option("Boolean")("Boolean")
+                        )
+                      )
+                  ),
+                Col
+                  .style(CSSProperties().setPaddingRight(10))
+                  .span(13)(
+                    FormItem
+                      .withKey(field.fieldKey + "values")
+                      .label(
+                        textWithTooltip(
+                          "Values",
+                          "All values for this variable you want to test. Example: ch,fr,de,CH. No Apostrophs \" needed!"
+                        )
+                      )
+                      .fieldKeyVarargs(field.fieldKey + "values")
+                      .nameVarargs(field.name, "values")
+                      .rulesVarargs(
+                        BaseRule()
+                          .setRequired(true)
+                          .setPattern(
+                            RegExp("""^[^,]+(,[^,]+)*$""", "gm")
+                          )
+                          .setMessage(
+                            "The Test Input Values is required!"
+                          )
+                      )(
+                        Input()
+                      )
+                  ),
+                Col.span(1)(
+                  iconWithTooltip(
+                    MinusCircleOutlined,
+                    "Delete this Test Input.",
+                    () => op.remove(field.name)
+                  )
+                )
+              )
+          }.toSeq :+
+            FormItem
+              .withKey("addInput")
+              .name("addInput")(
+                buttonWithTextTooltip(
+                  PlusOutlined,
+                  s"Add $label",
+                  s"Add $label of the DMN Table.",
+                  () => op.add()
+                )
+              )
+        )
+      },
+      name = key
+    )
+  }
+
+  private val identifierRule = BaseRule()
+    .setRequired(true)
+    .setPattern(RegExp("""^[^\d\W][-\w]+$""", "gm"))
+    .setMessage("This is required and must a valid Identifier!")
 
 }

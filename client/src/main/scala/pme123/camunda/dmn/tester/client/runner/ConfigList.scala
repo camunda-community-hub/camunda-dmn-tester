@@ -25,6 +25,7 @@ import typings.rcFieldForm.interfaceMod.Store
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.literal
 import scala.scalajs.js.JSON
+import ujson.Value
 
 @react object ConfigCard {
 
@@ -73,23 +74,12 @@ import scala.scalajs.js.JSON
       lazy val onSave = (values: Store) => {
         println(s"Received values of form: ${JSON.stringify(values)}")
         /*
-           {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}]}
+           {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}],"variables":[{"type":"String","key":"kind","values":"Suisse"}]}
          */
         val json = ujson.read(JSON.stringify(values))
 
-        val testerInputs = json("testerInputs").arr.map { e =>
-          val values = e("values").str
-            .split(",")
-            .map(_.trim)
-            .filter(_.nonEmpty)
-
-          val testerValues = e("type").str match {
-            case "String"  => values.map(StringValue)
-            case "Number"  => values.map(NumberValue.apply)
-            case "Boolean" => values.map(BooleanValue.apply)
-          }
-          TesterInput(e("key").str, testerValues.toList)
-        }.toList
+        val testerInputs = testInputsVars(json(testInputsKey))
+        val variables = testInputsVars(json(variablesKey))
         setIsModalVisible(false)
         val dmnPath = json("pathOfDmn").str
           .split("/")
@@ -98,7 +88,7 @@ import scala.scalajs.js.JSON
           .toList
         val dmnConfig = DmnConfig(
           json("decisionId").str,
-          TesterData(testerInputs),
+          TesterData(testerInputs, variables),
           dmnPath
         )
         maybeDmnConfig
@@ -175,6 +165,22 @@ import scala.scalajs.js.JSON
               )
           }
         )
+  }
+
+  private def testInputsVars(json: Value.Value) = {
+    json.arr.map { e =>
+      val values = e("values").str
+        .split(",")
+        .map(_.trim)
+        .filter(_.nonEmpty)
+
+      val testerValues = e("type").str match {
+        case "String" => values.map(StringValue)
+        case "Number" => values.map(NumberValue.apply)
+        case "Boolean" => values.map(BooleanValue.apply)
+      }
+      TesterInput(e("key").str, testerValues.toList)
+    }.toList
   }
 }
 

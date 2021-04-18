@@ -18,7 +18,7 @@ object Settings {
     _.settings(
       organization := "pme123",
       version := "0.10.0-SNAPSHOT",
-      scalaVersion := "2.13.2"
+      scalaVersion := "2.13.4"
     )
 
   lazy val ReleaseCmd = Command.command("release") { state =>

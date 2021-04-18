@@ -4,11 +4,11 @@ import scala.language.implicitConversions
 import scala.math.BigDecimal
 
 case class DmnConfig(
-                      decisionId: String,
-                      data: TesterData,
-                      dmnPath: List[String],
-                      isActive: Boolean = false
-                    ) {
+    decisionId: String,
+    data: TesterData,
+    dmnPath: List[String],
+    isActive: Boolean = false
+) {
 
   def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
     data.findTestCase(testInputs)
@@ -16,22 +16,24 @@ case class DmnConfig(
 }
 
 case class TesterData(
-                       inputs: List[TesterInput],
-                       testCases: List[TestCase] = List.empty
-                     ) {
+    inputs: List[TesterInput],
+    // simple input-, output-variables used in the DMN
+    variables: List[TesterInput] = List.empty,
+    testCases: List[TestCase] = List.empty
+) {
 
   lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _) => k }
 
   def allInputs(): List[Map[String, Any]] = {
-    val data = inputs.map(_.asValues())
+    val data = (inputs ++ variables).map(_.asValues())
     cartesianProduct(data).map(_.toMap)
   }
 
   /** this creates all variations of the inputs you provide
-   */
+    */
   def cartesianProduct(
-                        xss: List[(String, List[Any])]
-                      ): List[List[(String, Any)]] =
+      xss: List[(String, List[Any])]
+  ): List[List[(String, Any)]] =
     xss match {
       case Nil => List(Nil)
       case (key, v) :: t =>
@@ -116,8 +118,10 @@ object TesterValue {
 
 }
 
-case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult]) {
-
+case class TestCase(
+    inputs: Map[String, TesterValue],
+    results: List[TestResult]
+) {
 
   lazy val resultsOutputMap: Seq[Map[String, String]] =
     results.map(_.outputs.view.mapValues(_.valueStr).toMap)
@@ -129,7 +133,8 @@ case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult])
       TestFailure(s"There is no Output with the Index $rowIndex")
 
   def checkOut(rowIndex: Int, outputKey: String, value: String): TestedValue =
-    results.find(_.rowIndex == rowIndex)
+    results
+      .find(_.rowIndex == rowIndex)
       .map(_.checkOut(outputKey, value))
       .getOrElse(TestFailure(s"There is no Output with the Index $rowIndex"))
 
@@ -138,12 +143,16 @@ case class TestCase(inputs: Map[String, TesterValue], results: List[TestResult])
 case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
 
   def checkOut(outputKey: String, value: String): TestedValue =
-    outputs.get(outputKey)
+    outputs
+      .get(outputKey)
       .map(v =>
         if (v.valueStr == value)
           TestSuccess(value)
         else
-          TestFailure(value, s"The output '$outputKey' did not succeed: \n- expected: '${v.valueStr}'\nactual : '$value'")
+          TestFailure(
+            value,
+            s"The output '$outputKey' did not succeed: \n- expected: '${v.valueStr}'\nactual : '$value'"
+          )
       )
       .getOrElse(TestFailure(s"There is no Output with Key '$outputKey'"))
 

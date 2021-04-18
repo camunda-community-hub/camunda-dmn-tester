@@ -15,12 +15,6 @@ case class DmnEvalResult(
     )
     status.sorted.headOption.getOrElse(INFO)
   }
-  lazy val matchedInputKeys = {
-    println(s"EVAL RESULTS: $evalResults")
-    evalResults.headOption
-      .map(_.testInputs.keys.toSeq)
-      .getOrElse(inputKeys)
-  }
 }
 
 case class DmnEvalRowResult(
