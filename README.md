@@ -1,4 +1,7 @@
-[ ![Download](https://api.bintray.com/packages/pme123/maven/camunda-dmn-tester-server/images/download.svg) ](https://bintray.com/pme123/maven/camunda-dmn-tester-server/_latestVersion)
+![Maven Central](https://img.shields.io/nexus/r/https/s01.oss.sonatype.org/io.github.pme123/camunda-dmn-tester-shared_2.13.svg)
+![GitHub repo size](https://img.shields.io/github/repo-size/pme123/camunda-dmn-tester)
+![Docker Pulls](https://img.shields.io/docker/pulls/pame/camunda-dmn-tester)
+
 # Camunda DMN Table Tester
 
 >A little DMN Table tester with the following Goals:
