@@ -70,7 +70,9 @@ At the moment there are 2 steps:
    `sbt release`
 2. Publish: 
    
-   `sbt publishLocal` or `sbt publish`
+   `sbt publishLocal` or `sbt publishSigned`
+
+`publishSigned` will publish to Maven Central - see https://www.scala-sbt.org/release/docs/Using-Sonatype.html
 
 ### Docker
 There are 2 Docker Images:

@@ -1,6 +1,6 @@
 import $file.BaseScript
 
-//import $ivy.`pme123::camunda-dmn-tester-server:$testerVersion`
+//import $ivy.`io.github.pme123::camunda-dmn-tester-server:$testerVersion`
 import pme123.camunda.dmn.tester.server.runner._
 import ammonite.ops._
 

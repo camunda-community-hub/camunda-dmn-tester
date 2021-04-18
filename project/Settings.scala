@@ -1,13 +1,11 @@
-import bintray.BintrayPlugin.autoImport.bintrayRepository
-import com.typesafe.sbt.SbtNativePackager.Universal
 import com.typesafe.sbt.packager.Keys._
-import com.typesafe.sbt.packager.docker.{Cmd, DockerPlugin, ExecCmd}
+import com.typesafe.sbt.packager.docker.DockerPlugin
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import org.scalablytyped.converter.plugin.ScalablyTypedPluginBase.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbt.Keys._
-import sbt._
+import sbt.Keys.{logLevel, _}
+import sbt.{Level, _}
 import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 
 object Settings {
@@ -16,8 +14,8 @@ object Settings {
 
   lazy val projectSettings: Project => Project =
     _.settings(
-      organization := "pme123",
-      version := "0.10.0",
+      organization := "io.github.pme123",
+      version := "0.12.0-SNAPSHOT",
       scalaVersion := "2.13.4"
     )
 
@@ -31,23 +29,31 @@ object Settings {
 
   lazy val publicationSettings: Project => Project = _.settings(
     publishMavenStyle := true,
-    homepage := Some(new URL("https://github.com/pme123/camunda-dmn-tester")),
-    startYear := Some(2020),
-    pomExtra := <scm>
-      <connection>scm:git:github.com:/pme123/camunda-dmn-tester</connection>
-      <developerConnection>scm:git:git@github.com:pme123/camunda-dmn-tester.git</developerConnection>
-      <url>github.com:pme123/camunda-dmn-tester.git</url>
-    </scm>
-      <developers>
-        <developer>
-          <id>pme123</id>
-          <name>Pascal Mengelt</name>
-        </developer>
-      </developers>,
+    pomIncludeRepository := { _ => false },
+    publishTo := {
+      val nexus = "https://s01.oss.sonatype.org/"
+      if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+      else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials"),
     licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
-    bintrayRepository := {
-      if (isSnapshot.value) "maven-snapshots" else "maven"
-    }
+    homepage := Some(url("https://github.com/pme123/camunda-dmn-tester")),
+    startYear := Some(2020),
+    logLevel := Level.Debug,
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/pme123/camunda-dmn-tester"),
+        "scm:git:github.com:/pme123/camunda-dmn-tester"
+      )
+    ),
+    developers := List(
+      Developer(
+        id    = "pme123",
+        name  = "Pascal Mengelt",
+        email = "pascal.mengelt@gmail.com",
+        url   = url("https://github.com/pme123")
+      )
+    )
   )
 
   lazy val preventPublication: Project => Project =
