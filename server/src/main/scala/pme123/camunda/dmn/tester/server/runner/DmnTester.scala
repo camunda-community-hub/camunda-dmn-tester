@@ -58,6 +58,7 @@ case class DmnTester(
             s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.\n
                 |Hints:\n
                 |> All outputs need a value.\n
+                |> All Input-/ Output-Columns need an expression.\n
                 |> Did you miss to wrap Strings in " - e.g. "TEXT"?\n
                 |> Check if there is an 'empty' Rule you accidently created.\n
                 |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/\n""".stripMargin
