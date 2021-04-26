@@ -3,18 +3,25 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/pame/camunda-dmn-tester)
 
 # Camunda DMN Table Tester
+A little DMN Table tester with the following Goals:
+* As a developer I want to test the DMNs that I get from the Business, even not knowing the concrete rules.
+* Business people can create their own tests.
+* They can easily adjust the tests to the dynamic nature of DMN Tables.
 
->A little DMN Table tester with the following Goals:
-> * As a developer I want to test the DMNs that I get from the Business, even not knowing the concrete rules.
-> * Business people can create their own tests.
-> * They can easily adjust the tests to the dynamic nature of DMN Tables.
+> This is exactly the kind of tool that as soon as I saw it, I knew it was something I was missing.
+>
+> I really enjoy being able to help people especially new people with modeling DMN, so I often have people sending me models to validate.
+> 
+> This tool’s fundamental helpfulness comes first from being able to quickly catch some of the simple common errors, but also in the way it makes it easy for business users to explore the wide variety of possible ways in DMN that decisions can be modeled. This was in fact the original goal of DMN and this is a strong step towards narrowing the Business IT Gap for the standard.
+>  
+> **Niall Deehan** Developer Relations Camunda
 
 ## Usage
 I wrote two blog article that explains how you can use it:
 
-[Testing (Camunda)-DMN Tables automatically](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-713497ab57e6)
+* [Testing (Camunda)-DMN Tables automatically](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-713497ab57e6)
 
-[Use the DMN Tester for Continuous Integration CI](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-part-2-d3931ed38f51)
+* [Use the DMN Tester for Continuous Integration CI](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-part-2-d3931ed38f51)
 
 ## Technologies
 This projects builds on cool Open Source Projects. So my thanks go to:
