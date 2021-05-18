@@ -23,6 +23,8 @@ I wrote two blog article that explains how you can use it:
 
 * [Use the DMN Tester for Continuous Integration CI](https://pme123.medium.com/testing-camunda-dmn-tables-automatically-part-2-d3931ed38f51)
 
+And there is a Recording from Camunda Community Summit:
+* [Testing DMN Tables Automatically](https://page.camunda.com/ccs-mengelt-testing-dmn-tables-automatically) 
 ## Technologies
 This projects builds on cool Open Source Projects. So my thanks go to:
 
