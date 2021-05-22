@@ -10,7 +10,7 @@ case class DmnConfig(
     isActive: Boolean = false
 ) {
 
-  def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
+  def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
 
 }
@@ -22,7 +22,9 @@ case class TesterData(
     testCases: List[TestCase] = List.empty
 ) {
 
-  lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _) => k }
+  lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _, _) =>
+    k
+  }
 
   def allInputs(): List[Map[String, Any]] = {
     val data = (inputs ++ variables).map(_.asValues())
@@ -40,21 +42,26 @@ case class TesterData(
         for (xh <- v; xt <- cartesianProduct(t)) yield (key -> xh) :: xt
     }
 
-  def findTestCase(testInputs: Map[String, String]): Option[TestCase] =
+  def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     testCases.find { tc =>
-      tc.inputs.view.mapValues(_.valueStr).toMap == testInputs
+      tc.inputs.view.mapValues(_.value).toMap == testInputs
     }
 
 }
 
-case class TesterInput(key: String, values: List[TesterValue]) {
+case class TesterInput(
+    key: String,
+    nullValue: Boolean,
+    values: List[TesterValue]
+) {
 
   val valuesAsString: String = values.map(_.valueStr).mkString(", ")
 
   def valueType: String = values.headOption.map(_.valueType).getOrElse("String")
 
   def asValues(): (String, List[Any]) = {
-    val allValues: List[Any] = values.map(_.value)
+    val allValues: List[Any] = values.map(_.value) ++
+      (if (nullValue) List(null) else List.empty)
     key -> allValues
   }
 }
@@ -69,17 +76,19 @@ sealed trait TesterValue {
 
 object TesterValue {
 
-  def fromString(valueStr: String): TesterValue =
-    valueStr.toBooleanOption
-      .map(BooleanValue.apply) orElse
-      valueStr.toLongOption
-        .map(NumberValue.apply) orElse
-      valueStr.toDoubleOption
-        .map(NumberValue.apply) getOrElse
-      StringValue(valueStr)
+  def fromAny(value: Any): TesterValue =
+    value match {
+      case b: Boolean => BooleanValue(b)
+      case n:Long => NumberValue(n)
+      case n:Double => NumberValue(n)
+      case s: String if s == NullValue.constant => NullValue
+      case s: String => StringValue(s)
+      case o if o == null => NullValue
+      case o => throw new IllegalArgumentException(s"Not expected value type: $o")
+    }
 
-  def valueMap(inputs: Map[String, String]): Map[String, TesterValue] =
-    inputs.view.mapValues(fromString).toMap
+  def valueMap(inputs: Map[String, Any]): Map[String, TesterValue] =
+    inputs.view.mapValues(fromAny).toMap
 
   case class StringValue(value: String) extends TesterValue {
     val valueStr: String = value
@@ -116,6 +125,13 @@ object TesterValue {
 
   }
 
+  case object NullValue extends TesterValue {
+    val valueStr: String = "null"
+    val valueType: String = "Null"
+    val constant: String = "_NULL_"
+
+    val value: Any = null
+  }
 }
 
 case class TestCase(

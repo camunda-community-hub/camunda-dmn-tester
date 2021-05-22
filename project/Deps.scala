@@ -9,12 +9,12 @@ object Deps {
 
   object version {
     val ammonite = "2.2.0"
-    val dmnScala = "1.6.0"
+    val dmnScala = "1.6.2"
     val http4s = "0.21.12"
     val logback = "1.2.3"
     val zio = "1.0.3"
     val zioCats = "2.2.0.1"
-    val zioConfig = "1.0.0-RC31-1"
+    val zioConfig = "1.0.5"
     val scalaTest = "3.2.2"
   }
 

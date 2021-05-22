@@ -44,8 +44,12 @@ import scala.scalajs.js.RegExp
               StringDictionary(
                 "decisionId" -> s"${maybeDmnConfig.map(_.decisionId).getOrElse("")}",
                 "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
-                testInputsKey -> inputVariablesDictionary(maybeDmnConfig.toList.flatMap(_.data.inputs)),
-                variablesKey -> inputVariablesDictionary(maybeDmnConfig.toList.flatMap(_.data.variables))
+                testInputsKey -> inputVariablesDictionary(
+                  maybeDmnConfig.toList.flatMap(_.data.inputs)
+                ),
+                variablesKey -> inputVariablesDictionary(
+                  maybeDmnConfig.toList.flatMap(_.data.variables)
+                )
               )
             )
         },
@@ -118,19 +122,18 @@ import scala.scalajs.js.RegExp
 
   private def inputVariablesDictionary(inputsOrVars: List[TesterInput]) = {
     js.Array(
-      inputsOrVars.map {
-        case ti@TesterInput(key, _) =>
-          StringDictionary(
-            "key" -> key,
-            "type" -> ti.valueType,
-            "values" -> ti.valuesAsString
-          )
+      inputsOrVars.map { case ti @ TesterInput(key, nullValue, _) =>
+        StringDictionary(
+          "key" -> key,
+          "type" -> ti.valueType,
+          "nullValue" -> nullValue,
+          "values" -> ti.valuesAsString
+        )
       }: _*
     )
   }
 
-  private def testInputForm(key: String,
-                            label: String) = {
+  private def testInputForm(key: String, label: String) = {
     FormList(
       children = (
           fields: js.Array[FormListFieldData],
@@ -159,7 +162,7 @@ import scala.scalajs.js.RegExp
                   ),
                 Col
                   .style(CSSProperties().setPaddingRight(10))
-                  .span(5)(
+                  .span(4)(
                     FormItem
                       .withKey(field.fieldKey + "type")
                       .label(
@@ -180,7 +183,7 @@ import scala.scalajs.js.RegExp
                   ),
                 Col
                   .style(CSSProperties().setPaddingRight(10))
-                  .span(13)(
+                  .span(11)(
                     FormItem
                       .withKey(field.fieldKey + "values")
                       .label(
@@ -204,6 +207,21 @@ import scala.scalajs.js.RegExp
                         Input()
                       )
                   ),
+                Col.span(3)(
+                  FormItem
+                    .withKey(field.fieldKey + "nullValue")
+                    .label(
+                      textWithTooltip(
+                        "Null value",
+                        s"Check if you want to test a null value."
+                      )
+                    )
+                    .valuePropName("checked")
+                    .nameVarargs(field.name, "nullValue")
+                    .fieldKeyVarargs(field.fieldKey + "nullValue")(
+                      Checkbox.apply()
+                    )
+                ),
                 Col.span(1)(
                   iconWithTooltip(
                     MinusCircleOutlined,

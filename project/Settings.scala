@@ -11,11 +11,12 @@ import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 object Settings {
 
   val projectName = "camunda-dmn-tester"
+  lazy val projectVersion = scala.io.Source.fromFile("version").mkString.trim
 
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "io.github.pme123",
-      version := "0.12.0-SNAPSHOT",
+      version := projectVersion,
       scalaVersion := "2.13.4"
     )
 

@@ -95,7 +95,7 @@ case class DmnTableEngine(
     } yield DmnEvalRowResult(
       evalResult.status,
       decisionId,
-      context.variables.view.mapValues(_.toString).toMap,
+      context.variables.view.mapValues(v => if(v == null) null else v.toString).toMap,
       evalResult.matchedRules,
       evalResult.failed
     )
@@ -165,7 +165,7 @@ case class DmnTableEngine(
     else
       outputs.map { case (k, v) =>
         val maybeTestCase =
-          dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
+          dmnConfig.findTestCase(inputMap)
         k -> maybeTestCase
           .map(_.checkOut(rowIndex.intValue, k, v))
           .getOrElse(NotTested(v))
@@ -174,7 +174,7 @@ case class DmnTableEngine(
 
   private def checkIndex(rowIndex: Int, inputMap: Map[String, Any]) = {
     val maybeTestCase =
-      dmnConfig.findTestCase(inputMap.view.mapValues(_.toString).toMap)
+      dmnConfig.findTestCase(inputMap)
     maybeTestCase
       .map(_.checkIndex(rowIndex))
       .getOrElse(NotTested(rowIndex.toString))

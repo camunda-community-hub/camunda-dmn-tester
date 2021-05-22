@@ -179,7 +179,7 @@ import ujson.Value
         case "Number" => values.map(NumberValue.apply)
         case "Boolean" => values.map(BooleanValue.apply)
       }
-      TesterInput(e("key").str, testerValues.toList)
+      TesterInput(e("key").str, e("nullValue").bool, testerValues.toList)
     }.toList
   }
 }

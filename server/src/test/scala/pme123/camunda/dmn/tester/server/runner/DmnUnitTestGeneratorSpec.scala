@@ -99,8 +99,8 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
     decisionId,
     TesterData(
       List(
-        TesterInput("in1", List("hello3", "hello")),
-        TesterInput("in2", List(3.5, 4))
+        TesterInput("in1", false, List("hello3", "hello")),
+        TesterInput("in2", true, List(3.5, 4))
       ),
       List.empty,
       List(

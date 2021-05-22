@@ -1,11 +1,9 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import zio.ZIO
 import zio.config.typesafe.TypesafeConfigSource
-import zio.test.Assertion.{containsString, equalTo}
+import zio.test.Assertion.containsString
 import zio.test.{DefaultRunnableSpec, assert, suite, testM}
-import pme123.camunda.dmn.tester.shared.conversions._
 
 //noinspection TypeAnnotation
 object DmnConfigHandlerSpec extends DefaultRunnableSpec {

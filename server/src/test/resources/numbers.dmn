@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_numbers" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_numbers" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.7.0">
   <inputData id="InputData_0die4vm" name="number" />
   <decision id="numbers" name="numbers">
     <informationRequirement id="InformationRequirement_0ifcef0">
@@ -44,6 +44,17 @@
         </outputEntry>
         <outputEntry id="LiteralExpression_1a9208r">
           <text>"NOT HANDLED"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_067i6pb">
+        <inputEntry id="UnaryTests_1b3pbod">
+          <text>null</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_17yfilw">
+          <text>33</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1ffw9p6">
+          <text>"Null!"</text>
         </outputEntry>
       </rule>
     </decisionTable>

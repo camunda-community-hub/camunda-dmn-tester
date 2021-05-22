@@ -78,8 +78,15 @@ object hocon {
     }
 
   val stringValue: ConfigDescriptor[TesterValue] =
-    string(StringValue.apply, StringValue.unapply)
-      .asInstanceOf[ConfigDescriptor[TesterValue]]
+    string(
+      TesterValue.fromAny,
+      (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
+        bd match {
+          case NullValue => Some(NullValue.constant)
+          case StringValue(value) => Some(value)
+          case _                   => None
+        }
+    )
 
   val bigDecimalValue: ConfigDescriptor[TesterValue] =
     bigDecimal(
@@ -87,9 +94,9 @@ object hocon {
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
         bd match {
           case NumberValue(value) => Some(value)
-          case other              => None
+          case _              => None
         }
-    ).asInstanceOf[ConfigDescriptor[TesterValue]]
+    )
 
   val booleanValue: ConfigDescriptor[TesterValue] =
     boolean(
@@ -105,7 +112,7 @@ object hocon {
     bigDecimalValue orElse booleanValue orElse stringValue
 
   val testerInput: ConfigDescriptor[TesterInput] =
-    (string("key") |@| list("values")(testerValue))(
+    (string("key") |@| boolean("nullValue").default(false) |@| list("values")(testerValue))(
       TesterInput.apply,
       TesterInput.unapply
     )

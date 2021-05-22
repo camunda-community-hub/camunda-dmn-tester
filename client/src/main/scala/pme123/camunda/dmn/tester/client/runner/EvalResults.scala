@@ -249,7 +249,7 @@ class TableItem(
             .setEllipsis(true)
             .setKey(in)
             .setRender((_, row, _) =>
-              renderTextCell(row.testInputs(in))
+              renderTextCell(row.testInputs.get(in).map(TesterValue.fromAny(_).valueStr).get)
                 .setProps(CellType().setRowSpan(row.totalRowSpan))
             )
         ): _*
@@ -306,7 +306,7 @@ class TableItem(
 class TableRow(
                 val key: String,
                 val status: EvalStatus,
-                val testInputs: Map[String, String],
+                val testInputs: Map[String, Any],
                 var inputRowSpan: Int,
                 val dmnRowIndex: TestedValue,
                 val inputs: Map[String, String],
