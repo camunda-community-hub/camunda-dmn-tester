@@ -49,8 +49,8 @@ def release(version: String): Unit = {
     %.sbt(
       "-mem",
       "3000",
-    //  "release",
-    //  "publish",
+      "release",
+      "publish",
       "server/docker:publish"
     )
     %.git(
