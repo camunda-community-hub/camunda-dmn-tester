@@ -132,12 +132,12 @@ object Settings {
         requireJsDomEnv in Test := true,
         addCommandAlias(
           "dev",
-          ";set javaOptions  += \"-DIsLocal=true\";fastOptJS::startWebpackDevServer;~fastOptJS"
+          "fastOptJS::startWebpackDevServer;~fastOptJS"
         ),
         addCommandAlias("build", "fullOptJS::webpack"),
         libraryDependencies ++= Seq(
-          "me.shadaj" %%% "slinky-web" % "0.6.6",
-          "me.shadaj" %%% "slinky-hot" % "0.6.6"
+          "me.shadaj" %%% "slinky-web" % "0.6.7",
+          "me.shadaj" %%% "slinky-hot" % "0.6.7"
         ),
         libraryDependencies ++= Seq(
           "org.scalatest" %%% "scalatest" % "3.1.1" % Test

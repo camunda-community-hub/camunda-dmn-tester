@@ -143,7 +143,7 @@ import ujson.Value
             case (Some(msg), _) =>
               Alert
                 .message(
-                  s"Error: The DMN Configurations could not be loaded. (is the path ok?)"
+                  s"Error: The DMN Configurations could not be loaded. (is the path ok? Check the Server log.)"
                 )
                 .`type`(aStr.error)
                 .showIcon(true)
