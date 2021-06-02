@@ -75,6 +75,7 @@ object hocon {
       case NumberValue(value)  => Some(value)
       case StringValue(value)  => Some(value)
       case BooleanValue(value) => Some(value)
+      case NullValue => Some(null)
     }
 
   val stringValue: ConfigDescriptor[TesterValue] =
