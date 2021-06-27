@@ -1,6 +1,5 @@
 import ammonite.ops._
 
-
 /** <pre>
   * Creates a new Release for the client and publishes to the Artifactory:
   *
@@ -30,6 +29,87 @@ private def replaceVersion(version: String) = {
   newVersion
 }
 
+private def publishCIDocker(version: String) = {
+  write.over(pwd / "docker" / "data" / "testerVersion", version)
+  %.docker(
+    "build",
+    pwd / "docker",
+    "-t",
+    s"pame/camunda-dmn-tester-ci:$version"
+  )
+  %.docker(
+    "push",
+    s"pame/camunda-dmn-tester-ci:$version"
+  )
+}
+
+private def updateGit(version: String) = {
+  %.git(
+    "fetch",
+    "--all"
+  )
+  %.git(
+    "commit",
+    "-a",
+    "-m",
+    s"Released Version $version"
+  )
+  %.git(
+    "tag",
+    "-a",
+    version,
+    "-m",
+    s"Version $version"
+  )
+  %.git(
+    "push"
+  )
+  %.git(
+    "checkout",
+    "master"
+  )
+  %.git(
+    "merge",
+    "develop"
+  )
+  %.git(
+    "push"
+  )
+  %.git(
+    "checkout",
+    "develop"
+  )
+  val newVersion = replaceVersion(version)
+  %.git(
+    "commit",
+    "-a",
+    "-m",
+    s"Init new Version $newVersion"
+  )
+  %.git(
+    "push"
+  )
+}
+def publishTesterDocker = {
+  %.sbt(
+    "-mem",
+    "3000",
+    "release",
+    "publish",
+    "server/docker:publish"
+  )
+}
+
+def publishTesterDockerLocal = {
+  %.sbt(
+    "-mem",
+    "3000",
+    "release",
+    "publishLocal",
+    "server/docker:publishLocal"
+  )
+}
+
 @arg(
   doc =
     "> Creates a new Release for the package and publishes to bpf-generic-release"
@@ -46,65 +126,11 @@ def release(version: String): Unit = {
 
   val isSnapshot = version.contains("-")
   if (!isSnapshot) {
-    %.sbt(
-      "-mem",
-      "3000",
-      "release",
-      "publish",
-      "server/docker:publish"
-    )
-    %.git(
-      "fetch",
-      "--all"
-    )
-    %.git(
-      "commit",
-      "-a",
-      "-m",
-      s"Released Version $version"
-    )
-    %.git(
-      "tag",
-      "-a",
-      version,
-      "-m",
-      s"Version $version"
-    )
-    %.git(
-      "push"
-    )
-    %.git(
-      "checkout",
-      "master"
-    )
-    %.git(
-      "merge",
-      "develop"
-    )
-    %.git(
-      "push"
-    )
-    %.git(
-      "checkout",
-      "develop"
-    )
-    val newVersion = replaceVersion(version)
-    %.git(
-      "commit",
-      "-a",
-      "-m",
-      s"Init new Version $newVersion"
-    )
-    %.git(
-      "push"
-    )
+    publishTesterDocker
+    publishCIDocker(version)
+    updateGit(version)
   } else {
-    %.sbt(
-      "-mem",
-      "3000",
-      "release",
-      "publishLocal",
-      "server/docker:publishLocal"
-    )
+    publishTesterDockerLocal
   }
+
 }
