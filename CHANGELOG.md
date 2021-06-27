@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [](#1-1-0)
 ## 1.1.0 - Unreleased - <<set release date>>
+[](#0-12-0)
+## 0.12.0 - 2021-06-27
+### Fixed
+Unchecked `nullValue` throw hidden exception in configList.
 
 [](#0-11-0)
 ## 0.11.0 - 2021-05-22

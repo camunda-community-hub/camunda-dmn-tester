@@ -2,11 +2,7 @@ package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
-import pme123.camunda.dmn.tester.shared.TesterValue.{
-  BooleanValue,
-  NumberValue,
-  StringValue
-}
+import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
 import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
@@ -16,7 +12,7 @@ import slinky.core.facade.Hooks.useState
 import slinky.web.html._
 import typings.antDesignIcons.components.AntdIcon
 import typings.antDesignIconsSvg.mod._
-import typings.antd.antdStrings.circle
+import typings.antd.antdStrings.{circle, error}
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
 import typings.antd.{antdStrings => aStr}
@@ -77,6 +73,8 @@ import ujson.Value
            {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}],"variables":[{"type":"String","key":"kind","values":"Suisse"}]}
          */
         val json = ujson.read(JSON.stringify(values))
+        println(s"testerInputs: ${json(testInputsKey)}")
+        println(s"testerInputs2: ${testInputsVars(json(testInputsKey))}")
 
         val testerInputs = testInputsVars(json(testInputsKey))
         val variables = testInputsVars(json(variablesKey))
@@ -173,13 +171,13 @@ import ujson.Value
         .split(",")
         .map(_.trim)
         .filter(_.nonEmpty)
-
       val testerValues = e("type").str match {
         case "String" => values.map(StringValue)
         case "Number" => values.map(NumberValue.apply)
         case "Boolean" => values.map(BooleanValue.apply)
       }
-      TesterInput(e("key").str, e("nullValue").bool, testerValues.toList)
+      val nullValue = e.obj.get("nullValue").exists(_.bool)
+      TesterInput(e("key").str, nullValue, testerValues.toList)
     }.toList
   }
 }

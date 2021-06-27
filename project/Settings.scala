@@ -75,8 +75,8 @@ object Settings {
         libraryDependencies ++= Seq(
           "com.lihaoyi" %%% "autowire" % "0.3.2",
           "io.suzaku" %%% "boopickle" % "1.3.2",
-          "com.lihaoyi" %%% "upickle" % "1.2.2",
-          "com.lihaoyi" %%% "ujson" % "1.2.2"
+          "com.lihaoyi" %%% "upickle" % "1.4.0",
+          "com.lihaoyi" %%% "ujson" % "1.4.0"
         )
       ) //.withoutSuffixFor(JVMPlatform)
   }
