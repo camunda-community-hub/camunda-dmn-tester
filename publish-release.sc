@@ -1,7 +1,7 @@
 import ammonite.ops._
 
 /** <pre>
-  * Creates a new Release for the client and publishes to the Artifactory:
+  * Creates a new Release for the DmnTester (Library and Docker) and the camunda-dmn-tester-ci (Docker):
   *
   * amm ./publish-release.sc <VERSION>
   *
