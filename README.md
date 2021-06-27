@@ -77,7 +77,11 @@ This will watch all your changes in the client and automatically refresh your Br
 Open in the Browser **http://localhost:8024**.
 
 ## Releasing
+Just run:
+
+`amm ./publish-release.sc VERSION`
 ### Library
+
 At the moment there are 2 steps:
 1. Build the Client (full optimization) and the Server:
 

@@ -90,12 +90,13 @@ private def updateGit(version: String) = {
     "push"
   )
 }
-def publishTesterDocker = {
+def publishTesterDocker(version: String) = {
+  write.over(pwd / "version", version)
   %.sbt(
     "-mem",
     "3000",
     "release",
-    "publish",
+    "publishSigned",
     "server/docker:publish"
   )
 }
@@ -126,7 +127,7 @@ def release(version: String): Unit = {
 
   val isSnapshot = version.contains("-")
   if (!isSnapshot) {
-    publishTesterDocker
+    publishTesterDocker(version)
     publishCIDocker(version)
     updateGit(version)
   } else {
