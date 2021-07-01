@@ -77,20 +77,25 @@ This will watch all your changes in the client and automatically refresh your Br
 Open in the Browser **http://localhost:8024**.
 
 ## Releasing
-Just run:
+Just run `amm ./publish-release.sc VERSION`.
 
-`amm ./publish-release.sc VERSION`
-### Library
+Due to problems with the `"org.xerial.sbt" % "sbt-sonatype"` Plugin you have to release manually:
+- https://s01.oss.sonatype.org/#stagingRepositories
+  - login
+  - check Staging Repository
+  - hit _close_ Button
+  - hit _release_ Button
+    
+> if you do not see any of the buttons or repository hit the _refresh_ Button.
 
+### Local publish
 At the moment there are 2 steps:
 1. Build the Client (full optimization) and the Server:
 
    `sbt release`
 2. Publish: 
    
-   `sbt publishLocal` or `sbt publishSigned`
-
-`publishSigned` will publish to Maven Central - see https://www.scala-sbt.org/release/docs/Using-Sonatype.html
+   `sbt publishLocal`
 
 ### Docker
 There are 2 Docker Images:
