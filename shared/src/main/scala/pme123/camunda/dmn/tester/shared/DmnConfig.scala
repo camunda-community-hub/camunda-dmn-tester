@@ -7,7 +7,8 @@ case class DmnConfig(
     decisionId: String,
     data: TesterData,
     dmnPath: List[String],
-    isActive: Boolean = false
+    isActive: Boolean = false,
+    testUnit: Boolean = true
 ) {
 
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =

@@ -16,7 +16,7 @@ case class DmnTester(
                       dmnConfig: DmnConfig,
                       engine: DmnEngine = new DmnEngine()
                     ) {
-  val DmnConfig(decisionId, data, dmnPath, _) = dmnConfig
+  val DmnConfig(decisionId, data, dmnPath, _, _) = dmnConfig
 
   def run(): ZIO[Any, EvalException, DmnEvalResult] =
     parsedDmn().flatMap(run)
@@ -76,9 +76,9 @@ object DmnTester {
                     dmnConfig: DmnConfig,
                     engine: DmnEngine
                   ): ZIO[Console, EvalException, DmnEvalResult] = {
-    val DmnConfig(decisionId, _, dmnPath, _) = dmnConfig
+    val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
     console.putStrLn(
-      s"Start testing $decisionId: $dmnPath (${osPath(dmnPath)})"
+      s"Start testing $decisionId (testUnit = $testUnit): $dmnPath (${osPath(dmnPath)})"
     ) *>
       DmnTester(dmnConfig, engine)
         .run()
