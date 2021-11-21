@@ -27,6 +27,41 @@ I wrote two blog article that explains how you can use it:
 
 And there is a Recording from Camunda Community Summit:
 * [Testing DMN Tables Automatically](https://page.camunda.com/ccs-mengelt-testing-dmn-tables-automatically) 
+
+## Test Configuration
+![Config Dialog](docs/Screenshot_configDialog.png)
+**1 Test Mode**
+  
+  You can configure a DMN Table Test as:
+
+  - a Unit test (the inputs are not created from evaluating the depending decisions - you define them directly)
+  - with all its dependent Inputs (decisions like DMN Tables or Literal Expressions).
+
+**2 Decision Id**
+
+  The id of your table - be aware this is not the name
+  - you only find it in the 'Edit DRD' Panel with the DMN Table Object selected.
+
+**3 Path of the DMN**
+  
+  This path depends on your Docker Image (check _runDmnTester.sh_).
+  
+  Example: `-v $(pwd)/dmns:/opt/docker/dmns \` 
+  - This assumes your DMNs are in a folder _dmns_.
+  - So your Path would be `dmns/MyDmn.dmn`.
+
+**4 Test Inputs**
+
+  Add the following for each Input:
+  - Key: This is what you need in your input expressions.
+  - Type: The Type specified.
+  - Values: A comma separated list of all possible inputs.
+  - Null Value: If it is possible that the input may be _null_ (not required), check this box.
+
+**5 Test Variables** 
+
+  You can define Variables you use in your Rules. Usually one value is enough.
+
 ## Technologies
 This projects builds on cool Open Source Projects. So my thanks go to:
 
