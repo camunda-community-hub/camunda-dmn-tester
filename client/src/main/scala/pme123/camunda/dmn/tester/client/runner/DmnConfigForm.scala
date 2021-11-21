@@ -42,6 +42,7 @@ import scala.scalajs.js.RegExp
           if (isModalVisible)
             form.setFieldsValue(
               StringDictionary(
+                "testUnit" -> maybeDmnConfig.forall(_.testUnit),
                 "decisionId" -> s"${maybeDmnConfig.map(_.decisionId).getOrElse("")}",
                 "pathOfDmn" -> s"${maybeDmnConfig.map(_.dmnPath.mkString("/")).getOrElse("")}",
                 testInputsKey -> inputVariablesDictionary(
@@ -81,6 +82,18 @@ import scala.scalajs.js.RegExp
           Form
             .form(form)
             .className("config-form")(
+              FormItem()
+                .withKey("testUnitKey")
+                .name("testUnit")
+                .label(
+                  textWithTooltip(
+                    "Test is Unit",
+                    "Check if you want test your DMN independently."
+                  )
+                )
+                .valuePropName("checked")(
+                Checkbox()
+              ),
               FormItem
                 .withKey("decisionIdKey")
                 .name("decisionId")

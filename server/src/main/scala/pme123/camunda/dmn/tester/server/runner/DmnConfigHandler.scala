@@ -137,8 +137,8 @@ object hocon {
   val dmnConfig: ConfigDescriptor[DmnConfig] =
     (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(
       string
-    ) |@| boolean("isActive") |@| boolean("testUnit")
-      .default(false))(DmnConfig.apply, DmnConfig.unapply)
+    ) |@| boolean("isActive").default(false) |@| boolean("testUnit")
+      .default(true))(DmnConfig.apply, DmnConfig.unapply)
 
   def loadConfig(configFile: File): Task[DmnConfig] = {
     ZIO(println(s"load file $configFile")) *>
