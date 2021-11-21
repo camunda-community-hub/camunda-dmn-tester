@@ -62,7 +62,10 @@ private def updateGit(version: String) = {
     s"Version $version"
   )
   %.git(
-    "push"
+    "push",
+    "--set-upstream",
+    "origin",
+    "develop"
   )
   %.git(
     "checkout",
@@ -73,7 +76,8 @@ private def updateGit(version: String) = {
     "develop"
   )
   %.git(
-    "push"
+    "push",
+    "--tags"
   )
   %.git(
     "checkout",
