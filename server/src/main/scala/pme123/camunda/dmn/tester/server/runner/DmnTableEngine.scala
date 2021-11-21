@@ -20,17 +20,21 @@ case class DmnTableEngine(
     dmnConfig: DmnConfig,
     engine: DmnEngine = new DmnEngine()
 ) {
-  val DmnConfig(decisionId, _, dmnPath, _) = dmnConfig
+  val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
 
-  /** this removes all dependent Decisions - so we can Unit Test it.
+  /**
+   * If `testUnit` is set: removes all dependent Decisions - so we can Unit Test it.
     */
   lazy val pureDecision: IO[EvalException, ParsedDecision] =
     parsedDmn.decisionsById
       .get(decisionId)
       .map { decision =>
         UIO(
-          decision
-            .copy(requiredBkms = Seq.empty, requiredDecisions = Seq.empty)
+          if(testUnit)
+            decision
+              .copy(requiredBkms = Seq.empty, requiredDecisions = Seq.empty)
+          else
+            decision
         )
       }
       .getOrElse(

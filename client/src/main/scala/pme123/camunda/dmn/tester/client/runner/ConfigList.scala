@@ -73,9 +73,6 @@ import ujson.Value
            {"decisionId":"qwe","dmnPath":"qwe","testInputs":[{"type":"String","key":"qwe","values":"qwe"}],"variables":[{"type":"String","key":"kind","values":"Suisse"}]}
          */
         val json = ujson.read(JSON.stringify(values))
-        println(s"testerInputs: ${json(testInputsKey)}")
-        println(s"testerInputs2: ${testInputsVars(json(testInputsKey))}")
-
         val testerInputs = testInputsVars(json(testInputsKey))
         val variables = testInputsVars(json(variablesKey))
         setIsModalVisible(false)
@@ -87,7 +84,8 @@ import ujson.Value
         val dmnConfig = DmnConfig(
           json("decisionId").str,
           TesterData(testerInputs, variables),
-          dmnPath
+          dmnPath,
+          testUnit = json("testUnit").bool
         )
         maybeDmnConfig
           .map(existingConfig =>
