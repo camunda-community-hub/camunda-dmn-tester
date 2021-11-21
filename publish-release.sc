@@ -93,8 +93,7 @@ private def updateGit(version: String) = {
 def publishTesterDocker(version: String) = {
   write.over(pwd / "version", version)
   %.sbt(
-    "-mem",
-    "3000",
+    "-J-Xmx3G",
     "release",
     "publishSigned",
     "server/docker:publish"
@@ -103,8 +102,7 @@ def publishTesterDocker(version: String) = {
 
 def publishTesterDockerLocal = {
   %.sbt(
-    "-mem",
-    "3000",
+    "-J-Xmx3G",
     "release",
     "publishLocal",
     "server/docker:publishLocal"
