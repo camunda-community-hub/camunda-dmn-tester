@@ -73,7 +73,8 @@ private def updateGit(version: String) = {
     "develop"
   )
   %.git(
-    "push"
+    "push",
+    "--tags"
   )
   %.git(
     "checkout",
