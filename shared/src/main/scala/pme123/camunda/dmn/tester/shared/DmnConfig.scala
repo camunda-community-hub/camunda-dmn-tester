@@ -1,5 +1,10 @@
 package pme123.camunda.dmn.tester.shared
 
+import pme123.camunda.dmn.tester.shared.TesterValue.DateValue
+import pme123.camunda.dmn.tester.shared.conversions.dateRegex
+
+import java.time.{LocalDateTime, ZoneId}
+import java.util.Date
 import scala.language.implicitConversions
 import scala.math.BigDecimal
 
@@ -61,8 +66,12 @@ case class TesterInput(
   def valueType: String = values.headOption.map(_.valueType).getOrElse("String")
 
   def asValues(): (String, List[Any]) = {
-    val allValues: List[Any] = values.map(_.value) ++
-      (if (nullValue) List(null) else List.empty)
+    val allValues: List[Any] = values.map{
+      case DateValue(value) =>
+        val ldt = LocalDateTime.parse(value)
+        Date.from(ldt.atZone(ZoneId.systemDefault).toInstant)
+      case other => other.value} ++
+        (if (nullValue) List(null) else List.empty)
     key -> allValues
   }
 }
@@ -83,6 +92,7 @@ object TesterValue {
       case n:Long => NumberValue(n)
       case n:Double => NumberValue(n)
       case s: String if s == NullValue.constant => NullValue
+      case s: String if s.trim.matches(dateRegex) => DateValue(s)
       case s: String => StringValue(s)
       case o if o == null => NullValue
       case o => throw new IllegalArgumentException(s"Not expected value type: $o")
@@ -124,6 +134,11 @@ object TesterValue {
     def apply(doubleValue: Double): NumberValue =
       NumberValue(BigDecimal(doubleValue))
 
+  }
+
+  case class DateValue(value: String) extends TesterValue {
+    val valueStr: String = value
+    val valueType: String = "Date"
   }
 
   case object NullValue extends TesterValue {
@@ -176,9 +191,14 @@ case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
 }
 
 object conversions {
+  val dateRegex = """^([0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):?([0-5][0-9])?$"""
 
-  implicit def stringToTesterValue(x: String): TesterValue =
-    TesterValue.StringValue(x)
+  implicit def stringToTesterValue(x: String): TesterValue = {
+    if(x.trim.matches(dateRegex))
+      TesterValue.DateValue(x)
+    else
+      TesterValue.StringValue(x)
+  }
 
   implicit def intToTesterValue(x: Int): TesterValue =
     TesterValue.NumberValue(BigDecimal(x))

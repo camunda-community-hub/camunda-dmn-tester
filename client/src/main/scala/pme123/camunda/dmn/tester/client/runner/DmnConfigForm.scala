@@ -136,6 +136,7 @@ import scala.scalajs.js.RegExp
   private def inputVariablesDictionary(inputsOrVars: List[TesterInput]) = {
     js.Array(
       inputsOrVars.map { case ti @ TesterInput(key, nullValue, _) =>
+        println(s"VALUETYPE of $key ${ti.valueType}")
         StringDictionary(
           "key" -> key,
           "type" -> ti.valueType,
@@ -190,7 +191,8 @@ import scala.scalajs.js.RegExp
                         Select[String].apply(
                           Select.Option("String")("String"),
                           Select.Option("Number")("Number"),
-                          Select.Option("Boolean")("Boolean")
+                          Select.Option("Boolean")("Boolean"),
+                          Select.Option("Date")("Date")
                         )
                       )
                   ),

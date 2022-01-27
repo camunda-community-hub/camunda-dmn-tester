@@ -5,6 +5,7 @@ import ammonite.ops._
 import pme123.camunda.dmn.tester.shared.HandledTesterException.ConfigException
 import pme123.camunda.dmn.tester.shared.TesterValue._
 import pme123.camunda.dmn.tester.shared._
+import pme123.camunda.dmn.tester.shared.conversions.dateRegex
 import zio._
 import zio.console.Console
 
@@ -75,6 +76,7 @@ object hocon {
       case NumberValue(value)  => Some(value)
       case StringValue(value)  => Some(value)
       case BooleanValue(value) => Some(value)
+      case DateValue(value) => Some(value)
       case NullValue => Some(null)
     }
 
@@ -84,6 +86,7 @@ object hocon {
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
         bd match {
           case NullValue => Some(NullValue.constant)
+          case DateValue(value) => Some(value)
           case StringValue(value) => Some(value)
           case _                   => None
         }
