@@ -15,7 +15,11 @@ import typings.antDesignIconsSvg.mod
 import typings.antd.antdStrings.primary
 import typings.antd.components._
 import typings.antd.listMod.{ListLocale, ListProps}
-import typings.antd.tableInterfaceMod.{ColumnGroupType, ColumnType, TableRowSelection}
+import typings.antd.tableInterfaceMod.{
+  ColumnGroupType,
+  ColumnType,
+  TableRowSelection
+}
 import typings.antd.{antdBooleans, antdStrings => aStr}
 import typings.rcTable.interfaceMod.{CellType, RenderedCell, TableLayout}
 import typings.react.mod.CSSProperties
@@ -26,11 +30,11 @@ import scala.scalajs.js.|
 @react object EvalResultsCard {
 
   case class Props(
-                    evalResults: Seq[Either[EvalException, DmnEvalResult]],
-                    isLoaded: Boolean,
-                    maybeError: Option[String],
-                    onCreateTestCases: DmnConfig => Unit
-                  )
+      evalResults: Seq[Either[EvalException, DmnEvalResult]],
+      isLoaded: Boolean,
+      maybeError: Option[String],
+      onCreateTestCases: DmnConfig => Unit
+  )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
@@ -62,18 +66,18 @@ import scala.scalajs.js.|
 }
 
 class TableItem(
-                 val key: Int,
-                 val name: String,
-                 val age: Int,
-                 val address: String
-               ) extends js.Object
+    val key: Int,
+    val name: String,
+    val age: Int,
+    val address: String
+) extends js.Object
 
 @react object EvalResultsList {
 
   case class Props(
-                    evalResults: Seq[Either[EvalException, DmnEvalResult]],
-                    onCreateTestCases: DmnConfig => Unit
-                  )
+      evalResults: Seq[Either[EvalException, DmnEvalResult]],
+      onCreateTestCases: DmnConfig => Unit
+  )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     props =>
@@ -109,9 +113,9 @@ class TableItem(
   val outputTitle = "Output"
 
   case class Props(
-                    evalResult: Either[EvalException, DmnEvalResult],
-                    onCreateTestCases: DmnConfig => Unit
-                  )
+      evalResult: Either[EvalException, DmnEvalResult],
+      onCreateTestCases: DmnConfig => Unit
+  )
 
   val component: FunctionalComponent[Props] = FunctionalComponent[Props] {
     case Props(Left(EvalException(decisionId, msg)), _) =>
@@ -124,20 +128,19 @@ class TableItem(
           )
         )
     case Props(
-    Right(
-    er@DmnEvalResult(
-    dmn,
-    inputKeys,
-    outputKeys,
-    _,
-    _
-    )
-    ),
-    onCreateTestCases
-    ) =>
+          Right(
+            er @ DmnEvalResult(
+              dmn,
+              inputKeys,
+              outputKeys,
+              evalResults,
+              _
+            )
+          ),
+          onCreateTestCases
+        ) =>
       val rowCreator = RowCreator(er)
       val (selectedRows, setSelectedRows) = useState(Seq.empty[TableRow])
-
       lazy val tableRowSelection = TableRowSelection[TableRow]()
         .setRenderCell((_, row, _, ele: ReactElement) => {
           if (row.status == EvalStatus.INFO) {
@@ -154,7 +157,6 @@ class TableItem(
             setSelectedRows(Seq.empty)
         )
         .setOnSelect((row, selected, obj, e) => {
-          println(s"Selected $row")
           if (selected)
             setSelectedRows(selectedRows :+ row)
           else
@@ -175,8 +177,16 @@ class TableItem(
             statusColumn,
             testInputColumns(inputKeys),
             dmnRowColumn(inputKeys, outputKeys),
-            inOutColumns("Matched Input", dmn.dmnConfig.data.inputKeys, _.inputs, _.outputs),
-            inOutColumns(outputTitle, outputKeys, _.inputs, _.outputs)
+            inOutColumns(
+              "Matched Input",
+              matchedInputKeys(evalResults),
+              inFunct = Some(_.inputs.toMap)
+            ),
+            inOutColumns(
+              outputTitle,
+              matchedOutputKeys(evalResults),
+              outFunct = Some(_.outputs.toMap)
+            )
           )
 
       List.Item
@@ -186,7 +196,11 @@ class TableItem(
             h2(Space(icon(er.maxEvalStatus), span(dmn.id))),
             p(s"Hitpolicy: ${dmn.hitPolicy}"),
             p("DMN: " + dmn.dmnConfig.dmnPath.mkString("/")),
-            p("Variables: " + dmn.dmnConfig.data.variables.map(_.key).mkString(", ")),
+            p(
+              "Variables: " + dmn.dmnConfig.data.variables
+                .map(_.key)
+                .mkString(", ")
+            ),
             evalTable,
             withTooltip(
               "BE AWARE that this overwrites all existing Test Cases!",
@@ -205,7 +219,7 @@ class TableItem(
                             .map(r =>
                               TestResult(
                                 r.dmnRowIndex.value.toInt,
-                                TesterValue.valueMap(asStrMap(r.outputs))
+                                TesterValue.valueMap(asStrMap(r.outputs).toMap)
                               )
                             )
                             .toList
@@ -267,11 +281,12 @@ class TableItem(
   }
 
   private def inOutColumns(
-                            title: String,
-                            keys: Seq[String],
-                            inMap: TableRow => Map[String, String],
-                            outMap: TableRow => Map[String, TestedValue]
-                          ) = {
+      title: String,
+      keys: Seq[String],
+      inFunct: Option[TableRow => Map[String, String]] = None,
+      outFunct: Option[TableRow => Map[String, TestedValue]] = None
+  ) = {
+    println(s"keys: $keys")
     ColumnGroupType[TableRow](js.Array())
       .setTitleReactElement(s"$title(s)")
       .setChildrenVarargs(
@@ -281,12 +296,15 @@ class TableItem(
             .setEllipsis(true)
             .setDataIndex(key)
             .setKey(key)
-            .setRender((_, row, _) =>
-              if (title == outputTitle)
-                row.renderOutCell(key, outMap(row))
-              else
-                row.renderInCell(key, inMap(row))
-            )
+            .setRender((_, row, _) => {
+              inFunct
+                .map(ifunct => row.renderInCell(key, ifunct(row)))
+                .orElse(
+                  outFunct
+                    .map(ifunct => row.renderOutCell(key, ifunct(row)))
+                )
+                .get
+            })
         }: _*
       )
   }
@@ -304,16 +322,16 @@ class TableItem(
 }
 
 class TableRow(
-                val key: String,
-                val status: EvalStatus,
-                val testInputs: Map[String, Any],
-                var inputRowSpan: Int,
-                val dmnRowIndex: TestedValue,
-                val inputs: Map[String, String],
-                val outputs: Map[String, TestedValue],
-                val outputMessage: Option[String],
-                var children: js.Array[TableRow]
-              ) extends js.Object {
+    val key: String,
+    val status: EvalStatus,
+    val testInputs: Map[String, Any],
+    var inputRowSpan: Int,
+    val dmnRowIndex: TestedValue,
+    val inputs: Seq[(String, String)],
+    val outputs: Seq[(String, TestedValue)],
+    val outputMessage: Option[String],
+    var children: js.Array[TableRow]
+) extends js.Object {
 
   def totalRowSpan: Double = children.size + inputRowSpan
 
@@ -328,9 +346,9 @@ class TableRow(
   }
 
   def renderRowIndexCol(
-                         inputKeys: Seq[String],
-                         outputKeys: Seq[String]
-                       ): ReactElement | RenderedCell[TableRow] =
+      inputKeys: Seq[String],
+      outputKeys: Seq[String]
+  ): ReactElement | RenderedCell[TableRow] =
     outputMessage match {
       case Some(msg) =>
         val colSpan =
@@ -353,9 +371,9 @@ class TableRow(
     }
 
   def renderInCell(
-                    key: String,
-                    inMap: Map[String, String]
-                  ): RenderedCell[TableRow] = {
+      key: String,
+      inMap: Map[String, String]
+  ): RenderedCell[TableRow] = {
     val value = inColValue(key, inMap)
     renderTextCell(value)
       .setProps(
@@ -365,9 +383,10 @@ class TableRow(
   }
 
   def renderOutCell(
-                     key: String,
-                     outMap: Map[String, TestedValue]
-                   ): RenderedCell[TableRow] = {
+      key: String,
+      outMap: Map[String, TestedValue]
+  ): RenderedCell[TableRow] = {
+    println(s"$key - outMap: $outMap")
     val value = outColValue(key, outMap)
     testedCell(
       inOutColSpan(),
@@ -376,32 +395,32 @@ class TableRow(
   }
 
   private def inOutColSpan(): Int =
-      outputMessage.map(_ => 0).getOrElse(1)
+    outputMessage.map(_ => 0).getOrElse(1)
 
   private def inColValue(
-                          key: String,
-                          inOutMap: Map[String, String]
-                        ): String =
+      key: String,
+      inOutMap: Map[String, String]
+  ): String = {
     if (inOutMap.isEmpty)
       outputMessage.getOrElse("-")
-    else if(inOutMap.contains(key))
+    else if (inOutMap.contains(key))
       inOutMap(key)
     else
       outputMessage.getOrElse("x - only needed as Variable for Output.")
+  }
 
   private def outColValue(
-                          key: String,
-                          inOutMap: Map[String, TestedValue]
-                        ): TestedValue =
+      key: String,
+      inOutMap: Map[String, TestedValue]
+  ): TestedValue =
     if (inOutMap.isEmpty)
       NotTested(outputMessage.getOrElse("-"))
     else inOutMap(key)
 
-
   private def testedCell(
-                          colSpan: Int,
-                          actualVal: TestedValue
-                        ) = {
+      colSpan: Int,
+      actualVal: TestedValue
+  ) = {
     val (cssClass: String, tooltip: String) = actualVal match {
       case NotTested(value) =>
         s"INFO-cell" -> value
@@ -434,7 +453,6 @@ case class RowCreator(
     evalResults,
     missingRules
   ) = dmnEvalResult
-
   private lazy val evaluatedRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
@@ -445,30 +463,30 @@ case class RowCreator(
             testInputs,
             1,
             NotTested("0"),
-            Map.empty,
-            Map.empty,
+            Seq.empty,
+            Seq.empty,
             Some(maybeError.map(_.msg).getOrElse("NOT FOUND")),
             js.Array()
           )
         )
       case DmnEvalRowResult(
-      status,
-      _,
-      testInputs,
-      matchedRules,
-      maybeError
-      ) =>
+            status,
+            _,
+            testInputs,
+            matchedRules,
+            maybeError
+          ) =>
         val rows =
           matchedRules.zipWithIndex.map {
-            case (MatchedRule(_, rowIndex, inputs, outputMap), index) =>
+            case (MatchedRule(_, rowIndex, inputs, outputs), index) =>
               new TableRow(
                 testInputs.values.mkString("-") + index,
                 status,
                 testInputs,
                 1,
                 rowIndex,
-                inputKeys.zip(inputs).toMap,
-                outputMap,
+                inputs,
+                outputs,
                 None,
                 js.Array()
               )
@@ -482,8 +500,8 @@ case class RowCreator(
                 testInputs,
                 1,
                 NotTested("1"),
-                Map.empty,
-                Map.empty,
+                Seq.empty,
+                Seq.empty,
                 Some(msg.msg),
                 js.Array(rows.map(_.toChildRow()): _*)
               )
@@ -500,8 +518,8 @@ case class RowCreator(
         inputKeys.map(_ -> "").toMap,
         1,
         NotTested(index.toString),
-        Map.empty,
-        Map.empty,
+        Seq.empty,
+        Seq.empty,
         Some("There are no Test Inputs that match this Rule."),
         js.Array(
           new TableRow(
@@ -510,8 +528,8 @@ case class RowCreator(
             inputKeys.map(_ -> "").toMap,
             0,
             NotTested(index.toString),
-            inputKeys.zip(inputs).toMap,
-            outputKeys.zip(outputs.map(NotTested)).toMap,
+            matchedInputKeys(evalResults).zip(inputs),
+            outputKeys.zip(outputs.map(NotTested)),
             None,
             js.Array()
           )

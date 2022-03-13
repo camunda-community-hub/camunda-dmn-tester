@@ -75,7 +75,6 @@ import ujson.Value
         val json = ujson.read(JSON.stringify(values))
         val testerInputs = testInputsVars(json(testInputsKey))
         val variables = testInputsVars(json(variablesKey))
-        println(s"TESTER INPUTS: $testerInputs")
         setIsModalVisible(false)
         val dmnPath = json("pathOfDmn").str
           .split("/")

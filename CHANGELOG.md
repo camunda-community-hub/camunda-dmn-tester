@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [](#1-1-0)
 ## 1.1.0 - Unreleased - <<set release date>>
+### Added
+Support for _date and time("2021-12-12T00:00")_.
+
 [](#0-12-0)
 ## 0.12.0 - 2021-06-27
 ### Fixed

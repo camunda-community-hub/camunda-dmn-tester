@@ -128,8 +128,8 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
   private lazy val matchedRule = MatchedRule(
     "asdfe4",
     NotTested("1"),
-    Seq("hello3", "4.5"),
-    Map("out1" -> NotTested("val1"), "out2" -> NotTested("val2"))
+    Seq("in1" -> "hello3", "in2" -> "4.5"),
+    Seq("out1" -> NotTested("val1"), "out2" -> NotTested("val2"))
   )
   private lazy val infoRowResult = DmnEvalRowResult(
     EvalStatus.INFO,
