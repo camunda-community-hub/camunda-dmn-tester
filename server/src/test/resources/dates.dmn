@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_dates" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.11.1">
+  <inputData id="InputData_0die4vm" name="date" />
+  <decision id="dates" name="dates">
+    <informationRequirement id="InformationRequirement_0ifcef0">
+      <requiredInput href="#InputData_0die4vm" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0vlucip" hitPolicy="FIRST">
+      <input id="InputClause_1wdcmm6" label="date">
+        <inputExpression id="LiteralExpression_0zijywr" typeRef="date">
+          <text>date</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1yqa6vj" label="result" name="result" typeRef="date" />
+      <rule id="DecisionRule_0poldk9">
+        <inputEntry id="UnaryTests_09cs1wx">
+          <text>&gt; date and time("2021-12-23T00:00")</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_042a1ap">
+          <text>date and time("2021-12-12T00:00")</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0caaj80">
+        <inputEntry id="UnaryTests_16v8i9p">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1pzpzit">
+          <text>date and time("2020-12-12T00:00")</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_18cqihz">
+      <dmndi:DMNShape id="DMNShape_1ypz562" dmnElementRef="InputData_0die4vm">
+        <dc:Bounds height="45" width="125" x="122" y="270" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_07ub18m" dmnElementRef="dates">
+        <dc:Bounds height="80" width="180" x="207" y="81" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0vnfqnl" dmnElementRef="InformationRequirement_0ifcef0">
+        <di:waypoint x="201" y="270" />
+        <di:waypoint x="277" y="161" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

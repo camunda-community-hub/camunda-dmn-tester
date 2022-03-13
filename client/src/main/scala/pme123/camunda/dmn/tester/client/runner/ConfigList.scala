@@ -2,7 +2,7 @@ package pme123.camunda.dmn.tester.client.runner
 
 import pme123.camunda.dmn.tester.client.runner.ConfigItem.activeCheck
 import pme123.camunda.dmn.tester.client.{buttonWithTooltip, withTooltip}
-import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, NumberValue, StringValue}
+import pme123.camunda.dmn.tester.shared.TesterValue.{BooleanValue, DateValue, NumberValue, StringValue}
 import pme123.camunda.dmn.tester.shared.{DmnConfig, TesterData, TesterInput}
 import slinky.core.FunctionalComponent
 import slinky.core.WithAttrs.build
@@ -173,6 +173,7 @@ import ujson.Value
         case "String" => values.map(StringValue)
         case "Number" => values.map(NumberValue.apply)
         case "Boolean" => values.map(BooleanValue.apply)
+        case "Date" => values.map(DateValue.apply)
       }
       val nullValue = e.obj.get("nullValue").exists(_.bool)
       TesterInput(e("key").str, nullValue, testerValues.toList)

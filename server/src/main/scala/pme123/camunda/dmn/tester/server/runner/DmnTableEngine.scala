@@ -1,14 +1,9 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import org.camunda.dmn.Audit.{AuditLog, DecisionTableEvaluationResult}
-import org.camunda.dmn.DmnEngine
+import org.camunda.dmn.Audit.{AuditLog, ContextEvaluationResult, DecisionTableEvaluationResult, SingleEvaluationResult}
+import org.camunda.dmn.{DmnEngine, logger}
 import org.camunda.dmn.DmnEngine.EvalContext
-import org.camunda.dmn.parser.{
-  ParsedDecision,
-  ParsedDecisionTable,
-  ParsedDmn,
-  ParsedRule
-}
+import org.camunda.dmn.parser.{ParsedDecision, ParsedDecisionTable, ParsedDmn, ParsedRule}
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
@@ -64,7 +59,7 @@ case class DmnTableEngine(
         rules
       )
       missingRs = missingRules(matchedRules, rules)
-      outputKeys = matchedRules.headOption.toSeq.flatMap(_.outputs.keys)
+      outputKeys = matchedRules.headOption.toSeq.flatMap(_.outputs.map(_._1))
     } yield DmnEvalResult(
       dmn,
       inputKeys,
@@ -143,14 +138,24 @@ case class DmnTableEngine(
             MatchedRule(
               rule.rule.id,
               testedIndex,
-              rule.rule.inputEntries.map(_.text).toSeq,
+              log.entries.head.result match{
+                case DecisionTableEvaluationResult(inputs, _, _) =>
+                  inputs.map(i => i.input.name -> unwrap(i.value))
+                case SingleEvaluationResult(_) =>
+                  Seq.empty
+                case ContextEvaluationResult(entries, _) =>
+                  entries.toSeq.map {
+                    case k -> v => k -> v.toString
+                  }
+              },
+             // rule.rule.inputEntries.map(_.text).toSeq,
               checkOutputs(
                 inputMap,
                 testedIndex,
                 rule.outputs
                   .map(out => out.output.name -> unwrap(out.value))
                   .toMap
-              )
+              ).toSeq
             )
           })
         EvalResult(log.rootEntry.id, rules, maybeError)

@@ -146,7 +146,10 @@ case class DmnUnitTestGenerator(
 
   private[runner] def methodName(testInputs: Map[String, String]) = {
     "Test Inputs: " + testInputs
-      .map { case (k, v) =>
+      .map {
+        case (k, v) if v == null =>
+          s"$k -> null"
+        case (k, v) =>
         s"$k -> ${v.take(12)}"
       }
       .mkString(" | ")
