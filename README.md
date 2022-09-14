@@ -1,5 +1,8 @@
 [![Community Extension](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
 [![Lifecycle: Incubating](https://img.shields.io/badge/Lifecycle-Incubating-blue)](https://github.com/Camunda-Community-Hub/community/blob/main/extension-lifecycle.md#incubating-)
+![Compatible with: Camunda Platform 7](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%207-26d07c)
+![Compatible with: Camunda Platform 8](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%208-0072Ce)
+![Educational Tooling](https://img.shields.io/badge/Educational%20Tooling-Project%20for%20getting%20started%20with%20Camunda%20for%20educators-%239F2B68)
 ![Maven Central](https://img.shields.io/nexus/r/https/s01.oss.sonatype.org/io.github.pme123/camunda-dmn-tester-shared_2.13.svg)
 ![GitHub repo size](https://img.shields.io/github/repo-size/pme123/camunda-dmn-tester)
 ![Docker Pulls](https://img.shields.io/docker/pulls/pame/camunda-dmn-tester)
