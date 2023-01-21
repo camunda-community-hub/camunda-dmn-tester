@@ -1,6 +1,6 @@
 package pme123.camunda.dmn.tester.shared
 
-sealed trait HandledTesterException extends RuntimeException {
+sealed trait HandledTesterException {
   def msg: String
 }
 object HandledTesterException {

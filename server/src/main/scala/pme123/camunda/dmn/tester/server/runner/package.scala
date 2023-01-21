@@ -10,7 +10,7 @@ import zio.{URIO, console}
 
 package object runner {
 
-   val defaultConfigPaths = Seq(
+  val defaultConfigPaths: Seq[String] = Seq(
     "/server/src/test/resources/dmn-configs"
   )
 
@@ -32,12 +32,13 @@ package object runner {
       .mkString("| ", " | ", " |")
   }
 
-  def osPath(path: List[String]): Path = path match {
-    case ".." :: tail =>
-      pwd / up / tail
-    case other        =>
-      pwd / other
-  }
+  def osPath(path: List[String]): Path =
+    path.filterNot(_.isBlank) match {
+      case Nil                        => pwd
+      case x :: Nil if x.trim.isEmpty => pwd
+      case ".." :: tail               => pwd / up / tail
+      case other                      => pwd / other
+    }
 
   def printError(msg: String): URIO[Console, Unit] =
     console.putStrLn(

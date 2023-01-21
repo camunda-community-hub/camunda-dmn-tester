@@ -8,10 +8,13 @@ import sbt.Keys.{logLevel, _}
 import sbt.{Level, _}
 import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 
+import scala.io.{BufferedSource, Source}
+import scala.util.Using
+
 object Settings {
 
   val projectName = "camunda-dmn-tester"
-  lazy val projectVersion = scala.io.Source.fromFile("version").mkString.trim
+  lazy val projectVersion: String = Using(Source.fromFile("version"))(_.mkString.trim).get
 
   lazy val projectSettings: Project => Project =
     _.settings(
@@ -74,7 +77,7 @@ object Settings {
       _.settings(
         libraryDependencies ++= Seq(
           "com.lihaoyi" %%% "autowire" % "0.3.2",
-          "io.suzaku" %%% "boopickle" % "1.3.2",
+          "io.suzaku" %%% "boopickle" % "1.4.0",
           "com.lihaoyi" %%% "upickle" % "1.4.0",
           "com.lihaoyi" %%% "ujson" % "1.4.0"
         )
@@ -88,7 +91,7 @@ object Settings {
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       resolvers += Resolver.mavenLocal, // only needed for dmn-engine SNAPSHOT
       //    crossScalaVersions := Deps.supportedScalaVersions
-      Test / unmanagedSourceDirectories += baseDirectory.value / "target" / "generated-src"
+      Test / unmanagedSourceDirectories += baseDirectory.value / "target" / "generated-src",
     )
 
     lazy val serverDeps: Project => Project =
@@ -104,6 +107,10 @@ object Settings {
       libraryDependencies ++= Seq(
         Deps.ammonite,
         Deps.dmnScala,
+        // Optional for auto-derivation of JSON codecs
+        "io.circe" %% "circe-generic" % "0.14.3",
+        "io.circe" %% "circe-parser" % "0.14.3",
+        "org.http4s" %% "http4s-circe" % Deps.version.http4s,
         Deps.zio,
         Deps.zioCats,
         Deps.zioConfigHocon,

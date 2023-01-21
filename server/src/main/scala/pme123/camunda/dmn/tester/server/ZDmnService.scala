@@ -39,7 +39,7 @@ object ZDmnService {
     for {
       dmnConfigs <- readConfigs(path.toList)
       _ <- console.putStrLn(
-        s"Found ${dmnConfigs.length} DmnConfigs in ${pwd / path}"
+        s"Found ${dmnConfigs.length} DmnConfigs in ${pwd / path.filter(_.trim.nonEmpty)}"
       )
     } yield dmnConfigs
   }
@@ -93,11 +93,7 @@ object ZDmnService {
       }
       .flatMap {
         case f if !f.exists() =>
-          ZIO.fail(
-            ConfigException(
-              s"Your provided Config Path does not exist (${f.getAbsolutePath})."
-            )
-          )
+          UIO(Array.empty[DmnConfig])
         case f if !f.isDirectory =>
           ZIO.fail(
             ConfigException(
@@ -115,7 +111,7 @@ object ZDmnService {
   }
 
   private def getConfigFiles(f: File) = ZIO {
-    f.listFiles.filter(_.getName.endsWith(".conf"))
+    f.listFiles.filter(f2 => f2.getName.endsWith(".conf") && !f2.getName.startsWith("."))
   }.mapError { ex =>
     ex.printStackTrace()
     ConfigException(ex.getMessage)

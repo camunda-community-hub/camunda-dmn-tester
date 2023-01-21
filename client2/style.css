@@ -1,0 +1,273 @@
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(0, 0, 0, 0.65);
+  background: #f0f2f5;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+/*
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.vanilla:hover {
+  filter: drop-shadow(0 0 2em #f7df1eaa);
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+*/
+/* GENERAL */
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: #1890ff;
+  text-decoration: none;
+  background-color: transparent;
+  outline: none;
+  cursor: pointer;
+  -webkit-transition: color 0.3s;
+  transition: color 0.3s;
+  -webkit-text-decoration-skip: objects;
+}
+
+#dmnTester {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+/* TOP */
+.topSection {
+  background-color: #222;
+  height: 120px;
+  padding: 20px;
+  color: white;
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-title {
+  font-size: 1.5em;
+  color: white;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* MAIN */
+
+.App-section {
+  padding: 6pt;
+}
+
+.App-card {
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+ui5-table-column::part(column) {
+  text-align: left;
+}
+
+ui5-table-row::part(row) {
+  text-align: left;
+}
+
+ui5-card.medium {
+  width: 50rem;
+}
+
+/* 1. */
+
+.configPathsRow {
+  width: 100%;
+  text-align: left;
+}
+
+.configPathsSelect {
+  margin: 5px;
+  width: 80%;
+}
+
+.addConfigPath {
+  margin: 5px;
+  flex: none;
+  padding: 8px;
+  display: block;
+  cursor: pointer
+}
+
+/* 2. */
+
+ui5-li.selectConfigItem::part(title) {
+  font-size: small;
+}
+
+.configDialogForm {
+  width: 100%;
+  text-align: left;
+}
+.dialogLabel {
+  margin-right: 20px;
+}
+
+.dialogButton {
+  margin-left: 20px;
+}
+
+/* 3. */
+
+ui5-panel::part(content) {
+  text-align: left;
+}
+
+.testResultsPanel {
+  width: 100%;
+  margin-bottom: 16px;
+  outline: none;
+  box-shadow: 0 0 10px #9ecaed;
+  min-width: 50rem;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.testResultsTable {
+  max-width: 70rem;
+}
+
+ui5-table-column.resultInputHeader::part(column) {
+  background-color: aliceblue;
+}
+
+ui5-table-column.matchedInputHeader::part(column) {
+  background-color: bisque;
+}
+
+ui5-table-column.resultOutputHeader::part(column) {
+  background-color: beige;
+  height: 1rem;
+}
+
+ui5-table-column.smallColHeader::part(column) {
+  height: 1rem;
+  padding: 1px;
+}
+
+ui5-table-cell::part(cell) {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /*white-space: nowrap;*/
+}
+
+.busyIndicationPanel .busyIndicationPanel.ui5-busy-indicator-root  {
+  display: block;
+  overflow: scroll;
+  width: fit-content;
+}
+
+/* BOTTOM */
+
+.App-footer {
+  text-align: center;
+  padding: 20pt;
+}

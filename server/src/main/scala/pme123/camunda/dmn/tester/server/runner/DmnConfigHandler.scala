@@ -30,7 +30,7 @@ object DmnConfigHandler {
       path: List[String]
   ): ZIO[Console, ConfigException, Unit] = {
     ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f => console.putStrLn(s"Config Path: ${f.toIO.getAbsolutePath}"))
+      .tap(f => console.putStrLn(s"Config Path write: ${f.toIO.getAbsolutePath}"))
       .mapError { ex =>
         ex.printStackTrace()
         ConfigException(ex.getMessage)
@@ -40,7 +40,7 @@ object DmnConfigHandler {
           .writeConfig(dmnConfig)
           .mapError(failureMsg => ConfigException(failureMsg))
           .flatMap(c =>
-            ZIO(ops.write(configFile, c))
+            ZIO(ops.write(configFile, c, createFolders = true))
               .mapError(ex => {
                 ConfigException(
                   s"Could not write Config '${dmnConfig.decisionId}'\n${ex.getClass.getName}: ${ex.getMessage}"
@@ -55,7 +55,7 @@ object DmnConfigHandler {
       path: List[String]
   ): ZIO[Console, ConfigException, Unit] = {
     ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f => console.putStrLn(s"Config Path: ${f.toIO.getAbsolutePath}"))
+      .tap(f => console.putStrLn(s"Config Path to delete: ${f.toIO.getAbsolutePath}"))
       .bimap(
         { ex =>
           ex.printStackTrace()

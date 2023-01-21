@@ -94,7 +94,7 @@ case class DmnTableEngine(
     } yield DmnEvalRowResult(
       evalResult.status,
       decisionId,
-      context.variables.view.mapValues(v => if(v == null) null else v.toString).toMap,
+      context.variables.view.mapValues(v => if(v == null) "null" else v.toString).toMap,
       evalResult.matchedRules,
       evalResult.failed
     )
