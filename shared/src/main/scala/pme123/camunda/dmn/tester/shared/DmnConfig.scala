@@ -1,28 +1,29 @@
 package pme123.camunda.dmn.tester.shared
 
 import pme123.camunda.dmn.tester.shared.TesterValue.DateValue
-import pme123.camunda.dmn.tester.shared.conversions.dateRegex
 
 import java.time.{LocalDateTime, ZoneId}
 import java.util.Date
 import scala.language.implicitConversions
-import scala.math.BigDecimal
+import conversions._
 
 case class DmnConfig(
-    decisionId: String,
-    data: TesterData,
-    dmnPath: List[String],
+    decisionId: String = "",
+    data: TesterData = TesterData(),
+    dmnPath: List[String] = List.empty,
     isActive: Boolean = false,
     testUnit: Boolean = true
 ) {
 
+  lazy val dmnPathStr = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
+  
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
 
 }
 
 case class TesterData(
-    inputs: List[TesterInput],
+    inputs: List[TesterInput] = List.empty,
     // simple input-, output-variables used in the DMN
     variables: List[TesterInput] = List.empty,
     testCases: List[TestCase] = List.empty
@@ -56,9 +57,9 @@ case class TesterData(
 }
 
 case class TesterInput(
-    key: String,
-    nullValue: Boolean,
-    values: List[TesterValue]
+    key: String = "",
+    nullValue: Boolean = false,
+    values: List[TesterValue] = List.empty
 ) {
 
   val valuesAsString: String = values.map(_.valueStr).mkString(", ")
@@ -96,6 +97,16 @@ object TesterValue {
       case s: String => StringValue(s)
       case o if o == null => NullValue
       case o => throw new IllegalArgumentException(s"Not expected value type: $o")
+    }
+
+  def fromString(value: String): TesterValue =
+    value match {
+      case "true" => BooleanValue(true)
+      case "false" => BooleanValue(false)
+      case s if s.trim.matches(longRegex) => NumberValue(s.toLong)
+      case s if s.trim.matches(doubleRegex) => NumberValue(s.toDouble)
+      case s: String if s.trim.matches(dateRegex) => DateValue(s)
+      case s: String => StringValue(s)
     }
 
   def valueMap(inputs: Map[String, Any]): Map[String, TesterValue] =
@@ -191,6 +202,8 @@ case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
 }
 
 object conversions {
+  val longRegex = """^(-?)(0|([1-9][0-9]*))$"""
+  val doubleRegex = """^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$"""
   val dateRegex = """^([0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):?([0-5][0-9])?$"""
 
   implicit def stringToTesterValue(x: String): TesterValue = {

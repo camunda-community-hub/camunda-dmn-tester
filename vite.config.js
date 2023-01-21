@@ -19,12 +19,13 @@ function printSbtTask(task) {
   const result = process.platform === 'win32'
     ? spawnSync("sbt.bat", args.map(x => `"${x}"`), {shell: true, ...options})
     : spawnSync("sbt", args, options);
-
+  const output = result.stdout.toString('utf8').trim().split("\n")
+  console.log("Scala JS Output path: " + output[output.length - 1])
   if (result.error)
     throw result.error;
   if (result.status !== 0)
     throw new Error(`sbt process failed with exit code ${result.status}`);
-  return result.stdout.toString('utf8').trim();
+  return output[output.length - 1].trim();
 }
 
 // Get the output of fastLinkJS or fullLinkJS depending on isDev()

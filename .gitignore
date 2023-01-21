@@ -24,14 +24,15 @@ yarn.lock
 /demo/demo.iml
 /node_modules/
 /test.json
-/client2/.bloop/
-/client2/.bsp/
-/client2/.metals/
-/client2/project/.bloop/
-/client2/project/project/
-/client2/project/metals.sbt
-/client2/.vscode/
-/client2/node_modules/
+/client/.bloop/
+/client/.bsp/
+/client/.metals/
+/client/project_bak/.bloop/
+/client/project_bak/project/
+/client/project_bak/metals.sbt
+/client/.vscode/
+/client/node_modules/
 
-/client2/project/target/
-/client2/target/
+/client/project_bak/target/
+/client/target/
+/client/dist/

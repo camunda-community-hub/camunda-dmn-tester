@@ -1,4 +1,6 @@
-import ammonite.ops._
+#!/usr/bin/env amm
+
+import mainargs._
 
 /** <pre>
   * Creates a new Release for the DmnTester (Library and Docker) and the camunda-dmn-tester-ci (Docker):
@@ -12,8 +14,8 @@ import ammonite.ops._
   * amm ./publish-release.sc 0.2.5
   */
 
-private implicit val workDir: Path = {
-  val wd = pwd
+private implicit val workDir: os.Path = {
+  val wd = os.pwd
   println(s"Working Directory: $wd")
   wd
 }
@@ -25,78 +27,80 @@ private def replaceVersion(version: String) = {
     case pattern(major, minor, _) =>
       s"$major.${minor.toInt + 1}.0-SNAPSHOT"
   }
-  write.over(pwd / "version", newVersion)
+  os.write.over(os.pwd / "version", newVersion)
   newVersion
 }
 
 private def publishCIDocker(version: String) = {
-  write.over(pwd / "docker" / "data" / "testerVersion", version)
-  %.docker(
+  os.write.over(os.pwd / "docker" / "data" / "testerVersion", version)
+  runAndPrint( "docker",
     "build",
-    pwd / "docker",
+    os.pwd / "docker",
     "-t",
     s"pame/camunda-dmn-tester-ci:$version"
   )
-  %.docker(
+  runAndPrint( "docker",
     "push",
     s"pame/camunda-dmn-tester-ci:$version"
   )
 }
 
 private def updateGit(version: String) = {
-  %.git(
+  runAndPrint( "git",
     "fetch",
     "--all"
   )
-  %.git(
+  runAndPrint( "git",
     "commit",
     "-a",
     "-m",
     s"Released Version $version"
   )
-  %.git(
+  runAndPrint( "git",
     "tag",
     "-a",
     version,
     "-m",
     s"Version $version"
   )
-  %.git(
+  runAndPrint( "git",
     "push",
     "--set-upstream",
     "origin",
     "develop"
   )
-  %.git(
+  runAndPrint( "git",
     "checkout",
     "master"
   )
-  %.git(
+  runAndPrint( "git",
     "merge",
     "develop"
   )
-  %.git(
+  runAndPrint( "git",
     "push",
     "--tags"
   )
-  %.git(
+  runAndPrint( "git",
     "checkout",
     "develop"
   )
   val newVersion = replaceVersion(version)
-  %.git(
+  runAndPrint( "git",
     "commit",
     "-a",
     "-m",
     s"Init new Version $newVersion"
   )
-  %.git(
+  runAndPrint( "git",
     "push"
   )
 }
 def publishTesterDocker(version: String) = {
-  write.over(pwd / "version", version)
-  %.sbt(
+  os.write.over(os.pwd / "version", version)
+  buildClient
+  runAndPrint(
+    "sbt",
     "-J-Xmx3G",
     "release",
     "publishSigned",
@@ -105,12 +109,32 @@ def publishTesterDocker(version: String) = {
 }
 
 def publishTesterDockerLocal = {
-  %.sbt(
+  buildClient
+  runAndPrint(
+    "sbt",
     "-J-Xmx3G",
     "release",
     "publishLocal",
     "server/docker:publishLocal"
   )
+}
+
+def buildClient = {
+  runAndPrint(
+    "sbt",
+    "-J-Xmx3G",
+    "releaseClient",
+  )
+  runAndPrint(
+    "npm",
+    "run",
+    "build",
+  )
+}
+
+def runAndPrint(commands: os.Shellable*) = {
+  println(s"Commands: ${commands.mkString(", ")}")
+  println(os.proc(commands:_*).call())
 }
 
 @arg(

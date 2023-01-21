@@ -114,7 +114,7 @@ object HttpServer extends IOApp {
   private def static(file: String, blocker: Blocker, request: Request[IO]) = {
     logger.info(s"Static File: $file")
     StaticFile
-      .fromResource("/assets/" + file, blocker, Some(request))
+      .fromResource("/" + file, blocker, Some(request))
       .orElse(
         StaticFile
           .fromFile(
