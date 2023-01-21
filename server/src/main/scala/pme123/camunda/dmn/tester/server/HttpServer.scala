@@ -31,7 +31,7 @@ object HttpServer extends IOApp {
     for {
       blocker <- Blocker[IO]
       server <- BlazeServerBuilder[IO](global)
-        .bindHttp(8883, "localhost")
+        .bindHttp(8883, "0.0.0.0")
         .withHttpApp(CORS(httpApp(blocker)))
         .resource
     } yield server
