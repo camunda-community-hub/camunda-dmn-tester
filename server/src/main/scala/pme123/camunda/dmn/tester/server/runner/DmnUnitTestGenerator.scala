@@ -69,7 +69,7 @@ case class DmnUnitTestGenerator(
   ): UIO[String] =
     UIO(
       testMethod(
-        s"missing_${dmnRule.index}_${dmnRule.inputs.map(_.replaceAll("""[\W]""", "_")).mkString("__")}",
+        s"missing_${dmnRule.index}_${dmnRule.inputs.map(i => if(i == null) "null" else i.replaceAll("""[\W]""", "_")).mkString("__")}",
         s"""fail(\"\"\"There is no Rule that matched for these Inputs:
                        |${inputKeys
           .zip(dmnRule.inputs)

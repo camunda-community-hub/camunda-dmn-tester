@@ -49,3 +49,5 @@ class DmnService extends DmnApi {
   private def run[E, A](body: => ZIO[ZEnv, E, A]): A =
     runtime.unsafeRun(body)
 }
+
+object DmnService extends DmnService

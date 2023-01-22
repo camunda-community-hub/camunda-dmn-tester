@@ -1,9 +1,14 @@
-import Settings.{client => cli, server => ser, shared => sha, _}
+import Settings.{client => cli, server => ser, _}
+
+ThisBuild / evictionErrorLevel := Level.Warn
 
 lazy val root = project
-  .settings(name := s"$projectName-root", commands += ReleaseCmd)
+  .settings(
+    name := s"$projectName-root",
+    commands ++= Seq(ReleaseCmd, ReleaseClientCmd)
+  )
   .in(file("."))
-  .aggregate(shared.jvm, client, server)
+  .aggregate(shared.jvm, shared.js, client, server)
   .configure(
     projectSettings,
     preventPublication
@@ -12,10 +17,23 @@ lazy val root = project
 lazy val shared =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
+    .jvmSettings(
+      scalaVersion := scala2V,
+      libraryDependencies ++= Seq(
+        "io.circe" %% "circe-generic" % "0.14.3",
+        "io.circe" %% "circe-parser" % "0.14.3"
+      )
+    )
+    .jsSettings(
+      scalaVersion := scala3V,
+      libraryDependencies ++= Seq(
+        "io.circe" %%% "circe-generic" % "0.14.3",
+        "io.circe" %%% "circe-parser" % "0.14.3"
+      )
+    )
     .settings(name := s"$projectName-shared")
     .configure(
       projectSettings,
-      sha.deps,
       publicationSettings
     )
 
@@ -24,16 +42,12 @@ lazy val client =
     .settings(name := s"$projectName-client")
     .dependsOn(shared.js)
     .enablePlugins(
-      ScalablyTypedConverterPlugin,
-      ScalaJSBundlerPlugin,
       ScalaJSPlugin
     )
     .configure(
       projectSettings,
-      sha.deps,
-      cli.slinkyBasics,
-      cli.webpackSettings,
-      cli.antdSettings,
+      cli.settings,
+      cli.deps,
       preventPublication
     )
 
@@ -46,7 +60,6 @@ lazy val server =
       ser.serverDeps,
       ser.deps, // must be moved?
       ser.docker,
-      sha.deps,
       publicationSettings
     )
     .enablePlugins(JavaAppPackaging)
