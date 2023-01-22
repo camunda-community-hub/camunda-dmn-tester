@@ -21,6 +21,12 @@ A little DMN Table tester with the following Goals:
 >  
 > **Niall Deehan** Developer Relations Camunda
 
+## Version
+I work at a redesign at the moment and published it > Version `> 0.15.*`.
+
+Not all features are ready in the UI (mostly the test cases). 
+So if you need them stay on `0.14.0`.
+
 ## Usage
 I wrote two blog article that explains how you can use it:
 
@@ -69,19 +75,15 @@ And there is a Recording from Camunda Community Summit:
 This projects builds on cool Open Source Projects. So my thanks go to:
 
 ### Shared
-* [Autowire](https://github.com/lihaoyi/autowire):
-  > Autowire is a pair of macros that allows you to perform type-safe, reflection-free RPC between Scala systems.
-* [BooPickle](https://boopickle.suzaku.io):
-  > BooPickle is the fastest and most size efficient serialization (aka pickling) library that works on both Scala and Scala.js.
+* [Circe](https://circe.github.io/circe/):
+  > Library to serialize and deserialize Json to communicate between the client and the server. 
+  > The library works on both Scala and Scala.js.
 
 ### Client
-* [Slinky](https://slinky.dev)
-  > Write React apps in Scala just like you would in ES6
-* [Scalably Typed](https://scalablytyped.org)
-  > The Javascript ecosystem for Scala.js!
-  I used the facades for Ant Design
-* [Ant Design](https://ant.design)
-  >A design system for enterprise-level products. Create an efficient and enjoyable work experience.
+* [Laminar](https://laminar.dev)
+  > Native Scala.js library for building user interfaces
+* [Laminar bindings for SAP ui5](https://github.com/sherpal/LaminarSAPUI5Bindings)
+  > Bindings that allows using Laminar with a decent Webcomponents library.
 
 ### Server
 * [Scala DMN](https://github.com/camunda/dmn-scala)
@@ -108,7 +110,11 @@ This starts the Web Server on **Port 8883**.
 > Or use the client as described in the next chapter.
 
 ### Client
-`npm run dev`
+In the sbt console: `~fastLinkJS`
+
+This creates the Javascript file from the Scala classes on the fly with every change.
+
+In the terminal: `npm run dev`
 
 This will watch all your changes in the client and automatically refresh your Browser Session.
 This uses [Vite](https://vitejs.dev/guide/).
