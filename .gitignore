@@ -36,3 +36,6 @@ yarn.lock
 /client/project_bak/target/
 /client/target/
 /client/dist/
+/dist/
+/client/project/target/
+/package-lock.json

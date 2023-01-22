@@ -156,6 +156,12 @@ def release(version: String): Unit = {
     publishTesterDocker(version)
     publishCIDocker(version)
     updateGit(version)
+    println("""Due to problems with the `"org.xerial.sbt" % "sbt-sonatype"` Plugin you have to release manually:
+              |- https://s01.oss.sonatype.org/#stagingRepositories
+              |  - login
+              |  - check Staging Repository
+              |  - hit _close_ Button
+              |  - hit _release_ Button""".stripMargin)
   } else {
     publishTesterDockerLocal
   }

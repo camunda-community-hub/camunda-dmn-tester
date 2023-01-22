@@ -31,6 +31,7 @@ object HttpServer extends IOApp {
     for {
       blocker <- Blocker[IO]
       server <- BlazeServerBuilder[IO](global)
+        // 0.0.0.0 is required! - otherwise docker does not work
         .bindHttp(8883, "0.0.0.0")
         .withHttpApp(CORS(httpApp(blocker)))
         .resource

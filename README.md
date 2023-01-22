@@ -103,16 +103,17 @@ This projects builds on cool Open Source Projects. So my thanks go to:
 This starts the Web Server on **Port 8883**.
 
 >This copies the client assets to the classpath of the server.
-> So make sure you run `build` before.
+> So make sure you run `npm run build` before.
 >
 > Or use the client as described in the next chapter.
 
 ### Client
-`sbt dev`
+`npm run dev`
 
 This will watch all your changes in the client and automatically refresh your Browser Session.
+This uses [Vite](https://vitejs.dev/guide/).
 
-Open in the Browser **http://localhost:8024**.
+Open in the Browser **http://localhost:5173**.
 
 ## Releasing
 Just run `amm ./publish-release.sc VERSION`.
@@ -127,13 +128,9 @@ Due to problems with the `"org.xerial.sbt" % "sbt-sonatype"` Plugin you have to 
 > if you do not see any of the buttons or repository hit the _refresh_ Button.
 
 ### Local publish
-At the moment there are 2 steps:
-1. Build the Client (full optimization) and the Server:
+Just run `amm ./publish-release.sc VERSION-SNAPSHOT`.
 
-   `sbt release`
-2. Publish: 
-   
-   `sbt publishLocal`
+For now as soon as you publish a SNAPSHOT - it is always published locally.
 
 ### Docker
 There are 2 Docker Images:
