@@ -3,10 +3,10 @@ package pme123.camunda.dmn.tester.client
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
-import pme123.camunda.dmn.tester.shared.*
-import pme123.camunda.dmn.tester.shared.TesterValue.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.html
+import pme123.camunda.dmn.tester.shared.*
+import pme123.camunda.dmn.tester.shared.TesterValue.*
 
 final case class DmnConfigEditor(
     openEditDialogBus: EventBus[Boolean],
@@ -18,27 +18,6 @@ final case class DmnConfigEditor(
 
   lazy val saveConfigBus = EventBus[Boolean]()
 
-  lazy val serviceEvents = saveConfigBus.events
-    .withCurrentValueOf(dmnConfigSignal, dmnConfigPathSignal)
-    .flatMap { case (_, config, path) =>
-      val newConfig = config.copy(data =
-        config.data.copy(
-          inputs = dataInputsVar.now(),
-          variables = dataVariablesVar.now()
-        )
-      )
-      BackendClient
-        .updateConfig(newConfig, path)
-        .map {
-          case Right(configs) =>
-            dmnConfigsVar.set(configs)
-            openEditDialogBus.emit(false)
-            span("")
-          case Left(error) =>
-            errorMessage("Problem updating Dmn Config", error)
-        }
-    }
-
   lazy val comp = Dialog(
     _.showFromEvents(openEditDialogBus.events.filter(identity).mapTo(())),
     _.closeFromEvents(
@@ -49,7 +28,7 @@ final case class DmnConfigEditor(
       className := "editDialog",
       div(
         // hidden := true,
-        child <-- serviceEvents
+        child <-- submitDmnConfig
       ),
       configForm
     ),
@@ -69,6 +48,7 @@ final case class DmnConfigEditor(
         Button(
           className := "dialogButton",
           _.design := ButtonDesign.Emphasized,
+          disabled <-- dmnConfigSignal.map(_.hasErrors),
           "Save",
           _.events.onClick.mapTo(true) --> saveConfigBus
         )
@@ -112,55 +92,24 @@ final case class DmnConfigEditor(
             )
           )
         ),
-        Table.row(
-          _.cell(
-            width := "200px",
-            Label(
-              className := "dialogLabel",
-              _.forId := "decisionId",
-              _.required := true,
-              _.showColon := true,
-              "Decision Id"
-            )
-          ),
-          _.cell(
-            Input(
-              width := "700px",
-              _.id := "decisionId",
-              _.placeholder := "decistion Id",
-              _.required := true,
-              value <-- dmnConfigSignal
-                .map { c => // work around zoom not working
-                  dataInputsVar.set(c.data.inputs)
-                  dataVariablesVar.set(c.data.variables)
-                  c
-                }
-                .map(_.decisionId),
-              _.events.onChange.mapToValue --> decisionIdUpdater
-            )
-          )
+        stringInputRow(
+          "decisionId",
+          "Decision Id",
+          dmnConfigSignal.map(_.decisionIdError),
+          dmnConfigSignal.map { c => // work around - zoom not working
+            dataInputsVar.set(c.data.inputs)
+            dataVariablesVar.set(c.data.variables)
+            c
+          }.map(_.decisionId),
+          decisionIdUpdater
         ),
-        Table.row(
-          _.cell(
-            Label(
-              className := "dialogLabel",
-              _.forId := "dmnPath",
-              _.required := true,
-              _.showColon := true,
-              "Dmn Config Path"
-            )
-          ),
-          _.cell(
-            Input(
-              width := "700px",
-              _.id := "dmnPath",
-              _.placeholder := "dmn Path",
-              _.required := true,
-              value <-- dmnConfigSignal.map(_.dmnPath.mkString("/")),
-              _.events.onChange.mapToValue --> dmnPathUpdater
-            )
-          )
-        )
+        stringInputRow(
+          "dmnPath",
+          "Path to DMN",
+          dmnConfigSignal.map(_.dmnPathError),
+          dmnConfigSignal.map(_.dmnPathStr),
+          dmnPathUpdater
+        ),
       ),
       h4("Test Inputs "),
       inputValueVariableTables(dataInputsVar),
@@ -192,13 +141,14 @@ final case class DmnConfigEditor(
     dmnConfigVar.updater[String] { (config, newValue) =>
       config.copy(decisionId = newValue)
     }
-  private lazy val dmnPathUpdater =
+  private lazy val dmnPathUpdater: Observer[String] =
     dmnConfigVar.updater[String] { (config, newValue) =>
       config.copy(dmnPath = newValue.split("/").toList)
     }
 
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
     def renderInputsTableRow(key: String, inputSignal: Signal[TesterInput]) =
+      println(s"RENDERED: $key")
       def keyUpdater =
         inputsVar.updater[String] { (data, newValue) =>
           data.map(item =>
@@ -226,15 +176,13 @@ final case class DmnConfigEditor(
         }
 
       Table.row(
-        _.cell(
-          Input(
-            _.id := s"key_$key",
-            _.placeholder := "Input key",
-            _.required := true,
-            value <-- inputSignal.map(_.key),
-            _.events.onChange.mapToValue --> keyUpdater
-          )
-        ),
+          _.stringInputCell(
+            "dmnPath",
+            "Path to DMN",
+            inputSignal.map(_.keyError),
+            inputSignal.map(_.key),
+            keyUpdater
+          ),
         _.cell(
           Input(
             _.id := s"valueType_$key",
@@ -288,8 +236,40 @@ final case class DmnConfigEditor(
   ) =
     Input(
       _.required := true,
-      value <-- valueSignal,
-      onInput.mapToValue --> valueUpdater
+      controlled(
+        value <-- valueSignal,
+        onInput.mapToValue --> valueUpdater
+      )
     )
 
+  private lazy val submitDmnConfig = saveConfigBus.events
+    .withCurrentValueOf(dmnConfigSignal, dmnConfigPathSignal)
+    .flatMap { case (_, config, path) =>
+      println(s"CHECK: ${config.hasErrors} - ${config.decisionIdError}")
+      if (config.hasErrors)
+        EventStream.fromValue(
+          errorMessage(
+            "Validation Error(s)",
+            "There are incorrect data, please correct them before saving."
+          )
+        )
+      else {
+        val newConfig = config.copy(data =
+          config.data.copy(
+            inputs = dataInputsVar.now(),
+            variables = dataVariablesVar.now()
+          )
+        )
+        BackendClient
+          .updateConfig(newConfig, path)
+          .map {
+            case Right(configs) =>
+              dmnConfigsVar.set(configs)
+              openEditDialogBus.emit(false)
+              span("")
+            case Left(error) =>
+              errorMessage("Problem updating Dmn Config", error)
+          }
+      }
+    }
 end DmnConfigEditor

@@ -1,11 +1,11 @@
 package pme123.camunda.dmn.tester.shared
 
 import pme123.camunda.dmn.tester.shared.TesterValue.DateValue
+import pme123.camunda.dmn.tester.shared.conversions._
 
 import java.time.{LocalDateTime, ZoneId}
 import java.util.Date
 import scala.language.implicitConversions
-import conversions._
 
 case class DmnConfig(
     decisionId: String = "",
@@ -19,6 +19,21 @@ case class DmnConfig(
   
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
+
+  lazy val decisionIdError = {
+    val regex = """^(?!xml|Xml|xMl|xmL|XMl|xML|XmL|XML)[A-Za-z_][A-Za-z0-9-_.]*$""".r
+    if (regex.matches(decisionId)) None else Some(s"This must be a correct XML identifier (regex: $regex)")
+  }
+  lazy val dmnPathError = {
+    val regex = """^([^\/?%*:|"<>\.])+(\/[^\/?%*:|"<>\.]+)*\.dmn$""".r
+    if (regex.matches(dmnPathStr)) None else Some(s"This must be a correct Path e.g 'myDmns/coutryTable.dmn' (regex: $regex)")
+  }
+
+  lazy val dataError: Boolean =
+    data.hasError
+
+  lazy val hasErrors =
+    decisionIdError.nonEmpty || dmnPathError.nonEmpty || data.hasError
 
 }
 
@@ -54,6 +69,10 @@ case class TesterData(
       tc.inputs.view.mapValues(_.value).toMap == testInputs
     }
 
+  lazy val hasError: Boolean =
+    inputs.exists(_.hasError) ||
+    variables.exists(_.hasError)
+
 }
 
 case class TesterInput(
@@ -75,6 +94,14 @@ case class TesterInput(
         (if (nullValue) List(null) else List.empty)
     key -> allValues
   }
+
+  lazy val keyError = {
+    val regex = """^[A-Za-z_][A-Za-z0-9-_.]*$""".r
+    if (regex.matches(key)) None else Some(s"This must be a correct key - e.g. 'contractId' (regex: $regex)")
+  }
+
+  lazy val hasError: Boolean = keyError.nonEmpty
+
 }
 
 sealed trait TesterValue {
