@@ -48,7 +48,9 @@ final case class DmnConfigEditor(
         Button(
           className := "dialogButton",
           _.design := ButtonDesign.Emphasized,
-          disabled <-- dmnConfigSignal.map(_.hasErrors),
+          _.disabled <-- dmnConfigSignal
+            .combineWith(dataInputsVar.signal)
+            .map(c => c._1.hasErrors || c._2.exists(_.hasErrors)),
           "Save",
           _.events.onClick.mapTo(true) --> saveConfigBus
         )
@@ -96,11 +98,13 @@ final case class DmnConfigEditor(
           "decisionId",
           "Decision Id",
           dmnConfigSignal.map(_.decisionIdError),
-          dmnConfigSignal.map { c => // work around - zoom not working
-            dataInputsVar.set(c.data.inputs)
-            dataVariablesVar.set(c.data.variables)
-            c
-          }.map(_.decisionId),
+          dmnConfigSignal
+            .map { c => // work around - zoom not working
+              dataInputsVar.set(c.data.inputs)
+              dataVariablesVar.set(c.data.variables)
+              c
+            }
+            .map(_.decisionId),
           decisionIdUpdater
         ),
         stringInputRow(
@@ -109,7 +113,7 @@ final case class DmnConfigEditor(
           dmnConfigSignal.map(_.dmnPathError),
           dmnConfigSignal.map(_.dmnPathStr),
           dmnPathUpdater
-        ),
+        )
       ),
       h4("Test Inputs "),
       inputValueVariableTables(dataInputsVar),
@@ -134,7 +138,6 @@ final case class DmnConfigEditor(
 
   private lazy val testUnitUpdater =
     dmnConfigVar.updater[Boolean] { (config, newValue) =>
-      println(s"NEW VALUE: $newValue")
       config.copy(testUnit = newValue)
     }
   private lazy val decisionIdUpdater =
@@ -147,24 +150,25 @@ final case class DmnConfigEditor(
     }
 
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
-    def renderInputsTableRow(key: String, inputSignal: Signal[TesterInput]) =
-      println(s"RENDERED: $key")
+    def renderInputsTableRow(id: Int, inputSignal: Signal[TesterInput]) =
+
       def keyUpdater =
         inputsVar.updater[String] { (data, newValue) =>
           data.map(item =>
-            if item.key == key then item.copy(key = newValue) else item
+            if item.id == id then item.copy(key = newValue)
+            else item
           )
         }
       def nullValueUpdater =
         inputsVar.updater[Boolean] { (data, newValue) =>
           data.map(item =>
-            if item.key == key then item.copy(nullValue = newValue) else item
+            if item.id == id then item.copy(nullValue = newValue) else item
           )
         }
-      def valueUpdater =
+      def valuesUpdater =
         inputsVar.updater[String] { (data, newValue) =>
           data.map(item =>
-            if (item.key == key) {
+            if (item.id == id) {
               val values = newValue
                 .split(",")
                 .map(_.trim)
@@ -176,32 +180,30 @@ final case class DmnConfigEditor(
         }
 
       Table.row(
-          _.stringInputCell(
-            "dmnPath",
-            "Path to DMN",
-            inputSignal.map(_.keyError),
-            inputSignal.map(_.key),
-            keyUpdater
-          ),
-        _.cell(
-          Input(
-            _.id := s"valueType_$key",
-            _.readonly := true,
-            value <-- inputSignal.map(_.valueType)
-          )
+        _.stringInputCell(
+          s"key_$id",
+          "Key of variable",
+          inputSignal.map(_.keyError),
+          inputSignal.map(_.key),
+          keyUpdater
         ),
         _.cell(
           Input(
-            _.id := s"valuesAsString_$key",
-            _.placeholder := "Input Test Values",
-            _.required := true,
-            value <-- inputSignal.map(_.valuesAsString),
-            _.events.onChange.mapToValue --> valueUpdater
+            _.id := s"valueType_$id",
+            _.disabled := true,
+            _.value <-- inputSignal.map(_.valueType)
           )
+        ),
+        _.stringInputCell(
+          s"values_$id",
+          "Values of variable to test (semicolon-separated)",
+          inputSignal.map(_.valuesError),
+          inputSignal.map(_.valuesAsString),
+          valuesUpdater
         ),
         _.cell(
           CheckBox(
-            _.id := s"nullValue_$key",
+            _.id := s"nullValue_$id",
             _.checked <-- inputSignal.map(_.nullValue),
             _.events.onChange.map(_.target.checked) --> nullValueUpdater
           )
@@ -212,7 +214,7 @@ final case class DmnConfigEditor(
             _.design := ButtonDesign.Negative,
             _.tooltip := "Delete this entry.",
             _.events.onClick --> (_ =>
-              inputsVar.update(_.filterNot(_.key == key))
+              inputsVar.update(_.filterNot(_.id == id))
             )
           )
         )
@@ -224,28 +226,15 @@ final case class DmnConfigEditor(
       _.slots.columns := Table.column("Values"),
       _.slots.columns := Table.column("Null value"),
       _.slots.columns := Table.column(""),
-      children <-- inputsVar.signal.split(_.key) { (key, _, inputSignal) =>
-        renderInputsTableRow(key, inputSignal)
+      children <-- inputsVar.signal.split(_.id) { (id, _, inputSignal) =>
+        renderInputsTableRow(id, inputSignal)
       }
     )
   end inputValueVariableTables
 
-  private def inputForString(
-      valueSignal: Signal[String],
-      valueUpdater: Observer[String]
-  ) =
-    Input(
-      _.required := true,
-      controlled(
-        value <-- valueSignal,
-        onInput.mapToValue --> valueUpdater
-      )
-    )
-
   private lazy val submitDmnConfig = saveConfigBus.events
     .withCurrentValueOf(dmnConfigSignal, dmnConfigPathSignal)
     .flatMap { case (_, config, path) =>
-      println(s"CHECK: ${config.hasErrors} - ${config.decisionIdError}")
       if (config.hasErrors)
         EventStream.fromValue(
           errorMessage(

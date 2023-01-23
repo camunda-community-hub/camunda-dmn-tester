@@ -1,7 +1,7 @@
 package pme123.camunda.dmn.tester.client
 
-import be.doeraene.webcomponents.ui5.configkeys.*
 import be.doeraene.webcomponents.ui5.*
+import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
 import pme123.camunda.dmn.tester.shared.EvalStatus
 import pme123.camunda.dmn.tester.shared.EvalStatus.*
@@ -45,7 +45,14 @@ def stringInputRow(
         label
       )
     ),
-    _.stringInputCell(id, label, errorSignal, valueSignal, valueUpdater, "700px")
+    _.stringInputCell(
+      id,
+      label,
+      errorSignal,
+      valueSignal,
+      valueUpdater,
+      "700px"
+    )
   )
 
 extension (row: TableRow.type)

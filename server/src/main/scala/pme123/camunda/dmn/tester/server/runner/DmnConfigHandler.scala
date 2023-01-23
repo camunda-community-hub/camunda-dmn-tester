@@ -5,12 +5,12 @@ import ammonite.ops._
 import pme123.camunda.dmn.tester.shared.HandledTesterException.ConfigException
 import pme123.camunda.dmn.tester.shared.TesterValue._
 import pme123.camunda.dmn.tester.shared._
-import pme123.camunda.dmn.tester.shared.conversions.dateRegex
 import zio._
 import zio.console.Console
 
 import java.io.File
 import scala.language.implicitConversions
+import scala.util.Random
 
 object DmnConfigHandler {
 
@@ -30,7 +30,9 @@ object DmnConfigHandler {
       path: List[String]
   ): ZIO[Console, ConfigException, Unit] = {
     ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f => console.putStrLn(s"Config Path write: ${f.toIO.getAbsolutePath}"))
+      .tap(f =>
+        console.putStrLn(s"Config Path write: ${f.toIO.getAbsolutePath}")
+      )
       .mapError { ex =>
         ex.printStackTrace()
         ConfigException(ex.getMessage)
@@ -55,7 +57,9 @@ object DmnConfigHandler {
       path: List[String]
   ): ZIO[Console, ConfigException, Unit] = {
     ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f => console.putStrLn(s"Config Path to delete: ${f.toIO.getAbsolutePath}"))
+      .tap(f =>
+        console.putStrLn(s"Config Path to delete: ${f.toIO.getAbsolutePath}")
+      )
       .bimap(
         { ex =>
           ex.printStackTrace()
@@ -76,8 +80,8 @@ object hocon {
       case NumberValue(value)  => Some(value)
       case StringValue(value)  => Some(value)
       case BooleanValue(value) => Some(value)
-      case DateValue(value) => Some(value)
-      case NullValue => Some(null)
+      case DateValue(value)    => Some(value)
+      case NullValue           => Some(null)
     }
 
   val stringValue: ConfigDescriptor[TesterValue] =
@@ -85,10 +89,10 @@ object hocon {
       TesterValue.fromAny,
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
         bd match {
-          case NullValue => Some(NullValue.constant)
-          case DateValue(value) => Some(value)
+          case NullValue          => Some(NullValue.constant)
+          case DateValue(value)   => Some(value)
           case StringValue(value) => Some(value)
-          case _                   => None
+          case _                  => None
         }
     )
 
@@ -98,7 +102,7 @@ object hocon {
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
         bd match {
           case NumberValue(value) => Some(value)
-          case _              => None
+          case _                  => None
         }
     )
 
@@ -116,7 +120,9 @@ object hocon {
     bigDecimalValue orElse booleanValue orElse stringValue
 
   val testerInput: ConfigDescriptor[TesterInput] =
-    (string("key") |@| boolean("nullValue").default(false) |@| list("values")(testerValue))(
+    (string("key") |@| boolean("nullValue").default(false) |@| list("values")(
+      testerValue
+    ))(
       TesterInput.apply,
       TesterInput.unapply
     )

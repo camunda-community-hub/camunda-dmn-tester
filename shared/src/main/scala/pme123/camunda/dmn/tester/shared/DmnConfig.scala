@@ -6,6 +6,7 @@ import pme123.camunda.dmn.tester.shared.conversions._
 import java.time.{LocalDateTime, ZoneId}
 import java.util.Date
 import scala.language.implicitConversions
+import scala.util.Random
 
 case class DmnConfig(
     decisionId: String = "",
@@ -16,24 +17,27 @@ case class DmnConfig(
 ) {
 
   lazy val dmnPathStr = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
-  
+
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
 
   lazy val decisionIdError = {
-    val regex = """^(?!xml|Xml|xMl|xmL|XMl|xML|XmL|XML)[A-Za-z_][A-Za-z0-9-_.]*$""".r
-    if (regex.matches(decisionId)) None else Some(s"This must be a correct XML identifier (regex: $regex)")
+    val regex =
+      """^(?!xml|Xml|xMl|xmL|XMl|xML|XmL|XML)[A-Za-z_][A-Za-z0-9-_.]*$""".r
+    if (regex.matches(decisionId)) None
+    else Some(s"This must be a correct XML identifier (regex: $regex)")
   }
   lazy val dmnPathError = {
-    val regex = """^([^\/?%*:|"<>\.])+(\/[^\/?%*:|"<>\.]+)*\.dmn$""".r
-    if (regex.matches(dmnPathStr)) None else Some(s"This must be a correct Path e.g 'myDmns/coutryTable.dmn' (regex: $regex)")
+    val regex = """^([^\\\/?%*:|"<>\.])+(\/[^\\\/?%*:|"<>\.]+)*\.dmn$""".r
+    if (regex.matches(dmnPathStr)) None
+    else
+      Some(
+        s"This must be a correct Path e.g 'myDmns/coutryTable.dmn' (regex: $regex)"
+      )
   }
 
-  lazy val dataError: Boolean =
-    data.hasError
-
   lazy val hasErrors =
-    decisionIdError.nonEmpty || dmnPathError.nonEmpty || data.hasError
+    decisionIdError.nonEmpty || dmnPathError.nonEmpty
 
 }
 
@@ -44,9 +48,7 @@ case class TesterData(
     testCases: List[TestCase] = List.empty
 ) {
 
-  lazy val inputKeys: Seq[String] = inputs.map { case TesterInput(k, _, _) =>
-    k
-  }
+  lazy val inputKeys: Seq[String] = inputs.map(_.key)
 
   def allInputs(): List[Map[String, Any]] = {
     val data = (inputs ++ variables).map(_.asValues())
@@ -69,41 +71,64 @@ case class TesterData(
       tc.inputs.view.mapValues(_.value).toMap == testInputs
     }
 
-  lazy val hasError: Boolean =
-    inputs.exists(_.hasError) ||
-    variables.exists(_.hasError)
-
 }
 
 case class TesterInput(
-    key: String = "",
-    nullValue: Boolean = false,
-    values: List[TesterValue] = List.empty
+    key: String,
+    nullValue: Boolean,
+    values: List[TesterValue],
+    id: Int
 ) {
 
   val valuesAsString: String = values.map(_.valueStr).mkString(", ")
 
-  def valueType: String = values.headOption.map(_.valueType).getOrElse("String")
+  def valueType: String = values
+    .map(_.valueType)
+    .foldLeft(values.headOption.map(_.valueType).getOrElse("String"))(
+      (r, tpe) => if (r == tpe) r else "String" //
+    )
 
   def asValues(): (String, List[Any]) = {
-    val allValues: List[Any] = values.map{
+    val allValues: List[Any] = values.map {
       case DateValue(value) =>
         val ldt = LocalDateTime.parse(value)
         Date.from(ldt.atZone(ZoneId.systemDefault).toInstant)
-      case other => other.value} ++
-        (if (nullValue) List(null) else List.empty)
+      case other => other.value
+    } ++
+      (if (nullValue) List(null) else List.empty)
     key -> allValues
   }
 
   lazy val keyError = {
     val regex = """^[A-Za-z_][A-Za-z0-9-_.]*$""".r
-    if (regex.matches(key)) None else Some(s"This must be a correct key - e.g. 'contractId' (regex: $regex)")
+    if (regex.matches(key)) None
+    else Some(s"This must be a correct key - e.g. 'contractId' (regex: $regex)")
   }
 
-  lazy val hasError: Boolean = keyError.nonEmpty
+  lazy val valuesError = {
+    if (valuesAsString.trim.nonEmpty) None
+    else Some("Values are required. Examples: '1,2,3', 'hello', 'true, false'")
+  }
+
+  lazy val hasErrors: Boolean = keyError.nonEmpty || valuesError.nonEmpty
 
 }
 
+object TesterInput {
+  def apply(
+      key: String = "",
+      nullValue: Boolean = false,
+      values: List[TesterValue] = List.empty
+  ): TesterInput =
+    TesterInput(key, nullValue, values, id = Random.nextInt(100000))
+
+  def unapply(
+      input: TesterInput
+  ): Option[(String, Boolean, List[TesterValue])] = Some(
+    (input.key, input.nullValue, input.values)
+  )
+
+}
 sealed trait TesterValue {
   def valueStr: String
 
@@ -116,24 +141,25 @@ object TesterValue {
 
   def fromAny(value: Any): TesterValue =
     value match {
-      case b: Boolean => BooleanValue(b)
-      case n:Long => NumberValue(n)
-      case n:Double => NumberValue(n)
-      case s: String if s == NullValue.constant => NullValue
+      case b: Boolean                             => BooleanValue(b)
+      case n: Long                                => NumberValue(n)
+      case n: Double                              => NumberValue(n)
+      case s: String if s == NullValue.constant   => NullValue
       case s: String if s.trim.matches(dateRegex) => DateValue(s)
-      case s: String => StringValue(s)
-      case o if o == null => NullValue
-      case o => throw new IllegalArgumentException(s"Not expected value type: $o")
+      case s: String                              => StringValue(s)
+      case o if o == null                         => NullValue
+      case o =>
+        throw new IllegalArgumentException(s"Not expected value type: $o")
     }
 
   def fromString(value: String): TesterValue =
     value match {
-      case "true" => BooleanValue(true)
-      case "false" => BooleanValue(false)
-      case s if s.trim.matches(longRegex) => NumberValue(s.toLong)
-      case s if s.trim.matches(doubleRegex) => NumberValue(s.toDouble)
+      case "true"                                 => BooleanValue(true)
+      case "false"                                => BooleanValue(false)
+      case s if s.trim.matches(longRegex)         => NumberValue(s.toLong)
+      case s if s.trim.matches(doubleRegex)       => NumberValue(s.toDouble)
       case s: String if s.trim.matches(dateRegex) => DateValue(s)
-      case s: String => StringValue(s)
+      case s: String                              => StringValue(s)
     }
 
   def valueMap(inputs: Map[String, Any]): Map[String, TesterValue] =
@@ -231,10 +257,11 @@ case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
 object conversions {
   val longRegex = """^(-?)(0|([1-9][0-9]*))$"""
   val doubleRegex = """^(-?)(0|([1-9][0-9]*))(\\.[0-9]+)?$"""
-  val dateRegex = """^([0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):?([0-5][0-9])?$"""
+  val dateRegex =
+    """^([0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):?([0-5][0-9])?$"""
 
   implicit def stringToTesterValue(x: String): TesterValue = {
-    if(x.trim.matches(dateRegex))
+    if (x.trim.matches(dateRegex))
       TesterValue.DateValue(x)
     else
       TesterValue.StringValue(x)

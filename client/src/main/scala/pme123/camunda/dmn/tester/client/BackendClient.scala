@@ -1,22 +1,20 @@
 package pme123.camunda.dmn.tester.client
 
-import pme123.camunda.dmn.tester.shared.*
-import io.circe.*
-import io.circe.syntax.*
-import io.circe.generic.auto.*
-
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.web.AjaxEventStream
 import com.raquo.airstream.web.AjaxEventStream.AjaxStreamError
 import com.raquo.laminar.api.L.*
-import org.scalajs.dom
+import io.circe.*
+import io.circe.generic.auto.*
+import io.circe.syntax.*
 import org.scalajs.*
-import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
-import scala.scalajs.js.typedarray.TypedArrayBuffer
-import scala.scalajs.js.typedarray.ArrayBuffer
-import com.raquo.airstream.core.EventStream
 import org.scalajs.dom.XMLHttpRequest
+import pme123.camunda.dmn.tester.shared.*
+import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
+
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 
 object BackendClient {
 
@@ -39,17 +37,9 @@ object BackendClient {
         s"$url/api/dmnConfig?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
         data = dmnConfig.asJson.toString
       )
-      .map(req =>
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[Seq[DmnConfig]])
-          .left
-          .map(exc =>
-            s"Problem parsing body: ${req.responseText}\n${exc.getMessage()}"
-          )
-      )
+      .map(extractDmnConfigs)
       .recover(err =>
-        Some(Left(s"Problem updating Dmn Config: ${err.getMessage()} "))
+        Some(Left(s"Problem updating Dmn Config: ${err.getMessage} "))
       )
 
   // delete DmnConfig
@@ -106,16 +96,9 @@ object BackendClient {
       .get(
         s"$url/api/dmnConfigs?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
       )
-      .map(req =>
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[Seq[DmnConfig]])
-          .left
-          .map(exc =>
-            s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
-          )
-      )
+      .map(extractDmnConfigs)
       .recover(err =>
+        err.printStackTrace()
         Some(Left(s"Problem getting Dmn Configs: ${err.getMessage} "))
       )
 
@@ -132,13 +115,21 @@ object BackendClient {
           .flatMap(_.as[Seq[Either[EvalException, DmnEvalResult]]])
           .left
           .map(exc =>
-            s"Problem parsing response body: ${req.responseText}\n${exc.getMessage()}"
+            s"Problem parsing response body: ${req.responseText}\n${exc.getMessage}"
           )
       )
       .recover(err =>
-        Some(Left(s"Problem running Dmn Tests: ${err.getMessage()} "))
+        Some(Left(s"Problem running Dmn Tests: ${err.getMessage} "))
       )
 
   end runTests
 
+  private def extractDmnConfigs(req: XMLHttpRequest) =
+    parser
+      .parse(req.responseText)
+      .flatMap(_.as[Seq[DmnConfig]])
+      .left
+      .map(exc =>
+        s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
+      )
 }
