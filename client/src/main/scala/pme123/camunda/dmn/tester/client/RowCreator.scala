@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.{*, given}
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.syntax.*
+import org.scalajs.dom.HTMLElement
 import pme123.camunda.dmn.tester.shared.*
 
 import scala.scalajs.js
@@ -139,12 +140,12 @@ case class RowCreator(
               Table.row(
                 accessKey := r.key,
                 tr =>
-                  //  Seq(tr.cell(icon(r.status))) ++
-                  ((inputKeys.map(r.testInputs(_).toString).toSeq :+
-                    r.dmnRowIndex.intValue.toString) ++
-                    r.inputs.map(_._2) ++
-                    r.outputs.map(_._2.value))
-                    .map(ellipsis(_, tr))
+                  (inputKeys
+                    .map(r.testInputs(_).toString)
+                    .map(ellipsis(_, tr)) :+
+                    ellipsis(r.dmnRowIndex, tr)) ++
+                    r.inputs.map(_._2).map(ellipsis(_, tr)) ++
+                    r.outputs.map(o => ellipsis(o._2, tr))
               )
             )
         )
@@ -219,7 +220,7 @@ case class RowCreator(
 
   lazy val errorRows =
     val filteredRows = resultRows
-      .filter(r => r.status == EvalStatus.ERROR)
+      .filter(r => r.status == EvalStatus.ERROR && r.outputMessage.nonEmpty)
     if (filteredRows.isEmpty)
       Seq()
     else
@@ -255,6 +256,43 @@ case class RowCreator(
         )
       )
 
+  lazy val failedTestCasesRows =
+    val filteredRows = resultRows
+      .filter(r => r.status == EvalStatus.ERROR && r.outputMessage.isEmpty)
+    if (filteredRows.isEmpty)
+      Seq()
+    else
+      Seq(
+        h3(
+          "Test Cases with Errors ",
+          icon(EvalStatus.ERROR)
+        ),
+        p("For the following inputs, you expected a different result."),
+        Table(
+          className := "testResultsTable",
+          _.stickyColumnHeader := true,
+          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := Table.column(
+            span("Dmn Row")
+          ),
+          _.slots.columns := inputKeysColumns(true),
+          _.slots.columns := outputKeysColumns,
+          filteredRows
+            .map(r =>
+              Table.row(
+                accessKey := r.key,
+                tr =>
+                  (inputKeys
+                    .map(r.testInputs(_).toString)
+                    .map(ellipsis(_, tr)) :+
+                    ellipsis(r.dmnRowIndex, tr)) ++
+                    r.inputs.map(_._2).map(ellipsis(_, tr)) ++
+                    r.outputs.map(o => ellipsis(o._2, tr))
+              )
+            )
+        )
+      )
+
   lazy val resultRows: Seq[TableRow] = ({
     evaluatedRows.groupBy(_.testInputs.values.toSeq).map {
       case (_, rows) if rows.size > 1 & rows.head.children.length == 0 =>
@@ -263,14 +301,38 @@ case class RowCreator(
     }
   }.toSeq ++ missingRows).sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
 
-  val manyCols = (inputKeys.size * 2 + outputKeys.size) > 4
-  def ellipsis(value: String, tableRow: TableRow.type) =
+  private def ellipsis(
+      value: String,
+      tableRow: TableRow.type,
+      clsName: String = "notTestedCell",
+      msg: Option[String] = None
+  ): HtmlElement =
+    val manyCols = (inputKeys.size * 2 + outputKeys.size) > 4
     val maxSize = 14
     tableRow.cell(
-      title := value,
-      if (manyCols && value.size > maxSize) value.take(maxSize) + ".."
-      else value
+      title := msg.getOrElse(value),
+      className := clsName,
+      if (manyCols && value.length > maxSize) value.take(maxSize) + ".."
+      else value,
+      onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
+      onMouseOver
+        .filter(_ => msg.nonEmpty)
+        .map(_.target.asInstanceOf[HTMLElement])
+        .map(Some(_) -> msg.get) --> openPopoverBus,
+       // .map(_ => msg.map(s => div(s).asInstanceOf[HTMLElement])) --> openPopoverBus,
+      onMouseOut.mapTo(None -> "") --> openPopoverBus
     )
+
+  private def ellipsis(
+      result: TestedValue,
+      tableRow: TableRow.type
+  ): HtmlElement = result match
+    case TestFailure(value, msg) =>
+      ellipsis(value, tableRow, "failedCell", Some(msg))
+    case TestSuccess(value) =>
+      ellipsis(value, tableRow, "succeededCell")
+    case NotTested(value) =>
+      ellipsis(value, tableRow)
 
   private def inputKeysColumns(
       matchedInputKeys: Boolean
@@ -316,7 +378,6 @@ case class RowCreator(
         row.children
           .map(r =>
             Table.row { tr =>
-              //  Seq(tr.cell(icon(r.status))) ++
               (Seq(r.dmnRowIndex.intValue.toString) ++
                 r.inputs.map(_._2) ++
                 r.outputs.map(_._2.value))
@@ -350,5 +411,18 @@ case class RowCreator(
             .toList
         )
       )
+    )
+
+  private lazy val openPopoverBus: EventBus[(Option[HTMLElement], String)] = new EventBus
+  lazy val failedTestCasePopup =
+    Popover(
+      _.placementType := PopoverPlacementType.Bottom,
+      _.showAtFromEvents(openPopoverBus.events.collect { case Some(opener) -> _ =>
+        opener
+      }),
+      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ => () }),
+      p(child <-- openPopoverBus.events.collect { case _ -> msg =>
+        msg
+      })
     )
 end RowCreator

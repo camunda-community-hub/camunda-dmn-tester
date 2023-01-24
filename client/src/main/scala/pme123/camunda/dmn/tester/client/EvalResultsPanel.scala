@@ -12,16 +12,8 @@ case class EvalResultsPanel(
     dmnConfigPathSignal: Signal[String],
     dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  private val DmnEvalResult(
-    dmn,
-    inputKeys,
-    outputKeys,
-    evalResults,
-    _
-  ) = result
-
+  private lazy val dmn = result.dmn
   private lazy val creator = RowCreator(result)
-  // private lazy val selectedRowsVar: Var[List[TableRow]] = creator.selectedRowsVar
   private lazy val saveConfigBus = EventBus[Boolean]()
 
   private lazy val comp = Panel(
@@ -49,7 +41,9 @@ case class EvalResultsPanel(
     creator.errorRows,
     creator.noMatchingRows,
     creator.noMatchingInputs,
+    creator.failedTestCasesRows,
     creator.successful,
+    creator.failedTestCasePopup,
     Button(
       _.icon := IconName.`add-activity-2`,
       "Create Test Cases from the checked Rows",
@@ -90,6 +84,7 @@ case class EvalResultsPanel(
           .updateConfig(newConfig, path)
           .map {
             case Right(configs) =>
+              println("SET CONFIGS")
               dmnConfigsVar.set(configs)
               span("")
             case Left(error) =>

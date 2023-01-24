@@ -252,6 +252,15 @@ ui5-table-column.smallColHeader::part(column) {
   padding: 1px;
 }
 
+.succeededCell {
+  background-color: honeydew;
+}
+.failedCell {
+  background-color: mistyrose;
+}
+.notTestedCell {
+}
+
 ui5-table-cell::part(cell) {
   display: inline-block;
   overflow: hidden;
