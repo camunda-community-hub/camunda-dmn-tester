@@ -1,19 +1,22 @@
 package pme123.camunda.dmn.tester.client
 
-import pme123.camunda.dmn.tester.shared.*
-import scala.scalajs.js
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
-
 import io.circe.*
-import io.circe.syntax.*
 import io.circe.generic.auto.*
+import io.circe.syntax.*
+import pme123.camunda.dmn.tester.shared.*
+
+import scala.scalajs.js
 
 case class RowCreator(
     dmnEvalResult: DmnEvalResult
 ):
-  val DmnEvalResult(
+
+  lazy val selectedRowsVar: Var[List[TableRow]] = Var(List.empty)
+
+  private lazy val DmnEvalResult(
     dmn,
     inputKeys,
     outputKeys,
@@ -21,7 +24,6 @@ case class RowCreator(
     missingRules
   ) = dmnEvalResult
 
-  println(s"DMN: ${dmn.asJson}")
   private lazy val evaluatedRows: Seq[TableRow] =
     evalResults.sortBy(_.decisionId).flatMap {
       case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
@@ -45,7 +47,6 @@ case class RowCreator(
             matchedRules,
             maybeError
           ) =>
-
         val rows =
           matchedRules.zipWithIndex.map {
             case (MatchedRule(ruleId, rowIndex, inputs, outputs), index) =>
@@ -98,7 +99,7 @@ case class RowCreator(
             inputKeys.map(_ -> "").toMap,
             0,
             NotTested(index.toString),
-           rowInputs(ruleId, matchedInputKeys(evalResults).zip(inputs)),
+            rowInputs(ruleId, matchedInputKeys(evalResults).zip(inputs)),
             outputKeys.zip(outputs.map(NotTested.apply)),
             None,
             Seq()
@@ -107,9 +108,12 @@ case class RowCreator(
       )
     }
 
+  private lazy val allRowsVar = Var(Map.empty[String, TableRow])
+
   lazy val successful =
-    val filteredRows = resultRows
+    val filteredRows: Seq[TableRow] = resultRows
       .filter(_.status == EvalStatus.INFO)
+    allRowsVar.set(filteredRows.map(r => r.key -> r).toMap)
     if (filteredRows.isEmpty)
       Seq(h4("No successful tests"))
     else
@@ -119,6 +123,11 @@ case class RowCreator(
           className := "testResultsTable",
           _.mode := TableMode.MultiSelect,
           _.stickyColumnHeader := true,
+          _.events.onSelectionChange.map(
+            _.detail.selectedRows
+              .map(r => allRowsVar.now()(r.accessKey))
+              .toList
+          ) --> selectedRowsVar,
           _.slots.columns := inputKeysColumns(false),
           _.slots.columns := Table.column(
             span("Dmn Row")
@@ -127,15 +136,16 @@ case class RowCreator(
           _.slots.columns := outputKeysColumns,
           filteredRows
             .map(r =>
-              Table.row { tr =>
-                //  Seq(tr.cell(icon(r.status))) ++
-                ((inputKeys.map(r.testInputs(_).toString).toSeq :+
-                  r.dmnRowIndex.intValue.toString) ++
-                  r.inputs.map(_._2) ++
-                  r.outputs.map(_._2.value))
-                  .map(ellipsis(_, tr))
-
-              }
+              Table.row(
+                accessKey := r.key,
+                tr =>
+                  //  Seq(tr.cell(icon(r.status))) ++
+                  ((inputKeys.map(r.testInputs(_).toString).toSeq :+
+                    r.dmnRowIndex.intValue.toString) ++
+                    r.inputs.map(_._2) ++
+                    r.outputs.map(_._2.value))
+                    .map(ellipsis(_, tr))
+              )
             )
         )
       )
@@ -277,7 +287,7 @@ case class RowCreator(
     Table.column(
       className := "resultOutputHeader",
       span(ik),
-      title := "Result Output",
+      title := "Result Output"
     )
   )
 
@@ -285,12 +295,12 @@ case class RowCreator(
     dmn.rules.find(_.ruleId == ruleId).map(_.index).getOrElse(-1)
 
   private def rowInputs(ruleId: String, inputs: Seq[(String, String)]) =
-    if(dmn.dmnConfig.testUnit)
-        val rInputs = dmn.rules.find(_.ruleId == ruleId).map(_.inputs).getOrElse(Seq.empty)
-        inputs.zipWithIndex.map{case ((k -> v), index) => k -> rInputs(index)}
-    else
-      inputs
-  
+    if (dmn.dmnConfig.testUnit)
+      val rInputs =
+        dmn.rules.find(_.ruleId == ruleId).map(_.inputs).getOrElse(Seq.empty)
+      inputs.zipWithIndex.map { case ((k -> v), index) => k -> rInputs(index) }
+    else inputs
+
   private def matchedRowsTable(row: TableRow) =
     if (row.children.isEmpty)
       span("")
@@ -315,4 +325,30 @@ case class RowCreator(
           )
       )
 
+  private lazy val exConfig = dmn.dmnConfig
+  lazy val newConfigSignal: Signal[DmnConfig] =
+    selectedRowsVar.signal.map(selectedRows =>
+      exConfig.copy(data =
+        exConfig.data.copy(testCases =
+          selectedRows
+            .groupBy(_.testInputs.values.toSeq)
+            .map { case (_, rows) =>
+              val row = rows.head
+              val outputs = rows
+                .map(r =>
+                  TestResult(
+                    r.dmnRowIndex.value.toInt,
+                    TesterValue.valueMap(asStrMap(r.outputs).toMap)
+                  )
+                )
+                .toList
+              TestCase(
+                TesterValue.valueMap(row.testInputs),
+                outputs
+              )
+            }
+            .toList
+        )
+      )
+    )
 end RowCreator

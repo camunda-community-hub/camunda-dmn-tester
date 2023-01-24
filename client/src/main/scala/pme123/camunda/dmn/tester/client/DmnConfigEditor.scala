@@ -14,11 +14,11 @@ final case class DmnConfigEditor(
     dmnConfigVar: Var[DmnConfig],
     dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  lazy val dmnConfigSignal = dmnConfigVar.signal
+  private lazy val dmnConfigSignal = dmnConfigVar.signal
 
-  lazy val saveConfigBus = EventBus[Boolean]()
+  private lazy val saveConfigBus = EventBus[Boolean]()
 
-  lazy val comp = Dialog(
+  private lazy val comp = Dialog(
     _.showFromEvents(openEditDialogBus.events.filter(identity).mapTo(())),
     _.closeFromEvents(
       openEditDialogBus.events.map(!_).filter(identity).mapTo(())
@@ -27,7 +27,6 @@ final case class DmnConfigEditor(
     section(
       className := "editDialog",
       div(
-        // hidden := true,
         child <-- submitDmnConfig
       ),
       configForm
@@ -261,4 +260,19 @@ final case class DmnConfigEditor(
           }
       }
     }
+
+object DmnConfigEditor:
+  def apply(
+      openEditDialogBus: EventBus[Boolean],
+      dmnConfigPathSignal: Signal[String],
+      dmnConfigVar: Var[DmnConfig],
+      dmnConfigsVar: Var[Seq[DmnConfig]]
+  ): HtmlElement =
+    new DmnConfigEditor(
+      openEditDialogBus,
+      dmnConfigPathSignal,
+      dmnConfigVar,
+      dmnConfigsVar
+    ).comp
+
 end DmnConfigEditor

@@ -2,18 +2,17 @@ package pme123.camunda.dmn.tester.client
 
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
+import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.scalajs.dom.html
 import org.scalajs.dom
-import com.raquo.airstream.core.EventStream
-import com.raquo.airstream.core.Signal
+import org.scalajs.dom.{HTMLElement, html}
 import pme123.camunda.dmn.tester.shared.DmnConfig
-import org.scalajs.dom.HTMLElement
 
 final case class SelectConfigs(
     selectedPathSignal: Signal[String],
-    selectedConfigsVar: Var[List[DmnConfig]]
+    selectedConfigsVar: Var[List[DmnConfig]],
+    dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
 
   lazy val comp =
@@ -88,7 +87,7 @@ final case class SelectConfigs(
         selectedPathSignal,
         dmnConfigVar,
         dmnConfigsVar
-      ).comp
+      )
     )
 
   private lazy val deletePopup =
@@ -113,9 +112,6 @@ final case class SelectConfigs(
       ),
       div(hidden := true, child <-- deleteServiceEvents.map(_ => "ok"))
     )
-
-  private lazy val dmnConfigsVar: Var[Seq[DmnConfig]] =
-    Var[Seq[DmnConfig]](Seq.empty)
 
   private lazy val dmnConfigs = selectedPathSignal
     .flatMap(BackendClient.getConfigs(_))
@@ -148,8 +144,13 @@ final case class SelectConfigs(
 object SelectConfigs:
   def apply(
       selectedPathSignal: Signal[String],
-      selectedConfigsVar: Var[List[DmnConfig]]
+      selectedConfigsVar: Var[List[DmnConfig]],
+      dmnConfigsVar: Var[Seq[DmnConfig]]
   ): ReactiveHtmlElement[html.Element] =
-    new SelectConfigs(selectedPathSignal, selectedConfigsVar).comp
+    new SelectConfigs(
+      selectedPathSignal,
+      selectedConfigsVar,
+      dmnConfigsVar
+    ).comp
 
 end SelectConfigs

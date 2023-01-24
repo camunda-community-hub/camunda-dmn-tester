@@ -2,30 +2,28 @@ package pme123.camunda.dmn.tester.client
 
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
+import be.doeraene.webcomponents.ui5.configkeys.IconName.{
+  `value-help`,
+  collapse
+}
+import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.laminar.api.L.{*, given}
-import com.raquo.airstream.core.Signal
-import org.scalajs.dom.html
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import pme123.camunda.dmn.tester.shared.DmnConfig
-import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
-import pme123.camunda.dmn.tester.shared.DmnEvalResult
-import com.raquo.airstream.core.EventStream
-import pme123.camunda.dmn.tester.shared.EvalStatus
-import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
-import pme123.camunda.dmn.tester.shared.EvalStatus.WARN
-import pme123.camunda.dmn.tester.shared.EvalStatus.ERROR
-import be.doeraene.webcomponents.ui5.configkeys.IconName.`value-help`
+import org.scalajs.dom.{HTMLElement, html}
 import pme123.camunda.dmn.tester.client
-import be.doeraene.webcomponents.ui5.configkeys.IconName.collapse
+import pme123.camunda.dmn.tester.shared.EvalStatus.{ERROR, INFO, WARN}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
+import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult, EvalStatus}
 
-final case class CheckTheResults(
+final case class Main3CheckTheResults(
     private val testsAreRunningVar: Var[Boolean],
-    private val selectedConfigsSignal: Signal[List[DmnConfig]]
+    private val dmnConfigPathSignal: Signal[String],
+    private val selectedConfigsSignal: Signal[List[DmnConfig]],
+    private val dmnConfigsVar: Var[Seq[DmnConfig]],
 ):
   private lazy val hideSection =
     selectedConfigsSignal.map { selConfigs =>
       if (selConfigs.isEmpty)
-        println(s"SELECTION CHANGED: ${selConfigs.size}")
         testsAreRunningVar.set(true)
       selConfigs.isEmpty
     }
@@ -69,51 +67,13 @@ final case class CheckTheResults(
       configs: Seq[Either[EvalException, DmnEvalResult]]
   ) = configs
     .map {
-      case Right(result) => resultListItem(result)
+      case Right(result) => EvalResultsPanel(result, dmnConfigPathSignal, dmnConfigsVar)
       case Left(error)   => errorPanel(error)
     }
     .map { r =>
       testsAreRunningVar.set(false)
       r
     }
-
-  private def resultListItem(result: DmnEvalResult): HtmlElement =
-    val DmnEvalResult(
-      dmn,
-      inputKeys,
-      outputKeys,
-      evalResults,
-      _
-    ) = result
-    val creator = RowCreator(result)
-    val rows = creator.resultRows
-    val msgCols = (inputKeys.size + outputKeys.size + 1)
-
-    Panel(
-      _.accessibleRole := PanelAccessibleRole.Complementary,
-      className := "testResultsPanel",
-      className := "flex-column",
-      className := "full-width",
-      _.collapsed := true,
-      _.slots.header := Seq(
-        h2(icon(result.maxEvalStatus), dmn.id),
-        span(paddingLeft := "40px", dmn.dmnConfig.dmnPathStr)
-      ),
-      p(s"Hitpolicy: ${dmn.hitPolicy}"),
-      p("DMN: " + dmn.dmnConfig.dmnPath.mkString("/")),
-      p(
-        "Variables: " + (if (dmn.dmnConfig.data.variables.nonEmpty)
-                           dmn.dmnConfig.data.variables
-                             .map(_.key)
-                             .mkString(", ")
-                         else "--")
-      ),
-      creator.errorRows,
-      creator.noMatchingRows,
-      creator.noMatchingInputs,
-      creator.successful
-    )
-  end resultListItem
 
   private def errorPanel(evalException: EvalException) =
     val EvalException(decisionId, msg) = evalException
@@ -125,11 +85,18 @@ final case class CheckTheResults(
     )
   end errorPanel
 
-object CheckTheResults:
+object Main3CheckTheResults:
   def apply(
       testsAreRunningVar: Var[Boolean],
-      selectedConfigsSignal: Signal[List[DmnConfig]]
+      dmnConfigPathSignal: Signal[String],
+      selectedConfigsSignal: Signal[List[DmnConfig]],
+      dmnConfigsVar: Var[Seq[DmnConfig]],
   ): ReactiveHtmlElement[html.Element] =
-    new CheckTheResults(testsAreRunningVar, selectedConfigsSignal).comp
+    new Main3CheckTheResults(
+      testsAreRunningVar,
+      dmnConfigPathSignal,
+      selectedConfigsSignal,
+      dmnConfigsVar
+    ).comp
 
-end CheckTheResults
+end Main3CheckTheResults
