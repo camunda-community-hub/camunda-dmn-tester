@@ -112,7 +112,7 @@ case class RowCreator(
 
   lazy val successful =
     val filteredRows = resultRows
-      .filter(_.status == EvalStatus.INFO)
+      .filter(r => r.status == EvalStatus.INFO || (r.status == EvalStatus.ERROR && r.outputMessage.isEmpty))
     allRowsVar.set(filteredRows.map(r => r.key -> r).toMap)
     if (filteredRows.isEmpty)
       Seq(h4("No successful tests"))
@@ -158,7 +158,6 @@ case class RowCreator(
       )
 
   lazy val noMatchingInputs =
-    println(s"outputKeys: $outputKeys")
     val filteredRows = missingRows
     if (filteredRows.isEmpty)
       Seq()
@@ -248,22 +247,6 @@ case class RowCreator(
           collectResultTable(filteredRows)
       )
 
-  private def createStandardRows(filteredRows: Seq[TableRow]) = {
-    filteredRows
-      .map(r =>
-        Table.row(
-          accessKey := r.key,
-          tr =>
-            (inputKeys
-              .map(r.testInputs(_).toString)
-              .map(ellipsis(_, tr)) :+
-              ellipsis(r.dmnRowIndex, tr)) ++
-              r.inputs.map(_._2).map(ellipsis(_, tr)) ++
-              r.outputs.map(o => ellipsis(o._2, tr))
-        )
-      )
-  }
-
   lazy val resultRows: Seq[TableRow] = ({
     evaluatedRows.groupBy(_.testInputs.values.toSeq).map { case (_, rows) =>
       rows.head.toParentRow(rows.map(_.toChildRow()))
@@ -271,7 +254,21 @@ case class RowCreator(
   }.toSeq ++ missingRows).sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
 
   private def singleResultTable(filteredRows: Seq[TableRow]) =
-    val rows: Seq[HtmlElement] = createStandardRows(filteredRows)
+    val rows: Seq[HtmlElement] =
+      filteredRows
+        .map(r =>
+          Table.row(
+            accessKey := r.key,
+            tr =>
+              (inputKeys
+                .map(r.testInputs(_).toString)
+                .map(ellipsis(_, tr)) :+
+                ellipsis(r.dmnRowIndex, tr)) ++
+                r.inputs.map(_._2).map(ellipsis(_, tr)) ++
+                r.outputs.map(o => ellipsis(o._2, tr))
+          )
+        )
+
     successTable(rows)
 
   private def collectResultTable(filteredRows: Seq[TableRow]) =
@@ -464,7 +461,7 @@ case class RowCreator(
             TesterValue.valueMap(asStrMap(row.testInputs)),
             results
           )
-      }.toList))
+      }))
     )
 
   private lazy val openPopoverBus: EventBus[(Option[HTMLElement], String)] =

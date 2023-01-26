@@ -41,7 +41,7 @@ case class EvalResultsPanel(
     creator.errorRows,
     creator.noMatchingRows,
     creator.noMatchingInputs,
-    creator.failedTestCasesRows,
+   // creator.failedTestCasesRows,
     creator.successful,
     creator.failedTestCasePopup,
     Button(
