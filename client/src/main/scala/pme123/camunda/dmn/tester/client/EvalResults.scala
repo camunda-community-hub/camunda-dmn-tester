@@ -4,26 +4,23 @@ import pme123.camunda.dmn.tester.shared.*
 
 import scala.scalajs.js
 
-class TableItem(
-    val key: Int,
-    val name: String,
-    val age: Int,
-    val address: String
-) extends js.Object
+case class TableItem(
+    key: Int,
+    name: String,
+    age: Int,
+    address: String
+)
 
-class TableRow(
-    val key: String,
-    val status: EvalStatus,
-    val testInputs: Map[String, Any],
-    var inputRowSpan: Int,
-    val dmnRowIndex: TestedValue,
-    val inputs: Seq[(String, String)],
-    val outputs: Seq[(String, TestedValue)],
-    val outputMessage: Option[String],
+case class TableRow(
+    key: String,
+    status: EvalStatus,
+    testInputs: Map[String, Any],
+    dmnRowIndex: TestedValue,
+    inputs: Seq[(String, String)],
+    outputs: Seq[(String, TestedValue)],
+    outputMessage: Option[String],
     var children: Seq[TableRow]
 ) {
-
-  def totalRowSpan: Double = children.size + inputRowSpan
 
   def toParentRow(children: Seq[TableRow]): TableRow = {
     this.children = children
@@ -31,7 +28,6 @@ class TableRow(
   }
 
   def toChildRow(): TableRow = {
-    this.inputRowSpan = 0
     this
   }
 
@@ -59,9 +55,9 @@ class TableRow(
     else inOutMap(key)
 
 }
-
-
-
+object TableRow {
+  
+}
 
 def matchedInputKeys(evalResults: Seq[DmnEvalRowResult]): Seq[String] = {
   evalResults.headOption

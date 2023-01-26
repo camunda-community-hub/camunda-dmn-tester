@@ -126,17 +126,27 @@ object EvalStatus {
 
 }
 
-sealed trait HitPolicy
+sealed trait HitPolicy{
+  def isSingle: Boolean
+}
 
 object HitPolicy {
 
-  case object UNIQUE extends HitPolicy
+  case object UNIQUE extends HitPolicy {
+    val isSingle = true
+  }
 
-  case object FIRST extends HitPolicy
+  case object FIRST extends HitPolicy {
+    val isSingle = true
+  }
 
-  case object ANY extends HitPolicy
+  case object ANY extends HitPolicy {
+    val isSingle = true
+  }
 
-  case object COLLECT extends HitPolicy
+  case object COLLECT extends HitPolicy {
+    val isSingle = false
+  }
 
   def apply(value: String): HitPolicy =
     value.toUpperCase match {

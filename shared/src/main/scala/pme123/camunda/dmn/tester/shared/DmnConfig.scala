@@ -139,7 +139,7 @@ sealed trait TesterValue {
 
 object TesterValue {
 
-  def fromAny(value: Any): TesterValue =
+  def fromAny(value: Any): TesterValue = {
     value match {
       case b: Boolean                             => BooleanValue(b)
       case n: Long                                => NumberValue(n)
@@ -151,9 +151,11 @@ object TesterValue {
       case o =>
         throw new IllegalArgumentException(s"Not expected value type: $o")
     }
+  }
 
   def fromString(value: String): TesterValue =
     value match {
+      case "null"                                 => NullValue
       case "true"                                 => BooleanValue(true)
       case "false"                                => BooleanValue(false)
       case s if s.trim.matches(longRegex)         => NumberValue(s.toLong)
@@ -162,8 +164,8 @@ object TesterValue {
       case s: String                              => StringValue(s)
     }
 
-  def valueMap(inputs: Map[String, Any]): Map[String, TesterValue] =
-    inputs.view.mapValues(fromAny).toMap
+  def valueMap(inputs: Map[String, String]): Map[String, TesterValue] =
+    inputs.view.mapValues(fromString).toMap
 
   case class StringValue(value: String) extends TesterValue {
     val valueStr: String = value

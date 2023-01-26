@@ -44,34 +44,38 @@ final case class SelectConfigs(
               .map(r => allConfigsVar.now()(r.accessKey))
               .toList
           ) --> selectedConfigsVar,
-          children <-- dmnConfigsVar.signal.map(
-            _.sortBy(_.decisionId).map(config =>
-              Table.row(
-                accessKey := config.decisionId,
-                _.cell(config.decisionId),
-                _.cell(config.dmnPath.mkString("/")),
-                _.cell(
-                  Button(
-                    _.icon := IconName.edit,
-                    _.tooltip := "Edit this DMN Configuration",
-                    _.events.onClick.mapTo(true) --> openEditDialogBus,
-                    _.events.onClick.mapTo(config) --> dmnConfigVar
-                  )
-                ),
-                _.cell(
-                  Button(
-                    _.icon := IconName.delete,
-                    _.tooltip := "Delete this DMN Configuration",
-                    _.design := ButtonDesign.Negative,
-                    _.events.onClick.mapTo(config) --> dmnConfigVar,
-                    _.events.onClick
-                      .map(_.target)
-                      .map(Some(_)) --> openPopoverBus
+          children <-- dmnConfigsVar.signal
+            .map { configs =>
+              allConfigsVar.set(configs.map { c => c.decisionId -> c }.toMap)
+              configs
+                .sortBy(_.decisionId)
+                .map(config =>
+                  Table.row(
+                    accessKey := config.decisionId,
+                    _.cell(config.decisionId),
+                    _.cell(config.dmnPath.mkString("/")),
+                    _.cell(
+                      Button(
+                        _.icon := IconName.edit,
+                        _.tooltip := "Edit this DMN Configuration",
+                        _.events.onClick.mapTo(true) --> openEditDialogBus,
+                        _.events.onClick.mapTo(config) --> dmnConfigVar
+                      )
+                    ),
+                    _.cell(
+                      Button(
+                        _.icon := IconName.delete,
+                        _.tooltip := "Delete this DMN Configuration",
+                        _.design := ButtonDesign.Negative,
+                        _.events.onClick.mapTo(config) --> dmnConfigVar,
+                        _.events.onClick
+                          .map(_.target)
+                          .map(Some(_)) --> openPopoverBus
+                      )
+                    )
                   )
                 )
-              )
-            )
-          )
+            }
         ),
         deletePopup,
         Button(
@@ -117,7 +121,6 @@ final case class SelectConfigs(
     .flatMap(BackendClient.getConfigs(_))
     .map {
       case Right(configs) =>
-        allConfigsVar.set(configs.map { c => c.decisionId -> c }.toMap)
         dmnConfigsVar.set(configs)
         span("")
       case Left(error) =>

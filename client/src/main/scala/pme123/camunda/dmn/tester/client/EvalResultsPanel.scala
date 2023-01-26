@@ -49,7 +49,6 @@ case class EvalResultsPanel(
       "Create Test Cases from the checked Rows",
       width := "100%",
       _.events.onClick.mapTo(true) --> saveConfigBus,
-      //   _.events.onClick --> (_ => println(s"Create TEst CAses: ${selectedRows.now().size}")),
       onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
       onMouseOver
         .map(_.target.asInstanceOf[HTMLElement])
@@ -76,7 +75,7 @@ case class EvalResultsPanel(
         EventStream.fromValue(
           errorMessage(
             "Validation Error(s)",
-            "There are incorrect data, please correct them before saving."
+            "There are incorrect data, please correct them in the Config Editor before creating Test Cases."
           )
         )
       else {
@@ -84,7 +83,6 @@ case class EvalResultsPanel(
           .updateConfig(newConfig, path)
           .map {
             case Right(configs) =>
-              println("SET CONFIGS")
               dmnConfigsVar.set(configs)
               span("")
             case Left(error) =>

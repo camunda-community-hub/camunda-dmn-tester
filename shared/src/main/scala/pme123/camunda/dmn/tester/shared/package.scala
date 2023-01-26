@@ -6,4 +6,9 @@ package object shared {
     valueMap.map {
       case k -> v => k -> v.value
     }
+
+  def asStrMap(valueMap: Map[String, Any]) =
+    valueMap.map {
+      case k -> v => k -> v.toString
+    }  
 }
