@@ -83,7 +83,7 @@ object Settings {
     lazy val settings: Project => Project = _.settings(
       name := s"$projectName-server",
       scalaVersion := scala2V,
-      Compile / unmanagedResourceDirectories += baseDirectory.value / "../client/dist",
+      Compile / unmanagedResourceDirectories += baseDirectory.value / "../dist",
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       resolvers += Resolver.mavenLocal, // only needed for dmn-engine SNAPSHOT
       Test / unmanagedSourceDirectories += baseDirectory.value / "target" / "generated-src"
