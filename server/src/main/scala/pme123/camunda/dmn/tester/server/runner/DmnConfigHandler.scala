@@ -1,48 +1,42 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import ammonite.ops
-import ammonite.ops._
 import pme123.camunda.dmn.tester.shared.HandledTesterException.ConfigException
 import pme123.camunda.dmn.tester.shared.TesterValue._
 import pme123.camunda.dmn.tester.shared._
 import zio._
-import zio.console.Console
 
 import java.io.File
 import scala.language.implicitConversions
-import scala.util.Random
+import scala.util.Try
 
 object DmnConfigHandler {
 
-  def read(configPath: Seq[String]): IO[ConfigException, DmnConfig] =
-    read((pwd / configPath).toIO)
+  def read(configPath: Seq[String]): IO[HandledTesterException, DmnConfig] =
+    read((os.pwd / configPath).toIO)
 
-  def read(file: File): IO[ConfigException, DmnConfig] =
+  def read(file: File): IO[HandledTesterException, DmnConfig] =
     hocon
       .loadConfig(file)
-      .mapError { ex =>
-        ex.printStackTrace()
-        ConfigException(ex.getMessage)
-      }
+
 
   def write(
       dmnConfig: DmnConfig,
       path: List[String]
-  ): ZIO[Console, ConfigException, Unit] = {
-    ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f =>
-        console.putStrLn(s"Config Path write: ${f.toIO.getAbsolutePath}")
-      )
+  ): IO[HandledTesterException, Unit] = {
+    ZIO
+      .fromTry(Try(osPath(path) / s"${dmnConfig.decisionId}.conf"))
       .mapError { ex =>
         ex.printStackTrace()
         ConfigException(ex.getMessage)
       }
+      .tap(f => print(s"Config Path write: ${f.toIO.getAbsolutePath}"))
       .flatMap { configFile =>
         hocon
           .writeConfig(dmnConfig)
           .mapError(failureMsg => ConfigException(failureMsg))
           .flatMap(c =>
-            ZIO(ops.write(configFile, c, createFolders = true))
+            ZIO
+              .fromTry(Try(os.write(configFile, c, createFolders = true)))
               .mapError(ex => {
                 ConfigException(
                   s"Could not write Config '${dmnConfig.decisionId}'\n${ex.getClass.getName}: ${ex.getMessage}"
@@ -55,18 +49,18 @@ object DmnConfigHandler {
   def delete(
       dmnConfig: DmnConfig,
       path: List[String]
-  ): ZIO[Console, ConfigException, Unit] = {
-    ZIO(osPath(path) / s"${dmnConfig.decisionId}.conf")
-      .tap(f =>
-        console.putStrLn(s"Config Path to delete: ${f.toIO.getAbsolutePath}")
-      )
-      .bimap(
+  ): IO[HandledTesterException, Unit] = {
+    ZIO
+      .fromTry(Try(osPath(path) / s"${dmnConfig.decisionId}.conf"))
+      .mapError(
         { ex =>
           ex.printStackTrace()
           ConfigException(ex.getMessage)
-        },
-        p => ops.rm(p)
+        }
       )
+      .tap(f => print(s"Config Path to delete: ${f.toIO.getAbsolutePath}"))
+      .map(p => os.remove(p))
+
   }
 }
 
@@ -84,7 +78,7 @@ object hocon {
       case NullValue           => Some(null)
     }
 
-  val stringValue: ConfigDescriptor[TesterValue] =
+  lazy val stringValue: ConfigDescriptor[TesterValue] =
     string(
       TesterValue.fromAny,
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
@@ -96,7 +90,7 @@ object hocon {
         }
     )
 
-  val bigDecimalValue: ConfigDescriptor[TesterValue] =
+  private lazy val bigDecimalValue: ConfigDescriptor[TesterValue] =
     bigDecimal(
       NumberValue.apply,
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
@@ -106,7 +100,7 @@ object hocon {
         }
     )
 
-  val booleanValue: ConfigDescriptor[TesterValue] =
+  private lazy val booleanValue: ConfigDescriptor[TesterValue] =
     boolean(
       BooleanValue.apply,
       (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
@@ -116,43 +110,37 @@ object hocon {
         }
     ).asInstanceOf[ConfigDescriptor[TesterValue]]
 
-  val testerValue: _root_.zio.config.ConfigDescriptor[TesterValue] =
+  private val testerValue: _root_.zio.config.ConfigDescriptor[TesterValue] =
     bigDecimalValue orElse booleanValue orElse stringValue
 
-  val testerInput: ConfigDescriptor[TesterInput] =
-    (string("key") |@| boolean("nullValue").default(false) |@| list("values")(
-      testerValue
-    ))(
-      TesterInput.apply,
-      TesterInput.unapply
-    )
+  private lazy val testerInput: ConfigDescriptor[TesterInput] =
+    (string("key") zip boolean("nullValue").default(false) zip nested("values")(
+      list(testerValue)
+    ) zip int("id").default(util.Random.nextInt(100000))).to[TesterInput]
 
-  val testResult: ConfigDescriptor[TestResult] =
-    (int("rowIndex") |@|
-      map("outputs")(testerValue))(TestResult.apply, TestResult.unapply)
+  lazy val testResult: ConfigDescriptor[TestResult] =
+    (int("rowIndex") zip
+      map("outputs")(testerValue)).to[TestResult]
 
-  val testCases: ConfigDescriptor[TestCase] =
-    (map("inputs")(testerValue) |@|
-      list("results")(testResult))(TestCase.apply, TestCase.unapply)
+  private lazy val testCases: ConfigDescriptor[TestCase] =
+    (map("inputs")(testerValue) zip
+      list("results")(testResult)).to[TestCase]
 
-  val testerData: ConfigDescriptor[TesterData] =
-    (list("inputs")(testerInput) |@|
-      list("variables")(testerInput) |@|
-      list("testCases")(testCases).default(List.empty))(
-      TesterData.apply,
-      TesterData.unapply
-    )
+  private lazy val testerData: ConfigDescriptor[TesterData] =
+    (list("inputs")(testerInput) zip
+      list("variables")(testerInput) zip
+      list("testCases")(testCases).default(List.empty)).to[TesterData]
 
-  val dmnConfig: ConfigDescriptor[DmnConfig] =
-    (string("decisionId") |@| nested("data")(testerData) |@| list("dmnPath")(
-      string
-    ) |@| boolean("isActive").default(false) |@| boolean("testUnit")
-      .default(true))(DmnConfig.apply, DmnConfig.unapply)
+  lazy val dmnConfig: ConfigDescriptor[DmnConfig] =
+    (string("decisionId") zip nested("data")(testerData) zip nested("dmnPath")(
+      list(string)
+    ) zip boolean("isActive").default(false) zip boolean("testUnit")
+      .default(true)).to[DmnConfig]
 
-  def loadConfig(configFile: File): Task[DmnConfig] = {
-    ZIO(println(s"load file $configFile")) *>
+  def loadConfig(configFile: File): IO[HandledTesterException, DmnConfig] = {
+    print(s"load file $configFile") *>
       ZIO
-        .fromEither(
+        .succeed(
           TypesafeConfigSource
             .fromHoconFile(configFile)
         )
@@ -160,7 +148,8 @@ object hocon {
   }
 
   private[runner] def readConfig(configSource: ConfigSource) =
-    ZIO.fromEither(read(dmnConfig from configSource))
+    read(dmnConfig from configSource)
+      .mapError(exc => ConfigException(s"Problem reading Config Source: ${exc.getMessage()}"))
 
   private[runner] def writeConfig(config: DmnConfig): IO[String, String] =
     ZIO

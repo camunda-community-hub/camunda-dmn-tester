@@ -1,12 +1,14 @@
 package pme123.camunda.dmn.tester.server
 
-import ammonite.ops.{pwd, up}
 import org.camunda.dmn.DmnEngine
 import org.camunda.feel.syntaxtree.Val
-import os.Path
-import pme123.camunda.dmn.tester.shared.Dmn
-import zio.console.Console
-import zio.{URIO, console}
+import pme123.camunda.dmn.tester.shared.{Dmn, HandledTesterException}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException, ConsoleException, EvalException}
+import zio.Console.printLine
+import zio.IO
+
+import java.io.IOException
+import scala.language.implicitConversions
 
 package object runner {
 
@@ -32,20 +34,25 @@ package object runner {
       .mkString("| ", " | ", " |")
   }
 
-  def osPath(path: List[String]): Path =
+  def osPath(path: List[String]): os.Path =
     path.filterNot(_.isBlank) match {
-      case Nil                        => pwd
-      case x :: Nil if x.trim.isEmpty => pwd
-      case ".." :: tail               => pwd / up / tail
-      case other                      => pwd / other
+      case Nil                        => os.pwd
+      case x :: Nil if x.trim.isEmpty => os.pwd
+      case ".." :: tail               => os.pwd / os.up / tail
+      case other                      => os.pwd / other
     }
 
-  def printError(msg: String): URIO[Console, Unit] =
-    console.putStrLn(
+  def printError(msg: String): IO[ConsoleException, Unit] =
+    print(
       scala.Console.RED + msg + scala.Console.RESET
     )
-  def printWarning(msg: String): URIO[Console, Unit] =
-    console.putStrLn(
+  def printWarning(msg: String): IO[ConsoleException, Unit] =
+    print(
       scala.Console.YELLOW + msg + scala.Console.RESET
     )
+
+  def print(msg: String): IO[ConsoleException, Unit] = {
+    printLine(msg).mapError(exc => ConsoleException(s"ERROR: Problem with printing to console: ${exc.getMessage}"))
+  }
+
 }

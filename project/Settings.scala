@@ -100,7 +100,7 @@ object Settings {
 
     lazy val deps: Project => Project = _.settings(
       libraryDependencies ++= Seq(
-        Deps.ammonite,
+        Deps.osLib,
         Deps.dmnScala,
         // Optional for auto-derivation of JSON codecs
         "org.http4s" %% "http4s-circe" % Deps.version.http4s,
@@ -109,8 +109,8 @@ object Settings {
         Deps.zioConfigHocon,
         Deps.zioConfigMagnolia,
         Deps.zioTest % Test,
+        Deps.zioTestJUnit % Test,
         Deps.zioTestSbt % Test,
-        Deps.scalaTest % Test
       )
     )
 

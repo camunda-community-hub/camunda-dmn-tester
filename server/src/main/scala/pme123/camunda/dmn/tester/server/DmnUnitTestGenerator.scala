@@ -1,12 +1,12 @@
-package pme123.camunda.dmn.tester.server.runner
+package pme123.camunda.dmn.tester.server
 
-import ammonite.ops.{Callable1Implicit, rm}
-import os.write
+import pme123.camunda.dmn.tester.server.runner.osPath
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
-import zio.console.Console
-import zio.{Runtime, UIO, ZIO}
+import zio.{IO, Runtime, UIO, Unsafe, ZIO}
+
+import scala.util.Try
 
 case class UnitTestGeneratorConfig(
     packageName: String = "pme123.camunda.dmn.tester.test",
@@ -17,16 +17,19 @@ case class DmnUnitTestGenerator(
 ) {
   private val runtime = Runtime.default
 
-  def run(): Unit = runtime.unsafeRun(generate())
+  private def run[E, A](body: => IO[E, A]): A =
+    Unsafe.unsafe { implicit unsafe =>
+      runtime.unsafe.run(body).getOrThrowFiberFailure()
+    }
 
-  def generate(): ZIO[Console, Any, Unit] =
+  def generate(): IO[Any, Unit] =
     for {
       configPaths <- z.loadConfigPaths()
       configs <- ZIO.foreach(configPaths)(p =>
         z.loadConfigs(p.split("/").filter(_.trim.nonEmpty))
       )
       testResults <- z.runTests(configs.flatten)
-      _ <- ZIO.foreach_(testResults)(r => generate(r))
+      _ <- ZIO.foreach(testResults)(r => generate(r))
     } yield ()
 
   def generate(
@@ -50,24 +53,24 @@ case class DmnUnitTestGenerator(
         } yield ()
     }
 
-  private[runner] def className(decisionId: String) =
-    UIO(s"${decisionId.trim
+  private[server] def className(decisionId: String) =
+    ZIO.succeed(s"${decisionId.trim
       .split("""[\W]""")
       .filter(_.trim.nonEmpty)
       .map(n => n.capitalize)
       .mkString}Suite")
 
-  private[runner] def testMethods(dmnEvalResult: DmnEvalResult) = {
+  private[server] def testMethods(dmnEvalResult: DmnEvalResult) = {
     ZIO.foreach(dmnEvalResult.evalResults) { dmnEvalRow =>
       testMethod(dmnEvalRow, dmnEvalResult)
     }
   }
 
-  private[runner] def missingRuleMethod(
+  private[server] def missingRuleMethod(
       dmnRule: DmnRule,
       inputKeys: Seq[String]
   ): UIO[String] =
-    UIO(
+    ZIO.succeed(
       testMethod(
         s"missing_${dmnRule.index}_${dmnRule.inputs.map(i => if(i == null) "null" else i.replaceAll("""[\W]""", "_")).mkString("__")}",
         s"""fail(\"\"\"There is no Rule that matched for these Inputs:
@@ -80,11 +83,11 @@ case class DmnUnitTestGenerator(
       )
     )
 
-  private[runner] def info(
+  private[server] def info(
       dmnEvalRow: DmnEvalRowResult,
       dmnEvalResult: DmnEvalResult
   ): UIO[String] =
-    UIO {
+    ZIO.succeed {
       val DmnEvalRowResult(
         status,
         decisionId,
@@ -117,7 +120,7 @@ case class DmnUnitTestGenerator(
          |""".stripMargin
     }
 
-  private[runner] def testMethod(
+  private[server] def testMethod(
       dmnEvalRow: DmnEvalRowResult,
       dmnEvalResult: DmnEvalResult
   ): UIO[String] =
@@ -135,7 +138,7 @@ case class DmnUnitTestGenerator(
         )
       )
 
-  private[runner] def successfulTestCase(
+  private[server] def successfulTestCase(
       info: String
   ) = {
       s"""assert(true)
@@ -144,7 +147,7 @@ case class DmnUnitTestGenerator(
              |*/""".stripMargin
   }
 
-  private[runner] def methodName(testInputs: Map[String, String]) = {
+  private[server] def methodName(testInputs: Map[String, String]) = {
     "Test Inputs: " + testInputs
       .map {
         case (k, v) if v == null =>
@@ -155,26 +158,26 @@ case class DmnUnitTestGenerator(
       .mkString(" | ")
   }
 
-  private[runner] def testMethod(evalException: EvalException): UIO[String] =
-    UIO(
+  private[server] def testMethod(evalException: EvalException): UIO[String] =
+    ZIO.succeed(
       testMethod(
         "evalException",
         s"""fail(\"\"\"Dmn Table '${evalException.decisionId}' failed with:\\n - ${evalException.msg}\"\"\")"""
       )
     )
 
-  private[runner] def testMethod(name: String, content: String) =
+  private[server] def testMethod(name: String, content: String) =
         s"""  test ("$name") {
          |    $content
          |  }
          |""".stripMargin
 
-  private[runner] def testFile(
+  private[server] def testFile(
       className: String,
       testMethods: String*
   ) = {
     for {
-      genClass <- UIO(s"""package ${config.packageName}
+      genClass <- ZIO.succeed(s"""package ${config.packageName}
                          |
                          |import org.scalatest.funsuite.AnyFunSuite
                          |
@@ -182,13 +185,13 @@ case class DmnUnitTestGenerator(
                          |
                          |${testMethods.mkString("\n")}
                          |}""".stripMargin)
-      filePath <- UIO(
+      filePath <- ZIO.succeed(
         osPath(config.outputPath) / config.packageName.split(
           """\."""
         ) / s"$className.scala"
       )
-      _ <- ZIO(rm ! filePath)
-      _ <- ZIO(write(filePath, genClass, createFolders = true))
+      _ <- ZIO.fromTry(Try(os.remove(filePath)))
+      _ <- ZIO.fromTry(Try(os.write(filePath, genClass, createFolders = true)))
     } yield genClass
   }
 

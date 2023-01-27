@@ -1,13 +1,15 @@
 package pme123.camunda.dmn.tester.server.runner
 
+import pme123.camunda.dmn.tester.server.DmnUnitTestGenerator
 import pme123.camunda.dmn.tester.shared.conversions._
 import pme123.camunda.dmn.tester.shared._
+import pme123.camunda.dmn.tester.{shared => dmnTester}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
-import zio.console
 import zio.test.Assertion._
 import zio.test._
+import zio.test.junit.JUnitRunnableSpec
 //noinspection TypeAnnotation
-object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
+object DmnUnitTestGeneratorSpec extends JUnitRunnableSpec {
 
   lazy val generator = DmnUnitTestGenerator()
 
@@ -15,8 +17,8 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
 
   def spec =
     suite("DmnUnitTestGeneratorSpec")(
-      testM("create Class Name") {
-        assertM(generator.className("ed.af-bf_rf 6f"))(
+      test("create Class Name") {
+        assertZIO(generator.className("ed.af-bf_rf 6f"))(
           equalTo("EdAfBf_rf6fSuite")
         )
       },
@@ -31,43 +33,43 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
             containsString("INFO")
         )
       },
-      testM("create EvalException Test Method") {
+      test("create EvalException Test Method") {
         for {
           result <- evalExceptionTestMethod
-          _ <- console.putStrLn(s"Result:\n$result")
+          _ <- print(s"Result:\n$result")
         } yield assert(result)(
           containsString(decisionId) &&
             containsString("\\n - Failed poorly")
         )
       },
-      testM("create DmnEvalRowResult Test Method WARN") {
+      test("create DmnEvalRowResult Test Method WARN") {
         for {
           result <- resultWarnTestMethod
-          _ <- console.putStrLn(s"Result:\n$result")
+          _ <- print(s"Result:\n$result")
         } yield assert(result)(
           containsString(decisionId) &&
             containsString("WARN:")
         )
       },
-      testM("create DmnEvalRowResult Test Method INFO") {
+      test("create DmnEvalRowResult Test Method INFO") {
         for {
           result <- resultInfoTestMethod
-          _ <- console.putStrLn(s"Result:\n$result")
+          _ <- print(s"Result:\n$result")
         } yield assert(result)(
           containsString(decisionId) &&
             containsString("Status: INFO")
         )
       },
-      testM("create DmnEvalRowResult Test Method INFO with TestCase") {
+      test("create DmnEvalRowResult Test Method INFO with TestCase") {
         for {
           result <- resultInfoTestMethodTestCase
-          _ <- console.putStrLn(s"Result:\n$result")
+          _ <- print(s"Result:\n$result")
         } yield assert(result)(
           containsString(decisionId) &&
             containsString("Status: INFO")
         )
       },
-      testM("create Test File") {
+      test("create Test File") {
         for {
           testMethod <- evalExceptionTestMethod
           testMethod1 <- resultInfoTestMethod
@@ -80,27 +82,27 @@ object DmnUnitTestGeneratorSpec extends DefaultRunnableSpec {
             testMethod2,
             testMethod3
           )
-          _ <- console.putStrLn(s"Result:\n$result")
+          _ <- print(s"Result:\n$result")
         } yield assert(result)(
           containsString("package pme123.camunda.dmn.tester.test") &&
             containsString("class MyDecision_12Suite")
         )
       },
-      testM("generate Tests") {
-        assertM(generator.generate())(isUnit)
+      test("generate Tests") {
+        assertZIO(generator.generate())(isUnit)
       }
     )
 
   private val testCase: TestCase = TestCase(
     TesterValue.valueMap(infoRowResultTestCase.testInputs),
-    List(TestResult(1, Map("out1" -> "val1", "out2" -> "val2")),TestResult(1, Map("out1" -> "val1", "out2" -> "val3")))
+    List(dmnTester.TestResult(1, Map("out1" -> "val1", "out2" -> "val2")),dmnTester.TestResult(1, Map("out1" -> "val1", "out2" -> "val3")))
   )
   private lazy val dmnConfig = DmnConfig(
     decisionId,
     TesterData(
       List(
-        TesterInput("in1", false, List("hello3", "hello")),
-        TesterInput("in2", true, List(3.5, 4))
+        TesterInput("in1", nullValue = false, List("hello3", "hello")),
+        TesterInput("in2", nullValue = true, List(3.5, 4))
       ),
       List.empty,
       List(

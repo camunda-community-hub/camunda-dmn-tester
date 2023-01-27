@@ -3,7 +3,7 @@ package pme123.camunda.dmn.tester.server
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult}
-import zio.{Runtime, ZEnv, ZIO}
+import zio.{IO, Runtime, Unsafe, ZIO}
 
 class DmnService extends DmnApi {
 
@@ -46,8 +46,11 @@ class DmnService extends DmnApi {
     run(z.runTests(dmnConfigs))
 
   private val runtime = Runtime.default
-  private def run[E, A](body: => ZIO[ZEnv, E, A]): A =
-    runtime.unsafeRun(body)
+
+  private def run[E, A](body: => IO[E, A]): A =
+    Unsafe.unsafe { implicit unsafe =>
+      runtime.unsafe.run(body).getOrThrowFiberFailure()
+    }
 }
 
 object DmnService extends DmnService

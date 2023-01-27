@@ -24,7 +24,7 @@ case class DmnTableEngine(
     parsedDmn.decisionsById
       .get(decisionId)
       .map { decision =>
-        UIO(
+        ZIO.succeed(
           if(testUnit)
             decision
               .copy(requiredBkms = Seq.empty, requiredDecisions = Seq.empty)
@@ -47,7 +47,7 @@ case class DmnTableEngine(
       (hitPolicy, rules) = hitPolicyAndRules(decision)
       dmnEvalRows <- ZIO.foreach(allInputs) { inputMap =>
         for {
-          context <- UIO(EvalContext(parsedDmn, inputMap, decision))
+          context <- ZIO.succeed(EvalContext(parsedDmn, inputMap, decision))
           evalRow <- evalDecisionRow(decision, context, rules)
         } yield evalRow
       }
@@ -75,7 +75,7 @@ case class DmnTableEngine(
       rules: Seq[DmnRule]
   ): ZIO[Any, EvalException, DmnEvalRowResult] =
     for {
-      _ <- UIO(
+      _ <- ZIO.succeed(
         engine.decisionEval
           .eval(
             parsedDecision,

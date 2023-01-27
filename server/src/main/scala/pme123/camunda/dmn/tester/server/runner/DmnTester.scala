@@ -6,24 +6,24 @@ import org.camunda.dmn.parser._
 import os.read.inputStream
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
-import zio.console.Console
-import zio.{IO, ZIO, console}
+import zio.{IO, ZIO}
 
 import java.io.InputStream
 import scala.language.implicitConversions
+import scala.util.Try
 
 case class DmnTester(
-                      dmnConfig: DmnConfig,
-                      engine: DmnEngine = new DmnEngine()
-                    ) {
+    dmnConfig: DmnConfig,
+    engine: DmnEngine = new DmnEngine()
+) {
   val DmnConfig(decisionId, data, dmnPath, _, _) = dmnConfig
 
-  def run(): ZIO[Any, EvalException, DmnEvalResult] =
+  def run(): IO[EvalException, DmnEvalResult] =
     parsedDmn().flatMap(run)
 
   def run(
-           dmn: ParsedDmn
-         ): ZIO[Any, EvalException, DmnEvalResult] = {
+      dmn: ParsedDmn
+  ): IO[EvalException, DmnEvalResult] = {
     val allInputs: Seq[Map[String, Any]] = data.allInputs()
 
     val engine = DmnTableEngine(dmn, dmnConfig)
@@ -35,7 +35,8 @@ case class DmnTester(
 
   def parsedDmn(): IO[EvalException, ParsedDmn] =
     for {
-      is <- ZIO(inputStream(osPath(dmnPath)))
+      is <- ZIO
+        .fromTry(Try(inputStream(osPath(dmnPath))))
         .orElseFail(
           EvalException(
             decisionId,
@@ -46,13 +47,13 @@ case class DmnTester(
     } yield dmn
 
   def parsedDmn(
-                 streamToTest: InputStream
-               ): IO[EvalException, ParsedDmn] = {
+      streamToTest: InputStream
+  ): IO[EvalException, ParsedDmn] = {
     ZIO
       .fromEither(engine.parse(streamToTest))
       .mapError {
         case Failure(message)
-          if message.contains("Failed to parse FEEL expression ''") =>
+            if message.contains("Failed to parse FEEL expression ''") =>
           EvalException(
             decisionId,
             s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.\n
@@ -73,14 +74,16 @@ case class DmnTester(
 object DmnTester {
 
   def testDmnTable(
-                    dmnConfig: DmnConfig,
-                    engine: DmnEngine
-                  ): ZIO[Console, EvalException, DmnEvalResult] = {
+      dmnConfig: DmnConfig,
+      engine: DmnEngine
+  ): IO[HandledTesterException, Either[EvalException, DmnEvalResult]] = {
     val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
-    console.putStrLn(
+    print(
       s"Start testing $decisionId (testUnit = $testUnit): $dmnPath (${osPath(dmnPath)})"
     ) *>
       DmnTester(dmnConfig, engine)
         .run()
+        .map(Right.apply)
+        .catchAll(ex => ZIO.left(ex))
   }
 }

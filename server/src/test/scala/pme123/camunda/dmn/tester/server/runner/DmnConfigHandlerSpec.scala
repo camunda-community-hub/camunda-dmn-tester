@@ -3,10 +3,11 @@ package pme123.camunda.dmn.tester.server.runner
 import zio.ZIO
 import zio.config.typesafe.TypesafeConfigSource
 import zio.test.Assertion.containsString
-import zio.test.{DefaultRunnableSpec, assert, suite, testM}
+import zio.test.junit.JUnitRunnableSpec
+import zio.test._
 
 //noinspection TypeAnnotation
-object DmnConfigHandlerSpec extends DefaultRunnableSpec {
+object DmnConfigHandlerSpec extends JUnitRunnableSpec {
   val config =
     """
       |decisionId: country-risk,
@@ -28,11 +29,11 @@ object DmnConfigHandlerSpec extends DefaultRunnableSpec {
 
   def spec =
     suite("DmnConfigHandlerSpec")(
-      testM("read and write DmnConfig") {
+      test("read and write DmnConfig") {
         for {
-          dmnSource <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(config))
+          dmnSource <- ZIO.succeed(TypesafeConfigSource.fromHoconString(config))
           dmnConfig <- hocon.readConfig(dmnSource)
-          _ <- zio.console.putStrLn(s"DmnConfig: $dmnConfig")
+          _ <- print(s"DmnConfig: $dmnConfig")
           configStr <- hocon.writeConfig(dmnConfig)
         } yield {
           assert(configStr)(
