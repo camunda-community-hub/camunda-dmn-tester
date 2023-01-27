@@ -6,5 +6,5 @@ docker run \
    -v $(pwd)/dmns:/opt/docker/dmns \
    -v $(pwd)/dmnConfigs:/opt/docker/dmnConfigs \
    -v $(pwd)/../server/src/test/resources:/opt/docker/server/src/test/resources \
-   -p 8885:8883 \
-   pame/camunda-dmn-tester:0.16.1
+   -p 8883:8883 \
+   pame/camunda-dmn-tester
