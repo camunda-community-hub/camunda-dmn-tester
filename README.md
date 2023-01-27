@@ -22,10 +22,10 @@ A little DMN Table tester with the following Goals:
 > **Niall Deehan** Developer Relations Camunda
 
 ## Version
-I work at a redesign at the moment and published it > Version `> 0.15.*`.
+I work at a redesign at the moment and published it > Version `> 0.16.1`.
 
-Not all features are ready in the UI (mostly the test cases). 
-So if you need them stay on `0.14.0`.
+All features are ready (but you never know;). 
+So if you want the better tested version -  stay on `0.14.0`.
 
 ## Usage
 I wrote two blog article that explains how you can use it:
