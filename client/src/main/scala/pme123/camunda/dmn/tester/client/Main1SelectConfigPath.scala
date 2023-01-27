@@ -91,7 +91,6 @@ final case class SelectConfigPath(
       Button(
         _.icon := IconName.add,
         _.events.onClick.map { _ =>
-          println(s"button1: ${newPathVar.now()}")
           selectedPathVar.set(newPathVar.now())
           configPathsVar.set(
             configPathsVar.now() :+ newPathVar.now()

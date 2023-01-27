@@ -10,6 +10,7 @@ import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import org.scalajs.dom.HTMLElement
+import pme123.camunda.dmn.tester.shared
 import pme123.camunda.dmn.tester.shared.*
 
 import scala.collection.View.Empty
@@ -25,9 +26,9 @@ case class RowCreator(
         r.status == EvalStatus.INFO || (r.status == EvalStatus.ERROR && r.outputMessage.isEmpty)
       )
     allRowsVar.set(filteredRows.map(r => r.key -> r).toMap)
-    if (filteredRows.isEmpty)
-      Seq(h4("No successful tests"))
+    if (filteredRows.isEmpty) Seq(h4("No successful tests"))
     else {
+      val maxStatus = maxEvalStatus(filteredRows)
       val rows: Seq[HtmlElement] = filteredRows
         .map(r =>
           Table.row(
@@ -56,8 +57,14 @@ case class RowCreator(
           )
         )
       Seq(
-        h3(if (dmnEvalResult.maxEvalStatus == EvalStatus.INFO) "Successful Tests " else "Failed TestCases", icon(dmnEvalResult.maxEvalStatus)),
-        if (dmnEvalResult.maxEvalStatus == EvalStatus.INFO) span("") else p("Your DMN is correct, but you expected some different results."),
+        h3(
+          if (maxStatus == EvalStatus.INFO)
+            "Successful Tests "
+          else "Failed TestCases",
+          icon(maxStatus)
+        ),
+        if (maxStatus == EvalStatus.INFO) span("")
+        else p("Your DMN is correct, but you expected some different results."),
         Table(
           className := "testResultsTable",
           _.mode := TableMode.MultiSelect,
@@ -81,7 +88,9 @@ case class RowCreator(
   lazy val noMatchingRows: Seq[HtmlElement] =
     val filteredRows = resultRows
       .filter(r =>
-        r.status == EvalStatus.WARN && r.outputMessage.contains(noMatchingRowsMsg)
+        r.status == EvalStatus.WARN && r.outputMessage.contains(
+          noMatchingRowsMsg
+        )
       )
     if (filteredRows.isEmpty)
       Seq()
@@ -124,17 +133,13 @@ case class RowCreator(
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
-          _.slots.columns := outputKeys.map(ik =>
-            Table.column(
-              className := "resultOutputHeader",
-              title := "Returned Output",
-              span(ik)
-            )
-          ),
+          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := outputKeysColumns,
           filteredRows
             .map(r =>
               Table.row { tr =>
                 (Seq(r.dmnRowIndex.intValue.toString) ++
+                  r.inputs.map(_._2) ++
                   r.outputs.map(_._2.value))
                   .map(ellipsis(_, tr))
               }
@@ -263,29 +268,23 @@ case class RowCreator(
         EvalStatus.WARN,
         inputKeys.map(_ -> "").toMap,
         NotTested(index.toString),
-        Seq.empty,
+        inputKeys.zip(inputs),
+        // if there are errors in the evaluation - there might be no outputs.
         outputKeys.zip(outputs.map(NotTested.apply)),
-        Some("There are no Test Inputs that match this Rule."),
-        Seq(
-          new TableRow(
-            ruleId + index,
-            EvalStatus.WARN,
-            inputKeys.map(_ -> "").toMap,
-            NotTested(index.toString),
-            rowInputs(ruleId, matchedInputKeys(evalResults).zip(inputs)),
-            outputKeys.zip(outputs.map(NotTested.apply)),
-            None,
-            Seq()
-          )
-        )
+        outputMessage = None,
+        children = Seq.empty
       )
     }
 
   private lazy val allRowsVar = Var(Map.empty[String, TableRow])
 
   private lazy val resultRows: Seq[TableRow] = {
-    evaluatedRows.groupBy(_.testInputs.values.toSeq).map { case (_, rows) =>
-      rows.head.toParentRow(rows.map(_.toChildRow()))
+    evaluatedRows.groupBy(_.testInputs.values.toSeq).map {
+      // work with children - to support also HitPolicies with multiple Result Rules
+      case (_, rows) if rows.head.children.isEmpty =>
+        rows.head.toParentRow(rows.map(_.toChildRow()))
+      // errors with list of rows that are involved (HitPolicy UNIQUE with multiple results)
+      case (_, others) => others.head
     }
   }.toSeq.sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
 
@@ -361,7 +360,7 @@ case class RowCreator(
     else inputs
 
   private def matchedRowsTable(row: TableRow) =
-    if (row.children.isEmpty)
+    if (row.children.isEmpty || row.children.head.outputs.isEmpty)
       span("")
     else
       Table(

@@ -31,7 +31,6 @@ object BackendClient {
       dmnConfig: DmnConfig,
       path: String
   ): EventStream[Either[String, Seq[DmnConfig]]] =
-    println(s"updateConfig: $path $dmnConfig")
     AjaxEventStream
       .put(
         s"$url/api/dmnConfig?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
@@ -47,16 +46,11 @@ object BackendClient {
       dmnConfig: DmnConfig,
       path: String
   ): EventStream[Seq[DmnConfig]] =
-    println(s"deleteConfig: $path $dmnConfig")
     AjaxEventStream
       .delete(
         s"$url/api/dmnConfig?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
         data = dmnConfig.asJson.toString
       )
-      .map { req =>
-        //     println(s"RESULT ${dmnConfig.decisionId}: ${req.responseText}")
-        req
-      }
       .map(req =>
         parser
           .parse(req.responseText)

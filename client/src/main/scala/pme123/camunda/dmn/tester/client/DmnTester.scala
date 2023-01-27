@@ -8,6 +8,7 @@ import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.html
 import pme123.camunda.dmn.tester.client.Main3CheckTheResults
+
 @main
 def DmnTester(): Unit =
   renderOnDomContentLoaded(

@@ -62,9 +62,7 @@ final case class DmnConfigEditor(
       className := "configDialogForm",
       /*    onMountCallback{ ctx =>
           dmnConfigVar.zoom{ c =>
-            println(s"c.data.inputs: ${c.data.inputs}")
             c.data.inputs}{ inputs =>
-             println(s"back c.data.inputs: ${inputs}")
              val dmnConfig = dmnConfigVar.now()
              dmnConfig.copy(data = dmnConfig.data.copy(inputs = inputs))
           }(ctx.owner) --> dataInputsVar
