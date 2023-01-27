@@ -1,20 +1,15 @@
 package pme123.camunda.dmn.tester.client
 
 import pme123.camunda.dmn.tester.shared.*
-
 import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5.*
 import org.scalajs.dom
 import be.doeraene.webcomponents.ui5.configkeys.*
-import java.awt.Event
-
+import com.raquo.laminar.nodes.ReactiveHtmlElement
+import org.scalajs.dom.html
 import pme123.camunda.dmn.tester.client.Main3CheckTheResults
 @main
 def DmnTester(): Unit =
-  /* renderOnDomContentLoaded(
-    dom.document.getElementById("app"),
-    Main.appElement()
-  )*/
   renderOnDomContentLoaded(
     dom.document.getElementById("dmnTester"),
     Main.dmnTester()
@@ -29,9 +24,9 @@ object Main:
   private lazy val dmnConfigsVar: Var[Seq[DmnConfig]] =
     Var[Seq[DmnConfig]](Seq.empty)
   
-  def dmnTester() =
+  def dmnTester(): ReactiveHtmlElement[html.Div] =
     div(
-      MainHeader(),
+      Main0Header(),
       SelectConfigPath(selectedPathVar),
       SelectConfigs(selectedPathVar.signal, selectedConfigsVar, dmnConfigsVar),
       Main3CheckTheResults(testsAreRunningVar, selectedPathVar.signal, selectedConfigsVar.signal, dmnConfigsVar),
