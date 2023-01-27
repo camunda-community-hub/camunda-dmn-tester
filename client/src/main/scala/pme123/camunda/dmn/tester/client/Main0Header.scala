@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.html
 
-final case class MainHeader():
+final case class Main0Header():
 
   lazy val comp: ReactiveHtmlElement[html.Element] =
     section(
@@ -16,12 +16,12 @@ final case class MainHeader():
         className := "App-logo",
         alt := "logo"
       ),
-      h1(cls("App-title"), "Camunda DMN Table Tester")
+      h1(cls("App-title"), "Camunda DMN Table Tester V2 BETA \uD83C\uDF89")
     )
   end comp
 
-object MainHeader:
+object Main0Header:
     def apply(): ReactiveHtmlElement[html.Element] =
-        new MainHeader().comp  
+        new Main0Header().comp  
 
-end MainHeader
+end Main0Header

@@ -19,8 +19,181 @@ case class RowCreator(
     dmnEvalResult: DmnEvalResult
 ):
 
-  lazy val selectedTableRowsVar: Var[List[TableRow]] = Var(List.empty)
+  lazy val testCasesTable: Seq[HtmlElement] =
+    val filteredRows = resultRows
+      .filter(r =>
+        r.status == EvalStatus.INFO || (r.status == EvalStatus.ERROR && r.outputMessage.isEmpty)
+      )
+    allRowsVar.set(filteredRows.map(r => r.key -> r).toMap)
+    if (filteredRows.isEmpty)
+      Seq(h4("No successful tests"))
+    else {
+      val rows: Seq[HtmlElement] = filteredRows
+        .map(r =>
+          Table.row(
+            accessKey := r.key,
+            tr =>
+              (inputKeys
+                .map(r.testInputs(_).toString)
+                .map(ellipsis(_, tr)) :+
+                collectCellTable(r.children.map {
+                  _.dmnRowIndex
+                })) ++
+                r.inputs.zipWithIndex.map { case _ -> index =>
+                  collectCellTable(
+                    r.children.map {
+                      _.inputs(index)._2
+                    }
+                  )
+                } ++
+                r.outputs.zipWithIndex.map { case _ -> index =>
+                  collectCellTable(
+                    r.children.map {
+                      _.outputs(index)._2
+                    }
+                  )
+                }
+          )
+        )
+      Seq(
+        h3(if (dmnEvalResult.maxEvalStatus == EvalStatus.INFO) "Successful Tests " else "Failed TestCases", icon(dmnEvalResult.maxEvalStatus)),
+        if (dmnEvalResult.maxEvalStatus == EvalStatus.INFO) span("") else p("Your DMN is correct, but you expected some different results."),
+        Table(
+          className := "testResultsTable",
+          _.mode := TableMode.MultiSelect,
+          _.stickyColumnHeader := true,
+          _.events.onSelectionChange.map(
+            _.detail.selectedRows
+              .map(r => allRowsVar.now()(r.accessKey))
+              .toList
+          ) --> selectedTableRowsVar,
+          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := Table.column(
+            span("Dmn Row")
+          ),
+          _.slots.columns := inputKeysColumns(true),
+          _.slots.columns := outputKeysColumns,
+          rows
+        )
+      )
+    }
 
+  lazy val noMatchingRows: Seq[HtmlElement] =
+    val filteredRows = resultRows
+      .filter(r =>
+        r.status == EvalStatus.WARN && r.outputMessage.contains(noMatchingRowsMsg)
+      )
+    if (filteredRows.isEmpty)
+      Seq()
+    else
+      Seq(
+        h3(
+          "Test Inputs with no matching Row ",
+          icon(EvalStatus.WARN)
+        ),
+        p("For the following inputs, there is no matching row in the DMN."),
+        Table(
+          className := "testResultsTable",
+          _.stickyColumnHeader := true,
+          _.slots.columns := inputKeysColumns(false),
+          filteredRows
+            .map(r =>
+              Table.row { tr =>
+                r.testInputs
+                  .map(_._2.toString)
+                  .map(ellipsis(_, tr))
+                  .toSeq
+              }
+            )
+        )
+      )
+
+  lazy val noMatchingInputs: Seq[HtmlElement] =
+    val filteredRows = missingRows
+    if (filteredRows.isEmpty)
+      Seq()
+    else
+      Seq(
+        h3("Rules with no matching Test Inputs ", icon(EvalStatus.WARN)),
+        p(
+          "There are no Test Inputs that match these Rules."
+        ),
+        Table(
+          className := "testResultsTable",
+          _.stickyColumnHeader := true,
+          _.slots.columns := Table.column(
+            span("Dmn Row")
+          ),
+          _.slots.columns := outputKeys.map(ik =>
+            Table.column(
+              className := "resultOutputHeader",
+              title := "Returned Output",
+              span(ik)
+            )
+          ),
+          filteredRows
+            .map(r =>
+              Table.row { tr =>
+                (Seq(r.dmnRowIndex.intValue.toString) ++
+                  r.outputs.map(_._2.value))
+                  .map(ellipsis(_, tr))
+              }
+            )
+        )
+      )
+
+  lazy val errorRows: Seq[HtmlElement] =
+    val filteredRows = resultRows
+      .filter(r => r.status == EvalStatus.ERROR && r.outputMessage.nonEmpty)
+    if (filteredRows.isEmpty)
+      Seq()
+    else
+      Seq(
+        h3(
+          "Tests with Errors ",
+          icon(EvalStatus.ERROR)
+        ),
+        p("For the following inputs, evaluating the DMN created an error."),
+        Table(
+          className := "testResultsTable",
+          _.stickyColumnHeader := true,
+          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := Table.column("Error Message"),
+          filteredRows
+            .map(r =>
+              Table.row { tr =>
+                r.testInputs
+                  .map(_._2.toString)
+                  .map(value =>
+                    tr.cell(
+                      title := value,
+                      value
+                    )
+                  )
+                  .toSeq :+
+                  tr.cell(
+                    r.outputMessage.getOrElse("no error message"),
+                    matchedRowsTable(r)
+                  )
+              }
+            )
+        )
+      )
+
+  lazy val failedTestCasePopup: HtmlElement =
+    Popover(
+      _.placementType := PopoverPlacementType.Bottom,
+      _.showAtFromEvents(openPopoverBus.events.collect {
+        case Some(opener) -> _ =>
+          opener
+      }),
+      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ => () }),
+      p(child <-- openPopoverBus.events.collect { case _ -> msg =>
+        msg
+      })
+    )
+
+  private lazy val selectedTableRowsVar: Var[List[TableRow]] = Var(List.empty)
   private lazy val DmnEvalResult(
     dmn,
     inputKeys,
@@ -52,8 +225,8 @@ case class RowCreator(
             maybeError
           ) =>
         val rows =
-          matchedRules.zipWithIndex.map {
-            case (MatchedRule(ruleId, rowIndex, inputs, outputs), index) =>
+          matchedRules.map {
+            case MatchedRule(ruleId, rowIndex, inputs, outputs) =>
               new TableRow(
                 testInputs.values.mkString("-"),
                 status,
@@ -110,215 +283,11 @@ case class RowCreator(
 
   private lazy val allRowsVar = Var(Map.empty[String, TableRow])
 
-  lazy val successful =
-    val filteredRows = resultRows
-      .filter(r => r.status == EvalStatus.INFO || (r.status == EvalStatus.ERROR && r.outputMessage.isEmpty))
-    allRowsVar.set(filteredRows.map(r => r.key -> r).toMap)
-    if (filteredRows.isEmpty)
-      Seq(h4("No successful tests"))
-    else
-      Seq(
-        h3("Successful Tests ", icon(EvalStatus.INFO)),
-        if (dmn.hitPolicy.isSingle)
-          singleResultTable(filteredRows)
-        else
-          collectResultTable(filteredRows)
-      )
-
-  lazy val noMatchingRows =
-    val filteredRows = resultRows
-      .filter(r =>
-        r.status == EvalStatus.WARN && r.outputMessage == Some(
-          noMatchingRowsMsg
-        )
-      )
-    if (filteredRows.isEmpty)
-      Seq()
-    else
-      Seq(
-        h3(
-          "Test Inputs with no matching Row ",
-          icon(EvalStatus.WARN)
-        ),
-        p("For the following inputs, there is no matching row in the DMN."),
-        Table(
-          className := "testResultsTable",
-          _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns(false),
-          filteredRows
-            .map(r =>
-              Table.row { tr =>
-                r.testInputs
-                  .map(_._2.toString)
-                  .map(ellipsis(_, tr))
-                  .toSeq
-              }
-            )
-        )
-      )
-
-  lazy val noMatchingInputs =
-    val filteredRows = missingRows
-    if (filteredRows.isEmpty)
-      Seq()
-    else
-      Seq(
-        h3("Rules with no matching Test Inputs ", icon(EvalStatus.WARN)),
-        p(
-          "There are no Test Inputs that match these Rules."
-        ),
-        Table(
-          className := "testResultsTable",
-          _.stickyColumnHeader := true,
-          _.slots.columns := Table.column(
-            span("Dmn Row")
-          ),
-          _.slots.columns := outputKeys.map(ik =>
-            Table.column(
-              className := "resultOutputHeader",
-              title := "Returned Output",
-              span(ik)
-            )
-          ),
-          filteredRows
-            .map(r =>
-              Table.row { tr =>
-                (Seq(r.dmnRowIndex.intValue.toString) ++
-                  r.outputs.map(_._2.value))
-                  .map(ellipsis(_, tr))
-              }
-            )
-        )
-      )
-
-  lazy val errorRows =
-    val filteredRows = resultRows
-      .filter(r => r.status == EvalStatus.ERROR && r.outputMessage.nonEmpty)
-    if (filteredRows.isEmpty)
-      Seq()
-    else
-      Seq(
-        h3(
-          "Tests with Errors ",
-          icon(EvalStatus.ERROR)
-        ),
-        p("For the following inputs, evaluating the DMN created an error."),
-        Table(
-          className := "testResultsTable",
-          _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns(false),
-          _.slots.columns := Table.column("Error Message"),
-          filteredRows
-            .map(r =>
-              Table.row { tr =>
-                r.testInputs
-                  .map(_._2.toString)
-                  .map(value =>
-                    tr.cell(
-                      title := value,
-                      value
-                    )
-                  )
-                  .toSeq :+
-                  tr.cell(
-                    r.outputMessage.getOrElse("no error message"),
-                    matchedRowsTable(r)
-                  )
-              }
-            )
-        )
-      )
-
-  lazy val failedTestCasesRows =
-    val filteredRows = resultRows
-      .filter(r => r.status == EvalStatus.ERROR && r.outputMessage.isEmpty)
-    if (filteredRows.isEmpty)
-      Seq()
-    else
-      Seq(
-        h3(
-          "Test Cases with Errors ",
-          icon(EvalStatus.ERROR)
-        ),
-        p("For the following inputs, you expected a different result."),
-        if (dmn.hitPolicy.isSingle)
-          singleResultTable(filteredRows)
-        else
-          collectResultTable(filteredRows)
-      )
-
-  lazy val resultRows: Seq[TableRow] = ({
+  private lazy val resultRows: Seq[TableRow] = {
     evaluatedRows.groupBy(_.testInputs.values.toSeq).map { case (_, rows) =>
       rows.head.toParentRow(rows.map(_.toChildRow()))
     }
-  }.toSeq ++ missingRows).sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
-
-  private def singleResultTable(filteredRows: Seq[TableRow]) =
-    val rows: Seq[HtmlElement] =
-      filteredRows
-        .map(r =>
-          Table.row(
-            accessKey := r.key,
-            tr =>
-              (inputKeys
-                .map(r.testInputs(_).toString)
-                .map(ellipsis(_, tr)) :+
-                ellipsis(r.dmnRowIndex, tr)) ++
-                r.inputs.map(_._2).map(ellipsis(_, tr)) ++
-                r.outputs.map(o => ellipsis(o._2, tr))
-          )
-        )
-
-    successTable(rows)
-
-  private def collectResultTable(filteredRows: Seq[TableRow]) =
-    val rows: Seq[HtmlElement] = filteredRows
-      .map(r =>
-        Table.row(
-          accessKey := r.key,
-          tr =>
-            (inputKeys
-              .map(r.testInputs(_).toString)
-              .map(ellipsis(_, tr)) :+
-              collectCellTable(r.children.map { _.dmnRowIndex })) ++
-              r.inputs.zipWithIndex.map { case _ -> index =>
-                collectCellTable(
-                  r.children.map {
-                    _.inputs(index)._2
-                  }
-                )
-              } ++
-              r.outputs.zipWithIndex.map { case _ -> index =>
-                collectCellTable(
-                  r.children.map {
-                    _.outputs(index)._2
-                  }
-                )
-              }
-        )
-      )
-    successTable(rows)
-
-  private def successTable(
-      rows: Seq[HtmlElement]
-  ) =
-    Table(
-      className := "testResultsTable",
-      _.mode := TableMode.MultiSelect,
-      _.stickyColumnHeader := true,
-      _.events.onSelectionChange.map(
-        _.detail.selectedRows
-          .map(r => allRowsVar.now()(r.accessKey))
-          .toList
-      ) --> selectedTableRowsVar,
-      _.slots.columns := inputKeysColumns(false),
-      _.slots.columns := Table.column(
-        span("Dmn Row")
-      ),
-      _.slots.columns := inputKeysColumns(true),
-      _.slots.columns := outputKeysColumns,
-      rows
-    )
+  }.toSeq.sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
 
   private def ellipsis(
       value: String,
@@ -329,17 +298,6 @@ case class RowCreator(
     ellipsis(value, tableRow.cell(), clsName, msg)
 
   private def ellipsis(
-      result: TestedValue,
-      tableRow: TableRow.type
-  ): HtmlElement = result match
-    case TestFailure(value, msg) =>
-      ellipsis(value, tableRow, "failedCell", Some(msg))
-    case TestSuccess(value) =>
-      ellipsis(value, tableRow, "succeededCell", None)
-    case NotTested(value) =>
-      ellipsis(value, tableRow, "notTestedCell", None)
-
-  private def ellipsis(
       value: String,
       elem: HtmlElement,
       clsName: String,
@@ -347,17 +305,16 @@ case class RowCreator(
   ): HtmlElement =
     val manyCols = (inputKeys.size * 2 + outputKeys.size) > 4
     val maxSize = 14
+    val shorten = manyCols && value.length > maxSize
     elem.amend(
-      title := msg.getOrElse(value),
+      title := (if (shorten) value else ""),
       className := clsName,
-      if (manyCols && value.length > maxSize) value.take(maxSize) + ".."
-      else value,
+      if (shorten) value.take(maxSize) + ".." else value,
       onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
       onMouseOver
         .filter(_ => msg.nonEmpty)
         .map(_.target.asInstanceOf[HTMLElement])
         .map(Some(_) -> msg.get) --> openPopoverBus,
-      // .map(_ => msg.map(s => div(s).asInstanceOf[HTMLElement])) --> openPopoverBus,
       onMouseOut.mapTo(None -> "") --> openPopoverBus
     )
 
@@ -396,14 +353,11 @@ case class RowCreator(
     )
   )
 
-  private def rowIndex(ruleId: String) =
-    dmn.rules.find(_.ruleId == ruleId).map(_.index).getOrElse(-1)
-
   private def rowInputs(ruleId: String, inputs: Seq[(String, String)]) =
     if (dmn.dmnConfig.testUnit)
       val rInputs =
         dmn.rules.find(_.ruleId == ruleId).map(_.inputs).getOrElse(Seq.empty)
-      inputs.zipWithIndex.map { case ((k -> v), index) => k -> rInputs(index) }
+      inputs.zipWithIndex.map { case (k -> _, index) => k -> rInputs(index) }
     else inputs
 
   private def matchedRowsTable(row: TableRow) =
@@ -429,6 +383,7 @@ case class RowCreator(
           )
       )
 
+  // if HitPolicy COLLECT one inputs variation may have more than one result
   private def collectCellTable(
       values: Seq[TestedValue | String]
   ) =
@@ -466,16 +421,5 @@ case class RowCreator(
 
   private lazy val openPopoverBus: EventBus[(Option[HTMLElement], String)] =
     new EventBus
-  lazy val failedTestCasePopup =
-    Popover(
-      _.placementType := PopoverPlacementType.Bottom,
-      _.showAtFromEvents(openPopoverBus.events.collect {
-        case Some(opener) -> _ =>
-          opener
-      }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ => () }),
-      p(child <-- openPopoverBus.events.collect { case _ -> msg =>
-        msg
-      })
-    )
+
 end RowCreator

@@ -41,8 +41,7 @@ case class EvalResultsPanel(
     creator.errorRows,
     creator.noMatchingRows,
     creator.noMatchingInputs,
-   // creator.failedTestCasesRows,
-    creator.successful,
+    creator.testCasesTable,
     creator.failedTestCasePopup,
     Button(
       _.icon := IconName.`add-activity-2`,
