@@ -8,6 +8,8 @@ import org.scalajs.dom.html
 import pme123.camunda.dmn.tester.shared.*
 import pme123.camunda.dmn.tester.shared.TesterValue.*
 
+import scala.util.Random
+
 final case class DmnConfigEditor(
     openEditDialogBus: EventBus[Boolean],
     dmnConfigPathSignal: Signal[String],
@@ -148,24 +150,24 @@ final case class DmnConfigEditor(
 
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
     def renderInputsTableRow(id: Int, inputSignal: Signal[TesterInput]) =
-
       def keyUpdater =
         inputsVar.updater[String] { (data, newValue) =>
           data.map(item =>
-            if item.id == id then item.copy(key = newValue)
+            if item.id.contains(id) then item.copy(key = newValue)
             else item
           )
         }
       def nullValueUpdater =
         inputsVar.updater[Boolean] { (data, newValue) =>
           data.map(item =>
-            if item.id == id then item.copy(nullValue = newValue) else item
+            if item.id.contains(id) then item.copy(nullValue = newValue)
+            else item
           )
         }
       def valuesUpdater =
         inputsVar.updater[String] { (data, newValue) =>
           data.map(item =>
-            if (item.id == id) {
+            if (item.id.contains(id)) {
               val values = newValue
                 .split(",")
                 .map(_.trim)
@@ -211,7 +213,7 @@ final case class DmnConfigEditor(
             _.design := ButtonDesign.Negative,
             _.tooltip := "Delete this entry.",
             _.events.onClick --> (_ =>
-              inputsVar.update(_.filterNot(_.id == id))
+              inputsVar.update(_.filterNot(_.id.contains(id)))
             )
           )
         )
@@ -223,9 +225,17 @@ final case class DmnConfigEditor(
       _.slots.columns := Table.column("Values"),
       _.slots.columns := Table.column("Null value"),
       _.slots.columns := Table.column(""),
-      children <-- inputsVar.signal.split(_.id) { (id, _, inputSignal) =>
-        renderInputsTableRow(id, inputSignal)
-      }
+      children <-- inputsVar.signal
+        .map { c =>
+          c.map {
+            case ti: TesterInput if ti.id.isEmpty =>
+              ti.copy(id = Some(Random.nextInt(100000)))
+            case o => o
+          }
+        }
+        .split(_.id) { (id, _, inputSignal) =>
+          renderInputsTableRow(id.get, inputSignal)
+        }
     )
   end inputValueVariableTables
 

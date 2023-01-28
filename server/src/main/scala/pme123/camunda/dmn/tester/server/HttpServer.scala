@@ -131,13 +131,6 @@ object HttpServer extends IOApp {
     logger.info(s"Static File: $file")
     StaticFile
       .fromResource("/" + file, Some(request))
-      .orElse(
-        StaticFile
-          .fromString(
-            (testReportsPath / file).toIO.getAbsolutePath,
-            Some(request)
-          )
-      )
       .getOrElseF(NotFound())
   }
 

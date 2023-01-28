@@ -116,7 +116,7 @@ object hocon {
   private lazy val testerInput: ConfigDescriptor[TesterInput] =
     (string("key") zip boolean("nullValue").default(false) zip nested("values")(
       list(testerValue)
-    ) zip int("id").default(util.Random.nextInt(100000))).to[TesterInput]
+    ) zip int("id").optional).to[TesterInput]
 
   lazy val testResult: ConfigDescriptor[TestResult] =
     (int("rowIndex") zip

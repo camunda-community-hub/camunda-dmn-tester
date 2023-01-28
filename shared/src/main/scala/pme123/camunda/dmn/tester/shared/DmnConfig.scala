@@ -77,7 +77,7 @@ case class TesterInput(
     key: String,
     nullValue: Boolean,
     values: List[TesterValue],
-    id: Int
+    id: Option[Int]
 ) {
 
   val valuesAsString: String = values.map(_.valueStr).mkString(", ")
@@ -120,7 +120,7 @@ object TesterInput {
       nullValue: Boolean = false,
       values: List[TesterValue] = List.empty
   ): TesterInput =
-    TesterInput(key, nullValue, values, id = Random.nextInt(100000))
+    TesterInput(key, nullValue, values, id = Some(Random.nextInt(100000)))
 
   def unapply(
       input: TesterInput
