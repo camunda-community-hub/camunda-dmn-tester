@@ -10,9 +10,9 @@ object Deps {
   object version {
     val circe = "0.14.3"
     val osLib = "0.8.1"
-    val dmnScala = "1.6.2"
+    val dmnScala = "1.7.4"
     val http4s = "0.23.18"
-    val logback = "1.2.3"
+    val logback = "1.4.5"
     val zio = "2.0.6"
     val zioCats = "22.0.0.0"
     val zioConfig = "3.0.7"

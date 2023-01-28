@@ -1,14 +1,19 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import org.camunda.dmn.Audit.{AuditLog, ContextEvaluationResult, DecisionTableEvaluationResult, SingleEvaluationResult}
-import org.camunda.dmn.{DmnEngine, logger}
+import org.camunda.dmn.Audit.{
+  AuditLog,
+  ContextEvaluationResult,
+  DecisionTableEvaluationResult,
+  SingleEvaluationResult
+}
+import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.EvalContext
-import org.camunda.dmn.parser.{ParsedDecision, ParsedDecisionTable, ParsedDmn, ParsedRule}
+import org.camunda.dmn.parser._
 import org.camunda.feel.syntaxtree.{Val, ValError}
 import org.camunda.feel.valuemapper.ValueMapper
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
-import zio.{IO, UIO, ZIO}
+import zio.{IO, ZIO}
 
 case class DmnTableEngine(
     parsedDmn: ParsedDmn,
@@ -17,15 +22,15 @@ case class DmnTableEngine(
 ) {
   val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
 
-  /**
-   * If `testUnit` is set: removes all dependent Decisions - so we can Unit Test it.
+  /** If `testUnit` is set: removes all dependent Decisions - so we can Unit
+    * Test it.
     */
-  lazy val pureDecision: IO[EvalException, ParsedDecision] =
+  private lazy val pureDecision: IO[EvalException, ParsedDecision] =
     parsedDmn.decisionsById
       .get(decisionId)
       .map { decision =>
         ZIO.succeed(
-          if(testUnit)
+          if (testUnit)
             decision
               .copy(requiredBkms = Seq.empty, requiredDecisions = Seq.empty)
           else
@@ -94,7 +99,9 @@ case class DmnTableEngine(
     } yield DmnEvalRowResult(
       evalResult.status,
       decisionId,
-      context.variables.view.mapValues(v => if(v == null) "null" else v.toString).toMap,
+      context.variables.view
+        .mapValues(v => if (v == null) "null" else v.toString)
+        .toMap,
       evalResult.matchedRules,
       evalResult.failed
     )
@@ -103,16 +110,25 @@ case class DmnTableEngine(
     decision.logic match {
       case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
         hitPolicy -> rules.zipWithIndex.map {
-          case (ParsedRule(id, inputs, outputs), index) =>
+          case (
+                ParsedRule(id, inputs: Iterable[ParsedExpression], outputs),
+                index
+              ) =>
             DmnRule(
               index + 1,
               id,
-              inputs.map(_.text).toSeq,
-              outputs.map(_._2.text).toSeq
+              inputs.map(extractFrom).toSeq,
+              outputs.map(o => extractFrom(o._2)).toSeq
             )
         }.toSeq
       case other => s"No ParsedDecisionTable: $other" -> Seq.empty
     }
+  }
+  private def extractFrom(expr: ParsedExpression) = expr match {
+    case ExpressionFailure(failure) => failure
+    case FeelExpression(expr) =>
+      expr.text
+    case EmptyExpression => ""
   }
 
   private def evalResult(
@@ -138,17 +154,16 @@ case class DmnTableEngine(
             MatchedRule(
               rule.rule.id,
               testedIndex,
-              log.entries.head.result match{
+              log.entries.head.result match {
                 case DecisionTableEvaluationResult(inputs, _, _) =>
                   inputs.map(i => i.input.name -> unwrap(i.value))
                 case SingleEvaluationResult(_) =>
                   Seq.empty
                 case ContextEvaluationResult(entries, _) =>
-                  entries.toSeq.map {
-                    case k -> v => k -> v.toString
+                  entries.toSeq.map { case k -> v =>
+                    k -> v.toString
                   }
               },
-             // rule.rule.inputEntries.map(_.text).toSeq,
               checkOutputs(
                 inputMap,
                 testedIndex,
@@ -189,14 +204,16 @@ case class DmnTableEngine(
       .getOrElse(NotTested(rowIndex.toString))
   }
 
-  private def unwrap(value: Val): String =
-    ValueMapper.defaultValueMapper
-      .unpackVal(value) match {
+  private def unwrap(value: Val): String = {
+    val unwrapValue = ValueMapper.defaultValueMapper
+      .unpackVal(value)
+    unwrapValue match {
       case Some(seq: Seq[_]) => seq.mkString("[", ", ", "]")
       case Some(value)       => value.toString
       case None              => "NO VALUE"
       case value             => s"$value"
     }
+  }
 
   private def missingRules(
       matchedRules: Seq[MatchedRule],

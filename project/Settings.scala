@@ -95,7 +95,7 @@ object Settings {
           Deps.http4sDsl,
           Deps.http4sCirce,
           Deps.http4sServer,
-          Deps.logback
+          Deps.logback,
         )
       )
 
@@ -109,7 +109,6 @@ object Settings {
         Deps.zioTest % Test,
         Deps.zioTestJUnit % Test,
         Deps.zioTestSbt % Test,
-        "io.circe" %%% "circe-generic" % Deps.version.circe,
       )
     )
 
