@@ -33,10 +33,10 @@ object BackendClient {
   ): EventStream[Either[String, Seq[DmnConfig]]] =
     AjaxEventStream
       .put(
-        s"$url/api/dmnConfig?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
+        s"$url/api/dmnConfig?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
         data = dmnConfig.asJson.toString
       )
-      .map(extractDmnConfigs)
+      .map(extractBody[Seq[DmnConfig]])
       .recover(err =>
         Some(Left(s"Problem updating Dmn Config: ${err.getMessage} "))
       )
@@ -48,7 +48,7 @@ object BackendClient {
   ): EventStream[Seq[DmnConfig]] =
     AjaxEventStream
       .delete(
-        s"$url/api/dmnConfig?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
+        s"$url/api/dmnConfig?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
         data = dmnConfig.asJson.toString
       )
       .map(req =>
@@ -96,15 +96,29 @@ object BackendClient {
   def getConfigs(path: String): EventStream[Either[String, Seq[DmnConfig]]] =
     AjaxEventStream
       .get(
-        s"$url/api/dmnConfigs?configPath=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
+        s"$url/api/dmnConfigs?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
       )
-      .map(extractDmnConfigs)
+      .map(extractBody[Seq[DmnConfig]])
       .recover(err =>
         err.printStackTrace()
         Some(Left(s"Problem getting Dmn Configs: ${err.getMessage} "))
       )
 
   end getConfigs
+
+  // get DmnConfigs items
+  def validateDmnPath(path: String): EventStream[Either[String, Boolean]] =
+    AjaxEventStream
+      .get(
+        s"$url/api/validateDmnPath?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
+      )
+      .map(extractBody[Boolean])
+      .recover(err =>
+        err.printStackTrace()
+        Some(Left(s"Problem validating Dmn Path $path: ${err.getMessage} "))
+      )
+
+  end validateDmnPath
 
   def runTests(
       configs: Seq[DmnConfig]
@@ -126,10 +140,10 @@ object BackendClient {
 
   end runTests
 
-  private def extractDmnConfigs(req: XMLHttpRequest) =
+  private def extractBody[T : Decoder](req: XMLHttpRequest) =
     parser
       .parse(req.responseText)
-      .flatMap(_.as[Seq[DmnConfig]])
+      .flatMap(_.as[T])
       .left
       .map(exc =>
         s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"

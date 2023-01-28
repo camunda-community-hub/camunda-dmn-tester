@@ -2,21 +2,21 @@ package pme123.camunda.dmn.tester.server
 
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
-import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult}
+import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult}
 import zio.{IO, Runtime, Unsafe, ZIO}
 
-class DmnService extends DmnApi {
+class DmnService {
 
-  override def getBasePath(): String =
+  def getBasePath(): String =
     run(z.basePath())
 
-  override def getConfigPaths(): Seq[String] =
+  def getConfigPaths(): Seq[String] =
     run(z.loadConfigPaths())
 
-  override def getConfigs(path: Seq[String]): Seq[DmnConfig] =
+  def getConfigs(path: Seq[String]): Seq[DmnConfig] =
     run(z.loadConfigs(path))
 
-  override def addConfig(
+  def addConfig(
       dmnConfig: DmnConfig,
       path: Seq[String]
   ): Seq[DmnConfig] =
@@ -24,7 +24,7 @@ class DmnService extends DmnApi {
       z.addConfig(dmnConfig, path)
     )
 
-  override def updateConfig(
+  def updateConfig(
       dmnConfig: DmnConfig,
       path: Seq[String]
   ): Seq[DmnConfig] =
@@ -32,7 +32,7 @@ class DmnService extends DmnApi {
       z.updateConfig(dmnConfig, path)
     )
 
-  override def deleteConfig(
+  def deleteConfig(
       dmnConfig: DmnConfig,
       path: Seq[String]
   ): Seq[DmnConfig] =
@@ -40,7 +40,12 @@ class DmnService extends DmnApi {
       z.deleteConfig(dmnConfig, path)
     )
 
-  override def runTests(
+  def dmnPathExists(dmnPath: String) =
+    run(
+      z.dmnPathExists(dmnPath)
+    )
+
+  def runTests(
       dmnConfigs: Seq[DmnConfig]
   ): Seq[Either[EvalException, DmnEvalResult]] =
     run(z.runTests(dmnConfigs))
@@ -53,4 +58,6 @@ class DmnService extends DmnApi {
     }
 }
 
-object DmnService extends DmnService
+object DmnService extends DmnService {
+
+}

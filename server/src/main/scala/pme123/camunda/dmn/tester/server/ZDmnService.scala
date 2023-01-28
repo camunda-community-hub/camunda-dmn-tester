@@ -6,7 +6,7 @@ import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException,
 import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult, HandledTesterException}
 
 import scala.util.Try
-import zio.{IO, Task, ZIO}
+import zio.{IO, Task, UIO, ZIO}
 
 import java.io.{File, IOException}
 
@@ -61,6 +61,12 @@ object ZDmnService {
   ): IO[HandledTesterException, Seq[DmnConfig]] =
     DmnConfigHandler.delete(dmnConfig, path.toList) *>
       loadConfigs(path)
+
+  def dmnPathExists(dmnPath: String): UIO[Boolean] =
+    (for{
+      basePath <- basePath()
+      dmnExists <- ZIO.fromTry(Try(os.Path(s"$basePath/$dmnPath").toIO.exists()))
+    }yield dmnExists).catchAll(ex => ZIO.succeed(false))
 
   /** for a DmnConfig -> Either[EvalException, DmnEvalResult]
     */

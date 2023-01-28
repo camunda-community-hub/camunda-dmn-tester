@@ -4,6 +4,7 @@ import cats.effect._
 import com.comcast.ip4s._
 import io.circe.generic.auto._
 import io.circe.syntax._
+import org.http4s.UrlForm.entityEncoder
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe._
@@ -46,7 +47,7 @@ object HttpServer extends IOApp {
     ).orNotFound
 
   private object ConfigPathQueryParamMatcher
-      extends QueryParamDecoderMatcher[String]("configPath")
+      extends QueryParamDecoderMatcher[String]("path")
 
   private lazy val apiServices = HttpRoutes.of[IO] {
     case GET -> Root / "basePath" =>
@@ -64,6 +65,13 @@ object HttpServer extends IOApp {
           DmnService
             .getConfigs(decConfigPath.split("/"))
       Ok(configs.asJson)
+    case GET -> Root / "validateDmnPath" :? ConfigPathQueryParamMatcher(
+          dmnPath
+        ) =>
+      val decDmnPath = URLDecoder.decode(dmnPath, StandardCharsets.UTF_8)
+      val pathExists = DmnService
+            .dmnPathExists(decDmnPath)
+      Ok(pathExists)
 
     case req @ POST -> Root / "runDmnTests" =>
       Ok(

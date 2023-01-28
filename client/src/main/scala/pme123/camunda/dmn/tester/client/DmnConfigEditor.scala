@@ -121,6 +121,16 @@ final case class DmnConfigEditor(
           dmnPathUpdater
         )
       ),
+      div(
+        child <-- dmnExistsStream.map {
+          case Right(exists) if exists =>
+            span("")
+          case Right(_) =>
+            div(icon(EvalStatus.WARN), "Be aware that this DMN does not exist.")
+          case Left(error) =>
+            errorMessage("Problem updating Dmn Config", error)
+        }
+      ),
       h4("Test Inputs "),
       inputValueVariableTables(dataInputsVar),
       Button(
@@ -150,8 +160,15 @@ final case class DmnConfigEditor(
     dmnConfigVar.updater[String] { (config, newValue) =>
       config.copy(decisionId = newValue)
     }
+  private lazy val dmnExistsStream: EventStream[Either[String, Boolean]] =
+    newPathBus
+      .events
+      .flatMap(path => BackendClient.validateDmnPath(path))
+
+  private lazy val newPathBus: EventBus[String] = EventBus()
   private lazy val dmnPathUpdater: Observer[String] =
     dmnConfigVar.updater[String] { (config, newValue) =>
+      newPathBus.emit(newValue)
       config.copy(dmnPath = newValue.split("/").toList)
     }
 
