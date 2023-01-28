@@ -90,8 +90,8 @@ final case class Main1SelectConfigPath(
         className := "configPathsSelect",
         _.required := true,
         _.placeholder := "Add new path",
-        _.events.onChange.mapToValue --> newPathVar,
-        value <-- newPathVar.signal
+        value <-- newPathVar.signal,
+        _.events.onChange.mapToValue --> newPathVar
       ),
       Button(
         _.icon := IconName.add,

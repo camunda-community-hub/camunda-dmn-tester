@@ -23,9 +23,10 @@ final case class Main2SelectConfigs(
         cls := "medium",
         cls := "App-card",
         _.slots.header := Card.header(
-          _.titleText <-- dmnConfigsPathSignal.map(path =>
+          _.titleText <-- dmnConfigsPathSignal.map { path =>
+            selectedConfigsVar.set(List.empty)
             s"2. Select the DMN Configurations you want to test in : $path"
-          )
+          }
         ),
         div(child <-- dmnConfigs),
         Table(
