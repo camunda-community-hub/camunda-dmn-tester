@@ -93,6 +93,7 @@ object Settings {
       _.settings(
         libraryDependencies ++= Seq(
           Deps.http4sDsl,
+          Deps.http4sCirce,
           Deps.http4sServer,
           Deps.logback
         )
@@ -102,21 +103,19 @@ object Settings {
       libraryDependencies ++= Seq(
         Deps.osLib,
         Deps.dmnScala,
-        // Optional for auto-derivation of JSON codecs
-        "org.http4s" %% "http4s-circe" % Deps.version.http4s,
         Deps.zio,
         Deps.zioCats,
         Deps.zioConfigHocon,
-        Deps.zioConfigMagnolia,
         Deps.zioTest % Test,
         Deps.zioTestJUnit % Test,
         Deps.zioTestSbt % Test,
+        "io.circe" %%% "circe-generic" % Deps.version.circe,
       )
     )
 
     lazy val docker: Project => Project =
       _.settings(
-        dockerBaseImage := "openjdk:11", //eed3si9n/sbt:jdk11-alpine",
+        dockerBaseImage := "openjdk:11", // eed3si9n/sbt:jdk11-alpine",
         dockerExposedPorts ++= Seq(8883),
         Docker / packageName := projectName,
         dockerUsername := Some("pame"),

@@ -1,4 +1,4 @@
-import sbt.Keys.libraryDependencies
+import sbt.Keys._
 import sbt._
 
 object Deps {
@@ -8,9 +8,10 @@ object Deps {
   val supportedScalaVersions: Seq[String] = List(scala212, scala213)
 
   object version {
+    val circe = "0.14.3"
     val osLib = "0.8.1"
     val dmnScala = "1.6.2"
-    val http4s = "0.21.12"
+    val http4s = "0.23.18"
     val logback = "1.2.3"
     val zio = "2.0.6"
     val zioCats = "22.0.0.0"
@@ -33,7 +34,8 @@ object Deps {
   val zioTestSbt = "dev.zio" %% "zio-test-sbt" % version.zio
 
   lazy val http4sDsl = "org.http4s" %% "http4s-dsl" % version.http4s
-  lazy val http4sServer = "org.http4s" %% "http4s-blaze-server" % version.http4s
+  lazy val http4sServer = "org.http4s" %% "http4s-ember-server" % version.http4s
+  lazy val http4sCirce = "org.http4s" %% "http4s-circe" % version.http4s
   lazy val logback = "ch.qos.logback"  %  "logback-classic"     % version.logback
   lazy val scalaTest = "org.scalatest" %% "scalatest-funsuite" % version.scalaTest
 

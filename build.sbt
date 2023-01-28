@@ -17,19 +17,17 @@ lazy val root = project
 lazy val shared =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Pure)
-    .jvmSettings(
-      scalaVersion := scala2V,
+    .settings(
       libraryDependencies ++= Seq(
-        "io.circe" %% "circe-generic" % "0.14.3",
-        "io.circe" %% "circe-parser" % "0.14.3"
+        "io.circe" %%% "circe-generic" % Deps.version.circe,
+        "io.circe" %%% "circe-parser" % Deps.version.circe
       )
     )
+    .jvmSettings(
+      scalaVersion := scala2V
+    )
     .jsSettings(
-      scalaVersion := scala3V,
-      libraryDependencies ++= Seq(
-        "io.circe" %%% "circe-generic" % "0.14.3",
-        "io.circe" %%% "circe-parser" % "0.14.3"
-      )
+      scalaVersion := scala3V
     )
     .settings(name := s"$projectName-shared")
     .configure(
