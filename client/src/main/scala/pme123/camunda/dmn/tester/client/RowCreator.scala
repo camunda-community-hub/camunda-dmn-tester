@@ -303,17 +303,16 @@ case class RowCreator(
       msg: Option[String]
   ): HtmlElement =
     val manyCols = (inputKeys.size * 2 + outputKeys.size) > 4
-    val maxSize = 14
+    val maxSize = 20
     val shorten = manyCols && value.length > maxSize
     elem.amend(
-      title := (if (shorten) value else ""),
       className := clsName,
       if (shorten) value.take(maxSize) + ".." else value,
       onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
       onMouseOver
-        .filter(_ => msg.nonEmpty)
+        .filter(_ => msg.nonEmpty || shorten)
         .map(_.target.asInstanceOf[HTMLElement])
-        .map(Some(_) -> msg.get) --> openPopoverBus,
+        .map(Some(_) -> msg.getOrElse(value)) --> openPopoverBus,
       onMouseOut.mapTo(None -> "") --> openPopoverBus
     )
 
