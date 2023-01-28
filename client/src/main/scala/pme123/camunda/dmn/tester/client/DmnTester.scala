@@ -19,7 +19,9 @@ end DmnTester
 
 object Main:
 
-  private lazy val selectedPathVar = Var("")
+  private lazy val basePathVar = Var("")
+  private lazy val basePathSignal = basePathVar.signal
+  private lazy val dmnConfigsPathVar = Var("")
   private lazy val selectedConfigsVar = Var(List.empty[DmnConfig])
   private lazy val testsAreRunningVar: Var[Boolean] = Var(false)
   private lazy val dmnConfigsVar: Var[Seq[DmnConfig]] =
@@ -28,9 +30,9 @@ object Main:
   def dmnTester(): ReactiveHtmlElement[html.Div] =
     div(
       Main0Header(),
-      SelectConfigPath(selectedPathVar),
-      SelectConfigs(selectedPathVar.signal, selectedConfigsVar, dmnConfigsVar),
-      Main3CheckTheResults(testsAreRunningVar, selectedPathVar.signal, selectedConfigsVar.signal, dmnConfigsVar),
+      Main1SelectConfigPath(basePathVar, dmnConfigsPathVar),
+      Main2SelectConfigs(basePathSignal, dmnConfigsPathVar.signal, selectedConfigsVar, dmnConfigsVar),
+      Main3CheckTheResults(testsAreRunningVar, dmnConfigsPathVar.signal, selectedConfigsVar.signal, dmnConfigsVar),
       MainFooter(),
     )
 

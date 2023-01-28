@@ -1,22 +1,21 @@
 package pme123.camunda.dmn.tester.client
 
-import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5.*
-import org.scalajs.dom
 import be.doeraene.webcomponents.ui5.configkeys.*
-import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.scalajs.dom.html
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{EventStream, Signal, Source}
 import com.raquo.airstream.state.Var
-import com.raquo.airstream.core.Source
-import com.raquo.airstream.core.EventStream
+import com.raquo.laminar.api.L.{*, given}
+import com.raquo.laminar.nodes.ReactiveHtmlElement
+import org.scalajs.dom
+import org.scalajs.dom.html
 
-final case class SelectConfigPath(
-    selectedPathVar: Var[String]
+final case class Main1SelectConfigPath(
+    basePathVar: Var[String],
+    dmnConfigsPathVar: Var[String]
 ):
-  lazy val basePath = BackendClient.getBasePath
+  private lazy val basePath = BackendClient.getBasePath
 
-  lazy val comp =
+  private lazy val comp =
     section(
       className := "App-section",
       Card(
@@ -32,16 +31,21 @@ final case class SelectConfigPath(
             className := "configPathsSelect",
             "Base Path: ",
             child <-- basePath.map {
-              case Right(path) => span(path)
+              case Right(path) =>
+                basePathVar.set(path)
+                span(path)
               case Left(error) =>
-                div(width := "40rem", errorMessage("Problem getting Base Path", error))
+                div(
+                  width := "40rem",
+                  errorMessage("Problem getting Base Path", error)
+                )
             }
           ),
           Select(
             className := "configPathsSelect",
             children <-- configuredPaths,
             _.events.onChange
-              .map(_.detail.selectedOption.textContent) --> selectedPathVar
+              .map(_.detail.selectedOption.textContent) --> dmnConfigsPathVar
           ),
           newConfigPath
         )
@@ -51,17 +55,18 @@ final case class SelectConfigPath(
 
   private lazy val configPathsVar: Var[Seq[String]] = Var(Seq.empty[String])
 
-  private lazy val configPathEvents: EventStream[ReactiveHtmlElement[html.Element]] = BackendClient
-    .getConfigPaths
-    .map {
-      case Right(paths) =>
-        configPathsVar.set(paths)
-        if (selectedPathVar.now().isEmpty)
-          selectedPathVar.set(paths.head)
-        span("")  
-      case Left(error) =>
-        errorMessage("Problem getting Dmn Config Paths", error)
-    }
+  private lazy val configPathEvents
+      : EventStream[ReactiveHtmlElement[html.Element]] =
+    BackendClient.getConfigPaths
+      .map {
+        case Right(paths) =>
+          configPathsVar.set(paths)
+          if (dmnConfigsPathVar.now().isEmpty)
+            dmnConfigsPathVar.set(paths.head)
+          span("")
+        case Left(error) =>
+          errorMessage("Problem getting Dmn Config Paths", error)
+      }
 
   private lazy val configuredPaths
       : Signal[Seq[ReactiveHtmlElement[html.Element]]] =
@@ -70,7 +75,7 @@ final case class SelectConfigPath(
         Select.option(
           value := p,
           p,
-          _.selected <-- selectedPathVar.signal.map(p == _)
+          _.selected <-- dmnConfigsPathVar.signal.map(p == _)
         )
       })
     )
@@ -91,7 +96,7 @@ final case class SelectConfigPath(
       Button(
         _.icon := IconName.add,
         _.events.onClick.map { _ =>
-          selectedPathVar.set(newPathVar.now())
+          dmnConfigsPathVar.set(newPathVar.now())
           configPathsVar.set(
             configPathsVar.now() :+ newPathVar.now()
           )
@@ -102,9 +107,10 @@ final case class SelectConfigPath(
     )
   end newConfigPath
 
-object SelectConfigPath:
+object Main1SelectConfigPath:
   def apply(
-      selectedPathVar: Var[String]
+      basePathVar: Var[String],
+      dmnConfigsPathVar: Var[String]
   ): ReactiveHtmlElement[html.Element] =
-    new SelectConfigPath(selectedPathVar).comp
-end SelectConfigPath
+    new Main1SelectConfigPath(basePathVar, dmnConfigsPathVar).comp
+end Main1SelectConfigPath

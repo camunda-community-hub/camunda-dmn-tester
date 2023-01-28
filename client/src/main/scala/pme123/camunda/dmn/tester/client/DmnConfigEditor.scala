@@ -12,6 +12,7 @@ import scala.util.Random
 
 final case class DmnConfigEditor(
     openEditDialogBus: EventBus[Boolean],
+    basePathSignal: Signal[String],
     dmnConfigPathSignal: Signal[String],
     dmnConfigVar: Var[DmnConfig],
     dmnConfigsVar: Var[Seq[DmnConfig]]
@@ -75,6 +76,12 @@ final case class DmnConfigEditor(
       },*/
       Table(
         className := "dialogTable",
+        _.slots.columns := Table.column(
+          "Base Path"
+        ),
+        _.slots.columns := Table.column(
+          child.text <-- basePathSignal
+        ),
         Table.row(
           title := "Check if you want test your DMN independently.",
           _.cell(
@@ -272,12 +279,14 @@ final case class DmnConfigEditor(
 object DmnConfigEditor:
   def apply(
       openEditDialogBus: EventBus[Boolean],
+      basePathSignal: Signal[String],
       dmnConfigPathSignal: Signal[String],
       dmnConfigVar: Var[DmnConfig],
       dmnConfigsVar: Var[Seq[DmnConfig]]
   ): HtmlElement =
     new DmnConfigEditor(
       openEditDialogBus,
+      basePathSignal,
       dmnConfigPathSignal,
       dmnConfigVar,
       dmnConfigsVar

@@ -62,7 +62,15 @@ object BackendClient {
   def getBasePath: EventStream[Either[String, String]] =
     AjaxEventStream
       .get(s"$url/api/basePath")
-      .map(r => Right(r.responseText))
+      .map(req =>
+        parser
+          .parse(req.responseText)
+          .flatMap(_.as[String])
+          .left
+          .map(exc =>
+            s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
+          )
+      )
       .recover(err =>
         Some(Left(s"Problem getting Base Paths: ${err.getMessage} "))
       )

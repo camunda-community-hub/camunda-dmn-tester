@@ -9,20 +9,21 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLElement, html}
 import pme123.camunda.dmn.tester.shared.DmnConfig
 
-final case class SelectConfigs(
-    selectedPathSignal: Signal[String],
-    selectedConfigsVar: Var[List[DmnConfig]],
-    dmnConfigsVar: Var[Seq[DmnConfig]]
+final case class Main2SelectConfigs(
+                                basePathSignal: Signal[String],
+                                dmnConfigsPathSignal: Signal[String],
+                                selectedConfigsVar: Var[List[DmnConfig]],
+                                dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
 
-  lazy val comp =
+  lazy val comp: ReactiveHtmlElement[html.Element] =
     section(
       className := "App-section",
       Card(
         cls := "medium",
         cls := "App-card",
         _.slots.header := Card.header(
-          _.titleText <-- selectedPathSignal.map(path =>
+          _.titleText <-- dmnConfigsPathSignal.map(path =>
             s"2. Select the DMN Configurations you want to test in : $path"
           )
         ),
@@ -88,7 +89,8 @@ final case class SelectConfigs(
       ),
       DmnConfigEditor(
         openEditDialogBus,
-        selectedPathSignal,
+        basePathSignal,
+        dmnConfigsPathSignal,
         dmnConfigVar,
         dmnConfigsVar
       )
@@ -117,8 +119,8 @@ final case class SelectConfigs(
       div(hidden := true, child <-- deleteServiceEvents.map(_ => "ok"))
     )
 
-  private lazy val dmnConfigs = selectedPathSignal
-    .flatMap(BackendClient.getConfigs(_))
+  private lazy val dmnConfigs = dmnConfigsPathSignal
+    .flatMap(BackendClient.getConfigs)
     .map {
       case Right(configs) =>
         dmnConfigsVar.set(configs)
@@ -135,7 +137,7 @@ final case class SelectConfigs(
   private lazy val dmnConfigVar: Var[DmnConfig] = Var(DmnConfig())
 
   private lazy val deleteServiceEvents = deleteConfigBus.events
-    .withCurrentValueOf(dmnConfigVar.signal, selectedPathSignal)
+    .withCurrentValueOf(dmnConfigVar.signal, dmnConfigsPathSignal)
     .flatMap { case (_, config, path) =>
       BackendClient
         .deleteConfig(config, path)
@@ -144,16 +146,18 @@ final case class SelectConfigs(
           "ok"
         }
     }
-object SelectConfigs:
+object Main2SelectConfigs:
   def apply(
-      selectedPathSignal: Signal[String],
-      selectedConfigsVar: Var[List[DmnConfig]],
-      dmnConfigsVar: Var[Seq[DmnConfig]]
+             basePathSignal: Signal[String],
+             dmnConfigsPathSignal: Signal[String],
+             selectedConfigsVar: Var[List[DmnConfig]],
+             dmnConfigsVar: Var[Seq[DmnConfig]]
   ): ReactiveHtmlElement[html.Element] =
-    new SelectConfigs(
-      selectedPathSignal,
+    new Main2SelectConfigs(
+      basePathSignal,
+      dmnConfigsPathSignal,
       selectedConfigsVar,
       dmnConfigsVar
     ).comp
 
-end SelectConfigs
+end Main2SelectConfigs
