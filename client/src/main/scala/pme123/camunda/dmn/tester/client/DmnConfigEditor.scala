@@ -106,8 +106,8 @@ final case class DmnConfigEditor(
           dmnConfigSignal.map(_.decisionIdError),
           dmnConfigSignal
             .map { c => // work around - zoom not working
-              dataInputsVar.set(c.data.inputs)
-              dataVariablesVar.set(c.data.variables)
+              dataInputsVar.set(c.data.inputs.map(_.withId))
+              dataVariablesVar.set(c.data.variables.map(_.withId))
               c
             }
             .map(_.decisionId),
@@ -184,7 +184,10 @@ final case class DmnConfigEditor(
       def nullValueUpdater =
         inputsVar.updater[Boolean] { (data, newValue) =>
           data.map(item =>
-            if item.id.contains(id) then item.copy(nullValue = newValue)
+            println(s"Update: $id $newValue ${item.id}")
+            if item.id.contains(id) then
+              println(s"Update2: $newValue ${item}")
+              item.copy(nullValue = newValue)
             else item
           )
         }
@@ -227,7 +230,9 @@ final case class DmnConfigEditor(
         _.cell(
           CheckBox(
             _.id := s"nullValue_$id",
-            _.checked <-- inputSignal.map(_.nullValue),
+            _.checked <-- inputSignal.map{x =>
+              println(s"RENDER: $x")
+              x}.map(_.nullValue),
             _.events.onChange.map(_.target.checked) --> nullValueUpdater
           )
         ),
@@ -250,13 +255,6 @@ final case class DmnConfigEditor(
       _.slots.columns := Table.column("Null value"),
       _.slots.columns := Table.column(""),
       children <-- inputsVar.signal
-        .map { c =>
-          c.map {
-            case ti: TesterInput if ti.id.isEmpty =>
-              ti.copy(id = Some(Random.nextInt(100000)))
-            case o => o
-          }
-        }
         .split(_.id) { (id, _, inputSignal) =>
           renderInputsTableRow(id.get, inputSignal)
         }
@@ -266,7 +264,14 @@ final case class DmnConfigEditor(
   private lazy val submitDmnConfig = saveConfigBus.events
     .withCurrentValueOf(dmnConfigSignal, dmnConfigPathSignal)
     .flatMap { case (_, config, path) =>
-      if (config.hasErrors)
+      val newConfig = config.copy(data =
+        config.data.copy(
+          inputs = dataInputsVar.now(),
+          variables = dataVariablesVar.now()
+        )
+      )
+      println(s"NEW CONFIG: $newConfig")
+      if (newConfig.hasErrors)
         EventStream.fromValue(
           errorMessage(
             "Validation Error(s)",
@@ -274,12 +279,6 @@ final case class DmnConfigEditor(
           )
         )
       else {
-        val newConfig = config.copy(data =
-          config.data.copy(
-            inputs = dataInputsVar.now(),
-            variables = dataVariablesVar.now()
-          )
-        )
         BackendClient
           .updateConfig(newConfig, path)
           .map {

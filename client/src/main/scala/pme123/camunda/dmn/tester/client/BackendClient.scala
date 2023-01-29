@@ -31,6 +31,7 @@ object BackendClient {
       dmnConfig: DmnConfig,
       path: String
   ): EventStream[Either[String, Seq[DmnConfig]]] =
+    println(s"UPDATE $dmnConfig")
     AjaxEventStream
       .put(
         s"$url/api/dmnConfig?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",

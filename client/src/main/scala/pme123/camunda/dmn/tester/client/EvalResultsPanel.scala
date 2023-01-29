@@ -22,15 +22,11 @@ case class EvalResultsPanel(
     className := "flex-column",
     className := "full-width",
     _.collapsed := true,
-    _.slots.header := Seq(
-      h2(icon(result.maxEvalStatus), dmn.id),
-      span(paddingLeft := "40px", dmn.dmnConfig.dmnPathStr)
-    ),
+    _.slots.header := panelHeader(dmn.dmnConfig, result.maxEvalStatus),
     div(
       child <-- submitDmnConfig
     ),
     p(s"Hitpolicy: ${dmn.hitPolicy}"),
-    p("DMN: " + dmn.dmnConfig.dmnPath.mkString("/")),
     p(
       "Variables: " + (if (dmn.dmnConfig.data.variables.nonEmpty)
                          dmn.dmnConfig.data.variables

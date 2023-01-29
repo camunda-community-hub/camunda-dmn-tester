@@ -82,6 +82,12 @@ case class TesterInput(
 
   val valuesAsString: String = values.map(_.valueStr).mkString(", ")
 
+  lazy val withId: TesterInput = this match {
+    case ti: TesterInput if ti.id.isEmpty =>
+      ti.copy(id = Some(Random.nextInt(100000)))
+    case o => o
+  }
+  
   def valueType: String = values
     .map(_.valueType)
     .foldLeft(values.headOption.map(_.valueType).getOrElse("String"))(

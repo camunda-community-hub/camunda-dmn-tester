@@ -31,6 +31,9 @@ final case class Main2SelectConfigs(
         div(child <-- dmnConfigs),
         Table(
           _.mode := TableMode.MultiSelect,
+          _.noDataText <-- dmnConfigsPathSignal.map { path =>
+            s"In '$path' are no DMN Configurations yet, please create one'"
+          },
           _.slots.columns := Table.column(
             width := "30%",
             span("decisionId")

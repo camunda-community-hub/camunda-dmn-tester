@@ -38,7 +38,7 @@ case class DmnUnitTestGenerator(
     testResult match {
       case Left(exc) =>
         for {
-          name <- className(exc.decisionId)
+          name <- className(exc.dmnConfig.decisionId)
           testMethod <- testMethod(exc)
           _ <- testFile(name, testMethod)
         } yield ()
@@ -162,7 +162,7 @@ case class DmnUnitTestGenerator(
     ZIO.succeed(
       testMethod(
         "evalException",
-        s"""fail(\"\"\"Dmn Table '${evalException.decisionId}' failed with:\\n - ${evalException.msg}\"\"\")"""
+        s"""fail(\"\"\"Dmn Table '${evalException.dmnConfig.decisionId}' failed with:\\n - ${evalException.msg}\"\"\")"""
       )
     )
 

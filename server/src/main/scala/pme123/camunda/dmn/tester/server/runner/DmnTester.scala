@@ -39,7 +39,7 @@ case class DmnTester(
         .fromTry(Try(inputStream(osPath(dmnPath))))
         .orElseFail(
           EvalException(
-            decisionId,
+            dmnConfig,
             s"There was no DMN in ${dmnPath.mkString("/")}."
           )
         )
@@ -53,19 +53,20 @@ case class DmnTester(
       .fromEither(engine.parse(streamToTest))
       .mapError {
         case Failure(message)
-            if message.contains("Failed to parse FEEL expression ''") =>
+            if message.contains("FEEL expression: failed to parse expression") =>
           EvalException(
-            decisionId,
-            s"""|ERROR: Could not parse a FEEL expression in the DMN table: $decisionId.\n
-                |Hints:\n
-                |> All outputs need a value.\n
-                |> All Input-/ Output-Columns need an expression.\n
-                |> Did you miss to wrap Strings in " - e.g. "TEXT"?\n
-                |> Check if there is an 'empty' Rule you accidently created.\n
-                |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/\n""".stripMargin
+            dmnConfig,
+            s"""|$message
+                |Hints:
+                |> Read the message carefully - '' means you forgot to set a value.
+                |> All outputs need a value.
+                |> All Input-/ Output-Columns need an expression.
+                |> Did you miss to wrap Strings in " - e.g. "TEXT"?
+                |> Check if there is an 'empty' Rule you accidentally created.
+                |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/""".stripMargin
           )
         case Failure(msg) =>
-          EvalException(decisionId, msg)
+          EvalException(dmnConfig, msg)
       }
   }
 

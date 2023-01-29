@@ -185,7 +185,7 @@ object DmnUnitTestGeneratorSpec extends JUnitRunnableSpec {
 
   private def evalExceptionTestMethod = {
     generator.testMethod(
-      EvalException(decisionId, "Failed poorly")
+      EvalException(dmnConfig, "Failed poorly")
     )
   }
 }

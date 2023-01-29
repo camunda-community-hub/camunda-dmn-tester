@@ -3,7 +3,7 @@ package pme123.camunda.dmn.tester.client
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
-import pme123.camunda.dmn.tester.shared.EvalStatus
+import pme123.camunda.dmn.tester.shared.*
 import pme123.camunda.dmn.tester.shared.EvalStatus.*
 
 def icon(status: EvalStatus) =
@@ -55,6 +55,11 @@ def stringInputRow(
     )
   )
 
+def panelHeader(dmnConfig: DmnConfig, evalStatus: EvalStatus) =
+  Seq(
+    h2(icon(evalStatus), dmnConfig.decisionId),
+    span(paddingLeft := "40px", dmnConfig.dmnPathStr)
+  )
 extension (row: TableRow.type)
   def stringInputCell(
       id: String,

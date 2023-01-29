@@ -76,12 +76,15 @@ final case class Main3CheckTheResults(
     }
 
   private def errorPanel(evalException: EvalException) =
-    val EvalException(decisionId, msg) = evalException
+    val EvalException(dmnConfig, msg) = evalException
     Panel(
       className := "testResultsPanel",
       _.collapsed := true,
-      _.slots.header := h2(icon(EvalStatus.ERROR), span(decisionId)),
-      pre(padding := "6px", msg)
+      _.slots.header := panelHeader(dmnConfig, EvalStatus.ERROR),
+      div(padding := "6px", msg.split("\n").map {
+        case v if v.startsWith(">") => li(v.replace("> ", ""))
+        case v => p(v)
+      }.toSeq)
     )
   end errorPanel
 

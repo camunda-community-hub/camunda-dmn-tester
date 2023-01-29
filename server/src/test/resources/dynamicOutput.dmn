@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="Definitions_0h38p41" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="Definitions_0h38p41" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.2.0">
   <decision id="dynamicOutputDmn" name="Decision 1">
     <decisionTable id="DecisionTable_0s5pjgp">
       <input id="Input_1" label="season">
@@ -22,6 +22,17 @@
         </inputEntry>
         <outputEntry id="LiteralExpression_1lt1pkr">
           <text>"Raclette "  + kind</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1j2v6ut">
+        <inputEntry id="UnaryTests_1g70quc">
+          <text>"Spring"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_01qwu8t">
+          <text>&gt;8</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_12i3dd7">
+          <text>"Salad"</text>
         </outputEntry>
       </rule>
     </decisionTable>

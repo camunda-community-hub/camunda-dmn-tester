@@ -39,7 +39,7 @@ case class DmnTableEngine(
       }
       .getOrElse(
         ZIO.fail(
-          EvalException(decisionId, s"No decision found with id '$decisionId'")
+          EvalException(dmnConfig, s"No decision found with id '$decisionId'")
         )
       )
 
@@ -95,7 +95,7 @@ case class DmnTableEngine(
             context.variables
           )
         )
-        .orElseFail(EvalException(decisionId, "No Evaluation Result"))
+        .orElseFail(EvalException(dmnConfig, "No Evaluation Result"))
     } yield DmnEvalRowResult(
       evalResult.status,
       decisionId,

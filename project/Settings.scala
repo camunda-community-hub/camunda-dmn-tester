@@ -22,7 +22,7 @@ object Settings {
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "io.github.pme123",
-      version := projectVersion
+      version := projectVersion,
     )
 
   lazy val ReleaseCmd = Command.command("release") { state =>
