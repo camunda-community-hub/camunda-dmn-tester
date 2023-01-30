@@ -1,11 +1,6 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import org.camunda.dmn.Audit.{
-  AuditLog,
-  ContextEvaluationResult,
-  DecisionTableEvaluationResult,
-  SingleEvaluationResult
-}
+import org.camunda.dmn.Audit.{AuditLog, ContextEvaluationResult, DecisionTableEvaluationResult, EvaluationResult, SingleEvaluationResult}
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.EvalContext
 import org.camunda.dmn.parser._
@@ -78,7 +73,7 @@ case class DmnTableEngine(
       parsedDecision: ParsedDecision,
       context: EvalContext,
       rules: Seq[DmnRule]
-  ): ZIO[Any, EvalException, DmnEvalRowResult] =
+  ): ZIO[Any, EvalException, DmnEvalRowResult] = {
     for {
       _ <- ZIO.succeed(
         engine.decisionEval
@@ -105,6 +100,7 @@ case class DmnTableEngine(
       evalResult.matchedRules,
       evalResult.failed
     )
+  }
 
   private def hitPolicyAndRules(decision: ParsedDecision) = {
     decision.logic match {

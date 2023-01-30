@@ -16,19 +16,21 @@ case class DmnConfig(
     testUnit: Boolean = true
 ) {
 
-  lazy val dmnPathStr = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
+  lazy val dmnPathStr: String = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
   lazy val dmnConfigPathStr = s"${decisionId}${if(testUnit) "" else "-INT"}.conf"
+  lazy val inputKeys: Seq[String] = data.inputKeys
+
 
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
 
-  lazy val decisionIdError = {
+  lazy val decisionIdError: Option[String] = {
     val regex =
       """^(?!xml|Xml|xMl|xmL|XMl|xML|XmL|XML)[A-Za-z_][A-Za-z0-9-_.]*$""".r
     if (regex.matches(decisionId)) None
     else Some(s"This must be a correct XML identifier (regex: $regex)")
   }
-  lazy val dmnPathError = {
+  lazy val dmnPathError: Option[String] = {
     val regex = """^([^\\\/?%*:|"<>\.])+(\/[^\\\/?%*:|"<>\.]+)*\.dmn$""".r
     if (regex.matches(dmnPathStr)) None
     else
@@ -37,7 +39,7 @@ case class DmnConfig(
       )
   }
 
-  lazy val hasErrors =
+  lazy val hasErrors: Boolean =
     decisionIdError.nonEmpty || dmnPathError.nonEmpty
 
 }

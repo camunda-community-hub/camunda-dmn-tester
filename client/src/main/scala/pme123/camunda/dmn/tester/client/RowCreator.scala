@@ -30,7 +30,19 @@ case class RowCreator(
     else {
       val maxStatus = maxEvalStatus(filteredRows)
       val rows: Seq[HtmlElement] = filteredRows
-        .map(r =>
+        .map { r =>
+          val matchedInputs: Seq[HtmlElement] =
+            if (inputKeys.size == filteredRows.head.inputs.size)
+              r.inputs.zipWithIndex.map { case _ -> index =>
+                collectCellTable(
+                  r.children.map {
+                    _.inputs(index)._2
+                  }
+                )
+              }
+            else
+              Seq(TableRow.cell("-"))
+
           Table.row(
             accessKey := r.key,
             tr =>
@@ -40,13 +52,7 @@ case class RowCreator(
                 collectCellTable(r.children.map {
                   _.dmnRowIndex
                 })) ++
-                r.inputs.zipWithIndex.map { case _ -> index =>
-                  collectCellTable(
-                    r.children.map {
-                      _.inputs(index)._2
-                    }
-                  )
-                } ++
+                matchedInputs ++
                 r.outputs.zipWithIndex.map { case _ -> index =>
                   collectCellTable(
                     r.children.map {
@@ -55,7 +61,25 @@ case class RowCreator(
                   )
                 }
           )
-        )
+        }
+      val matchedInputsCols: Seq[HtmlElement] =
+        if (inputKeys.size == filteredRows.head.inputs.size)
+          inputKeysColumns(true)
+        else
+          Seq(
+            Table.column(
+              className := "matchedInputHeader",
+              "No Matching Inputs available.",
+              Icon(_.name := IconName.`question-mark`, marginLeft := "5px"),
+              onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
+              onMouseOver
+                .map(_.target.asInstanceOf[HTMLElement])
+                .map(Some(_) -> ("The reason is that your integrated Test, has inputs that are not specified in the Dmn Config. " +
+                  "This is fine in Integrated Tests!")) --> openPopoverBus,
+              onMouseOut.mapTo(None -> "") --> openPopoverBus
+            )
+          )
+
       Seq(
         h3(
           if (maxStatus == EvalStatus.INFO)
@@ -78,7 +102,7 @@ case class RowCreator(
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
-          _.slots.columns := inputKeysColumns(true),
+          _.slots.columns := matchedInputsCols,
           _.slots.columns := outputKeysColumns,
           rows
         )
@@ -334,14 +358,15 @@ case class RowCreator(
 
   private def inputKeysColumns(
       matchedInputKeys: Boolean
-  ) = inputKeys.map(ik =>
-    Table.column(
-      className := (if (matchedInputKeys) "matchedInputHeader"
-                    else "resultInputHeader"),
-      span(ik),
-      title := (if (matchedInputKeys) "Matched Input" else "Test Input")
+  ) =
+    inputKeys.map(ik =>
+      Table.column(
+        className := (if (matchedInputKeys) "matchedInputHeader"
+                      else "resultInputHeader"),
+        span(ik),
+        title := (if (matchedInputKeys) "Matched Input" else "Test Input")
+      )
     )
-  )
 
   private def outputKeysColumns = outputKeys.map(ik =>
     Table.column(

@@ -55,12 +55,12 @@ final case class Main2SelectConfigs(
           ) --> selectedConfigsVar,
           children <-- dmnConfigsVar.signal
             .map { configs =>
-              allConfigsVar.set(configs.map { c => c.decisionId -> c }.toMap)
+              allConfigsVar.set(configs.map { c => s"${c.decisionId}-${c.testUnit}" -> c }.toMap)
               configs
                 .sortBy(_.decisionId)
                 .map(config =>
                   Table.row(
-                    accessKey := config.decisionId,
+                    accessKey := s"${config.decisionId}-${config.testUnit}",
                     _.cell(config.decisionId),
                     _.cell(if(config.testUnit) "yes" else "no"),
                     _.cell(config.dmnPath.mkString("/")),

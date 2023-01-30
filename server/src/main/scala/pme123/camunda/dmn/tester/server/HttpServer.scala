@@ -4,7 +4,6 @@ import cats.effect._
 import com.comcast.ip4s._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.UrlForm.entityEncoder
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe._
@@ -22,7 +21,7 @@ import java.nio.charset.StandardCharsets
 
 object HttpServer extends IOApp {
 
-  val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   override def run(args: List[String]): IO[ExitCode] =
     IO(logger.info("Server starting at Port 8883")) *>
