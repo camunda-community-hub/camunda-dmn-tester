@@ -17,6 +17,7 @@ case class DmnConfig(
 ) {
 
   lazy val dmnPathStr = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
+  lazy val dmnConfigPathStr = s"${decisionId}${if(testUnit) "" else "-INT"}.conf"
 
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)
@@ -87,7 +88,7 @@ case class TesterInput(
       ti.copy(id = Some(Random.nextInt(100000)))
     case o => o
   }
-  
+
   def valueType: String = values
     .map(_.valueType)
     .foldLeft(values.headOption.map(_.valueType).getOrElse("String"))(

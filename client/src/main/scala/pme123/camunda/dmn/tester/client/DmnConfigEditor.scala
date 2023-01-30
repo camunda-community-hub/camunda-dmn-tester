@@ -184,9 +184,7 @@ final case class DmnConfigEditor(
       def nullValueUpdater =
         inputsVar.updater[Boolean] { (data, newValue) =>
           data.map(item =>
-            println(s"Update: $id $newValue ${item.id}")
             if item.id.contains(id) then
-              println(s"Update2: $newValue ${item}")
               item.copy(nullValue = newValue)
             else item
           )
@@ -230,9 +228,7 @@ final case class DmnConfigEditor(
         _.cell(
           CheckBox(
             _.id := s"nullValue_$id",
-            _.checked <-- inputSignal.map{x =>
-              println(s"RENDER: $x")
-              x}.map(_.nullValue),
+            _.checked <-- inputSignal.map(_.nullValue),
             _.events.onChange.map(_.target.checked) --> nullValueUpdater
           )
         ),
@@ -270,7 +266,6 @@ final case class DmnConfigEditor(
           variables = dataVariablesVar.now()
         )
       )
-      println(s"NEW CONFIG: $newConfig")
       if (newConfig.hasErrors)
         EventStream.fromValue(
           errorMessage(

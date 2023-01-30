@@ -24,7 +24,7 @@ object DmnConfigHandler {
       path: List[String]
   ): IO[HandledTesterException, Unit] = {
     ZIO
-      .fromTry(Try(osPath(path) / s"${dmnConfig.decisionId}.conf"))
+      .fromTry(Try(osPath(path) / dmnConfig.dmnConfigPathStr))
       .mapError { ex =>
         ex.printStackTrace()
         ConfigException(ex.getMessage)
@@ -51,7 +51,7 @@ object DmnConfigHandler {
       path: List[String]
   ): IO[HandledTesterException, Unit] = {
     ZIO
-      .fromTry(Try(osPath(path) / s"${dmnConfig.decisionId}.conf"))
+      .fromTry(Try(osPath(path) / dmnConfig.dmnConfigPathStr))
       .mapError(
         { ex =>
           ex.printStackTrace()

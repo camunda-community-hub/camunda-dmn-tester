@@ -39,7 +39,11 @@ final case class Main2SelectConfigs(
             span("decisionId")
           ),
           _.slots.columns := Table.column(
-            width := "60%",
+            width := "10%",
+            span("unitTest")
+          ),
+          _.slots.columns := Table.column(
+            width := "50%",
             span("dmnPath")
           ),
           _.slots.columns := Table.column(""),
@@ -58,6 +62,7 @@ final case class Main2SelectConfigs(
                   Table.row(
                     accessKey := config.decisionId,
                     _.cell(config.decisionId),
+                    _.cell(if(config.testUnit) "yes" else "no"),
                     _.cell(config.dmnPath.mkString("/")),
                     _.cell(
                       Button(

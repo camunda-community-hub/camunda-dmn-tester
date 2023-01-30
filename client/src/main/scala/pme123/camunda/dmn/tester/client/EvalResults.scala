@@ -46,5 +46,4 @@ def matchedOutputKeys(evalResults: Seq[DmnEvalRowResult]): Seq[String] = {
 lazy val noMatchingRowsMsg = "NOT FOUND"
 
 def maxEvalStatus(rows: Seq[TableRow]): EvalStatus =
-  println(s"STATUSES: ${rows.map(_.status)}")
   rows.map(_.status).min

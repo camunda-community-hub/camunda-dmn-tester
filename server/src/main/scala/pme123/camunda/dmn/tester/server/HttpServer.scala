@@ -88,7 +88,6 @@ object HttpServer extends IOApp {
     case req @ PUT -> Root / "dmnConfig" :? ConfigPathQueryParamMatcher(
           configPath
         ) =>
-      println(s"update DMN Config: started: ")
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
       Ok(
         req
@@ -102,7 +101,6 @@ object HttpServer extends IOApp {
     case req @ DELETE -> Root / "dmnConfig" :? ConfigPathQueryParamMatcher(
           configPath
         ) =>
-      println(s"update DMN Config: started: ")
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
       Ok(
         req
