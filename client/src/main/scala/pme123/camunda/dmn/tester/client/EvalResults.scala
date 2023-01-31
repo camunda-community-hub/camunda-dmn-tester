@@ -33,7 +33,7 @@ case class TableRow(
 
 def matchedInputKeys(evalResults: Seq[DmnEvalRowResult]): Seq[String] = {
   evalResults.headOption
-    .flatMap(_.matchedRules.headOption.map(_.inputs.keys.toSeq))
+    .flatMap(_.matchedRules.headOption.map(_.inputs.map(_._1)))
     .getOrElse(Seq.empty)
 }
 

@@ -35,7 +35,7 @@ case class Dmn(
 case class DmnRule(
                     index: Int,
                     ruleId: String,
-                    inputs: Seq[String],
+                    inputs: Seq[(String,String)],
                     outputs: Seq[String]
                   )
 
@@ -72,7 +72,7 @@ object EvalResult {
 case class MatchedRule(
                         ruleId: String,
                         rowIndex: TestedValue,
-                        inputs: Map[String, String],
+                        inputs: Seq[(String, String)],
                         outputs: Seq[(String, TestedValue)]
                       ) {
   def hasError: Boolean = rowIndex.isError || outputs.exists(_._2.isError)

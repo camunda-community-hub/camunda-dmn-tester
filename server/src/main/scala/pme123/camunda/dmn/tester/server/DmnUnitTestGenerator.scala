@@ -72,11 +72,11 @@ case class DmnUnitTestGenerator(
   ): UIO[String] =
     ZIO.succeed(
       testMethod(
-        s"missing_${dmnRule.index}_${dmnRule.inputs.map(i => if(i == null) "null" else i.replaceAll("""[\W]""", "_")).mkString("__")}",
+        s"missing_${dmnRule.index}_${dmnRule.inputs.map(i => if(i == null) "null" else i._2.replaceAll("""[\W]""", "_")).mkString("__")}",
         s"""fail(\"\"\"There is no Rule that matched for these Inputs:
                        |${inputKeys
           .zip(dmnRule.inputs)
-          .map { case (k: String, v: String) =>
+          .map { case (k: String, (k2: String, v: String)) =>
             s"|- $k: $v"
           }
           .mkString("\n")}\"\"\".stripMargin)""".stripMargin

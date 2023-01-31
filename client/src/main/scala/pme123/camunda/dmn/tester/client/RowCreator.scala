@@ -103,7 +103,7 @@ case class RowCreator(
               .map(r => allRowsVar.now()(r.accessKey))
               .toList
           ) --> selectedTableRowsVar,
-          _.slots.columns := inputKeysColumns,
+          _.slots.columns := inputKeysColumns(),
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
@@ -121,8 +121,7 @@ case class RowCreator(
           noMatchingRowsMsg
         )
       )
-    if (filteredRows.isEmpty)
-      Seq()
+    if (filteredRows.isEmpty) Seq()
     else
       Seq(
         h3(
@@ -133,7 +132,7 @@ case class RowCreator(
         Table(
           className := "testResultsTable",
           _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns,
+          _.slots.columns := inputKeysColumns(),
           filteredRows
             .map(r =>
               Table.row { tr =>
@@ -151,6 +150,7 @@ case class RowCreator(
     if (filteredRows.isEmpty)
       Seq()
     else
+      println(s"INPUTS: ${filteredRows.head.inputs}")
       Seq(
         h3("Rules with no matching Test Inputs ", icon(EvalStatus.WARN)),
         p(
@@ -162,7 +162,7 @@ case class RowCreator(
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
-          _.slots.columns := inputKeysColumns,
+          _.slots.columns := matchedInputsColumns(filteredRows.head.inputs),
           _.slots.columns := outputKeysColumns,
           filteredRows
             .map(r =>
@@ -191,7 +191,7 @@ case class RowCreator(
         Table(
           className := "testResultsTable",
           _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns,
+          _.slots.columns := inputKeysColumns(),
           _.slots.columns := Table.column("Error Message"),
           filteredRows
             .map(r =>
@@ -260,13 +260,13 @@ case class RowCreator(
           ) =>
         val rows =
           matchedRules.map {
-            case MatchedRule(ruleId, rowIndex, inputs, outputs) =>
+            case MatchedRule(_, rowIndex, inputs, outputs) =>
               new TableRow(
                 testInputs.values.mkString("-"),
                 status,
                 testInputs,
                 rowIndex,
-                rowInputs(ruleId, inputs),
+                rowInputs(inputs),
                 outputs,
                 None,
                 Seq()
@@ -297,7 +297,7 @@ case class RowCreator(
         EvalStatus.WARN,
         inputKeys.map(_ -> "").toMap,
         NotTested(index.toString),
-        inputKeys.zip(inputs),
+        inputs,
         // if there are errors in the evaluation - there might be no outputs.
         outputKeys.zip(outputs.map(NotTested.apply)),
         outputMessage = None,
@@ -361,8 +361,8 @@ case class RowCreator(
   ): HtmlElement =
     ellipsis(value, p(), "notTestedCell", None)
 
-  private lazy val inputKeysColumns =
-    inputKeys.map(ik =>
+  private def inputKeysColumns(inputKs: Seq[String] = inputKeys): Seq[HtmlElement] =
+    inputKs.map(ik =>
       Table.column(
         className := "resultInputHeader",
         span(ik),
@@ -387,15 +387,14 @@ case class RowCreator(
   )
 
   private def rowInputs(
-      ruleId: String,
-      inputs: Map[String, String]
+      inputs: Seq[(String, String)]
   ): Seq[(String, String)] =
     val ins = inputKeys
-      .map(ik => ik -> inputs.get(ik))
+      .map(ik => ik -> inputs.toMap.get(ik))
       .filter(_._2.nonEmpty)
       .map(i => i._1 -> i._2.get)
     if (ins.size != inputKeys.size)
-      inputs.toSeq
+      inputs
     else
       ins
 

@@ -108,7 +108,10 @@ case class DmnTableEngine(
 
   private def hitPolicyAndRules(decision: ParsedDecision) = {
     decision.logic match {
-      case ParsedDecisionTable(_, _, rules, hitPolicy, _) =>
+      case ParsedDecisionTable(inputDefs, _, rules, hitPolicy, _) =>
+        println(s"PARSED DECISION: $inputDefs")
+
+
         hitPolicy -> rules.zipWithIndex.map {
           case (
                 ParsedRule(id, inputs: Iterable[ParsedExpression], outputs),
@@ -117,7 +120,7 @@ case class DmnTableEngine(
             DmnRule(
               index + 1,
               id,
-              inputs.map(extractFrom).toSeq,
+              inputDefs.toSeq.zip(inputs.map(extractFrom)).flatMap(in => extractInput(in._1, in._2).toSeq),
               outputs.map(o => extractFrom(o._2)).toSeq
             )
         }.toSeq
@@ -156,7 +159,7 @@ case class DmnTableEngine(
               rule.rule.id,
               testedIndex,
               log.entries
-                .foldLeft(Map.empty[String, String])((result, logEntry) => {
+                .foldLeft(Seq.empty[(String, String)])((result, logEntry) => {
                   result ++ extractInputs(logEntry.result)
                 }),
               checkOutputs(
@@ -174,32 +177,42 @@ case class DmnTableEngine(
 
   private def extractInputs(
       evaluationResult: EvaluationResult
-  ) =
+  ): Seq[(String, String)] =
     evaluationResult match {
       case DecisionTableEvaluationResult(inputs, _, _) =>
         val ins = inputs
-          .map {
-            case EvaluatedInput(
-                  ParsedInput(
-                    _,
-                    name,
-                    FeelExpression(FeelParsedExpression(_, inputKey))
-                  ),
-                  value
-                ) =>
-              (inputKey == name,   name, unwrap(value))
+          .map { case EvaluatedInput(parsedInput, value) =>
+            extractInput(parsedInput, unwrap(value))
           }
-          .filter(in => !in._1 || (in._1 && dmnConfig.inputKeys.contains(in._2)))
-          .map(in => (in._2, in._3))
+          .filter(_.nonEmpty)
+          .map(_.get)
         println(s"INPUTS: $ins")
-        ins.toMap
+        ins
       case SingleEvaluationResult(_) =>
-        Map.empty
+        Seq.empty
       case ContextEvaluationResult(entries, _) =>
         entries.toSeq.map { case k -> v =>
           k -> v.toString
-        }.toMap
+        }
     }
+
+  private def extractInput(
+      input: ParsedInput,
+      value: String
+  ): Option[(String, String)] = {
+    val in = input match {
+      case ParsedInput(
+            _,
+            name,
+            FeelExpression(FeelParsedExpression(_, inputKey))
+          ) =>
+        (inputKey == name, name, value)
+    }
+    if (!in._1 || (in._1 && dmnConfig.inputKeys.contains(in._2)))
+      Some(in._2 -> in._3)
+    else
+      None
+  }
 
   private def checkOutputs(
       inputMap: Map[String, Any],

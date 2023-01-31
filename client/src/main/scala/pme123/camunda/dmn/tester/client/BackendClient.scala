@@ -125,7 +125,8 @@ object BackendClient {
   ): EventStream[Either[String, Seq[Either[EvalException, DmnEvalResult]]]] =
     AjaxEventStream
       .post(s"$url/api/runDmnTests", data = configs.asJson.toString)
-      .map(req =>
+      .map(req => {
+        println(s"EVALRESULT: ${req.responseText}")
         parser
           .parse(req.responseText)
           .flatMap(_.as[Seq[Either[EvalException, DmnEvalResult]]])
@@ -133,6 +134,7 @@ object BackendClient {
           .map(exc =>
             s"Problem parsing response body: ${req.responseText}\n${exc.getMessage}"
           )
+      }
       )
       .recover(err =>
         Some(Left(s"Problem running Dmn Tests: ${err.getMessage} "))
