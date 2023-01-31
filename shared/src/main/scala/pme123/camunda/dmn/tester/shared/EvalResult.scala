@@ -72,7 +72,7 @@ object EvalResult {
 case class MatchedRule(
                         ruleId: String,
                         rowIndex: TestedValue,
-                        inputs: Seq[(String, String)],
+                        inputs: Map[String, String],
                         outputs: Seq[(String, TestedValue)]
                       ) {
   def hasError: Boolean = rowIndex.isError || outputs.exists(_._2.isError)

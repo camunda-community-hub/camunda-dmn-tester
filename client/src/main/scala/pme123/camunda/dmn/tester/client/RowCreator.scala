@@ -14,6 +14,7 @@ import pme123.camunda.dmn.tester.shared
 import pme123.camunda.dmn.tester.shared.*
 
 import scala.collection.View.Empty
+import scala.collection.immutable
 import scala.scalajs.js
 
 case class RowCreator(
@@ -33,6 +34,7 @@ case class RowCreator(
         .map { r =>
           val matchedInputs: Seq[HtmlElement] =
             if (inputKeys.size == filteredRows.head.inputs.size)
+              println("CORRECT INPUT SIZE")
               r.inputs.zipWithIndex.map { case _ -> index =>
                 collectCellTable(
                   r.children.map {
@@ -40,8 +42,7 @@ case class RowCreator(
                   }
                 )
               }
-            else
-              Seq(TableRow.cell("-"))
+            else Seq(TableRow.cell("-"))
 
           Table.row(
             accessKey := r.key,
@@ -64,7 +65,7 @@ case class RowCreator(
         }
       val matchedInputsCols: Seq[HtmlElement] =
         if (inputKeys.size == filteredRows.head.inputs.size)
-          inputKeysColumns(true)
+          matchedInputsColumns(filteredRows.head.inputs)
         else
           Seq(
             Table.column(
@@ -74,8 +75,12 @@ case class RowCreator(
               onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
               onMouseOver
                 .map(_.target.asInstanceOf[HTMLElement])
-                .map(Some(_) -> ("The reason is that your integrated Test, has inputs that are not specified in the Dmn Config. " +
-                  "This is fine in Integrated Tests!")) --> openPopoverBus,
+                .map(
+                  Some(
+                    _
+                  ) -> ("The reason is that your integrated Test, has inputs that are not specified in the Dmn Config. " +
+                    "This is fine in Integrated Tests!")
+                ) --> openPopoverBus,
               onMouseOut.mapTo(None -> "") --> openPopoverBus
             )
           )
@@ -98,7 +103,7 @@ case class RowCreator(
               .map(r => allRowsVar.now()(r.accessKey))
               .toList
           ) --> selectedTableRowsVar,
-          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := inputKeysColumns,
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
@@ -128,7 +133,7 @@ case class RowCreator(
         Table(
           className := "testResultsTable",
           _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := inputKeysColumns,
           filteredRows
             .map(r =>
               Table.row { tr =>
@@ -157,7 +162,7 @@ case class RowCreator(
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
-          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := inputKeysColumns,
           _.slots.columns := outputKeysColumns,
           filteredRows
             .map(r =>
@@ -186,7 +191,7 @@ case class RowCreator(
         Table(
           className := "testResultsTable",
           _.stickyColumnHeader := true,
-          _.slots.columns := inputKeysColumns(false),
+          _.slots.columns := inputKeysColumns,
           _.slots.columns := Table.column("Error Message"),
           filteredRows
             .map(r =>
@@ -356,18 +361,23 @@ case class RowCreator(
   ): HtmlElement =
     ellipsis(value, p(), "notTestedCell", None)
 
-  private def inputKeysColumns(
-      matchedInputKeys: Boolean
-  ) =
+  private lazy val inputKeysColumns =
     inputKeys.map(ik =>
       Table.column(
-        className := (if (matchedInputKeys) "matchedInputHeader"
-                      else "resultInputHeader"),
+        className := "resultInputHeader",
         span(ik),
-        title := (if (matchedInputKeys) "Matched Input" else "Test Input")
+        title := "Test Input"
       )
     )
 
+  private def matchedInputsColumns(inputs: Seq[(String, String)]) =
+    inputs.map(ik =>
+      Table.column(
+        className := "matchedInputHeader",
+        span(ik._1),
+        title := "Matched Input"
+      )
+    )
   private def outputKeysColumns = outputKeys.map(ik =>
     Table.column(
       className := "resultOutputHeader",
@@ -376,12 +386,18 @@ case class RowCreator(
     )
   )
 
-  private def rowInputs(ruleId: String, inputs: Seq[(String, String)]) =
-    if (dmn.dmnConfig.testUnit)
-      val rInputs =
-        dmn.rules.find(_.ruleId == ruleId).map(_.inputs).getOrElse(Seq.empty)
-      inputs.zipWithIndex.map { case (k -> _, index) => k -> rInputs(index) }
-    else inputs
+  private def rowInputs(
+      ruleId: String,
+      inputs: Map[String, String]
+  ): Seq[(String, String)] =
+    val ins = inputKeys
+      .map(ik => ik -> inputs.get(ik))
+      .filter(_._2.nonEmpty)
+      .map(i => i._1 -> i._2.get)
+    if (ins.size != inputKeys.size)
+      inputs.toSeq
+    else
+      ins
 
   private def matchedRowsTable(row: TableRow) =
     if (row.children.isEmpty || row.children.head.outputs.isEmpty)
@@ -393,7 +409,7 @@ case class RowCreator(
           className := "smallColHeader",
           span("Dmn Row")
         ),
-        _.slots.columns := inputKeysColumns(true),
+        _.slots.columns := matchedInputsColumns(row.inputs),
         _.slots.columns := outputKeysColumns,
         row.children
           .map(r =>

@@ -1,10 +1,14 @@
 package pme123.camunda.dmn.tester.server.runner
 
-import org.camunda.dmn.Audit.{AuditLog, ContextEvaluationResult, DecisionTableEvaluationResult, EvaluationResult, SingleEvaluationResult}
+import org.camunda.dmn.Audit._
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine.EvalContext
 import org.camunda.dmn.parser._
-import org.camunda.feel.syntaxtree.{Val, ValError}
+import org.camunda.feel.syntaxtree.{
+  Val,
+  ValError,
+  ParsedExpression => FeelParsedExpression
+}
 import org.camunda.feel.valuemapper.ValueMapper
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
@@ -145,21 +149,16 @@ case class DmnTableEngine(
         }
         val rules = matchedRules
           .map(rule => {
+            println(s"RULE: $rule")
 
             val testedIndex = rowIndex(rule.rule.id)
             MatchedRule(
               rule.rule.id,
               testedIndex,
-              log.entries.head.result match {
-                case DecisionTableEvaluationResult(inputs, _, _) =>
-                  inputs.map(i => i.input.name -> unwrap(i.value))
-                case SingleEvaluationResult(_) =>
-                  Seq.empty
-                case ContextEvaluationResult(entries, _) =>
-                  entries.toSeq.map { case k -> v =>
-                    k -> v.toString
-                  }
-              },
+              log.entries
+                .foldLeft(Map.empty[String, String])((result, logEntry) => {
+                  result ++ extractInputs(logEntry.result)
+                }),
               checkOutputs(
                 inputMap,
                 testedIndex,
@@ -172,6 +171,35 @@ case class DmnTableEngine(
         EvalResult(log.rootEntry.id, rules, maybeError)
     }
   }
+
+  private def extractInputs(
+      evaluationResult: EvaluationResult
+  ) =
+    evaluationResult match {
+      case DecisionTableEvaluationResult(inputs, _, _) =>
+        val ins = inputs
+          .map {
+            case EvaluatedInput(
+                  ParsedInput(
+                    _,
+                    name,
+                    FeelExpression(FeelParsedExpression(_, inputKey))
+                  ),
+                  value
+                ) =>
+              (inputKey == name,   name, unwrap(value))
+          }
+          .filter(in => !in._1 || (in._1 && dmnConfig.inputKeys.contains(in._2)))
+          .map(in => (in._2, in._3))
+        println(s"INPUTS: $ins")
+        ins.toMap
+      case SingleEvaluationResult(_) =>
+        Map.empty
+      case ContextEvaluationResult(entries, _) =>
+        entries.toSeq.map { case k -> v =>
+          k -> v.toString
+        }.toMap
+    }
 
   private def checkOutputs(
       inputMap: Map[String, Any],
