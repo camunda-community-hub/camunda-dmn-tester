@@ -25,7 +25,7 @@ case class ResultTableRow(
       .map(_.rowIndex)
       .getOrElse(TestFailure("-9999")) // SHOULD NOT HAPPEN!
 
-  lazy val mainInputs: Seq[(String, String)] =
+  private lazy val mainInputs: Seq[(String, String)] =
     matchedRulesPerTable.headOption
       .flatMap(_.matchedRules.headOption)
       .toSeq
@@ -35,7 +35,7 @@ case class ResultTableRow(
     mainInputs
       .map(_._1)
 
-  lazy val mainOutputs: Seq[(String, TestedValue)] =
+  private lazy val mainOutputs: Seq[(String, TestedValue)] =
     matchedRulesPerTable.headOption
       .flatMap(_.matchedRules.headOption)
       .toSeq

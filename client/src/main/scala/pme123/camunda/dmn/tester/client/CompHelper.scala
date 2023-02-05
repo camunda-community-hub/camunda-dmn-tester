@@ -7,7 +7,7 @@ import pme123.camunda.dmn.tester.shared.*
 import pme123.camunda.dmn.tester.shared.EvalStatus.*
 
 def icon(status: EvalStatus) =
-  val (name, backgroungColor) = status match
+  val (name, backgroundColor) = status match
     case INFO  => (IconName.information, "green")
     case WARN  => (IconName.alert, "orange")
     case ERROR => (IconName.error, "red")
@@ -16,7 +16,7 @@ def icon(status: EvalStatus) =
     marginRight := "1em",
     width := "1.5rem",
     height := "1.5rem",
-    color := backgroungColor
+    color := backgroundColor
   )
 
 case class ErrorMessage(title: String, error: String)

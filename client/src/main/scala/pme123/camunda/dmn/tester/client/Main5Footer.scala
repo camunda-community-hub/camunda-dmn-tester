@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.html
 
-final case class MainFooter():
+final case class Main5Footer():
 
   lazy val comp: ReactiveHtmlElement[html.Element] =
     section(
@@ -19,8 +19,8 @@ final case class MainFooter():
       )
   end comp
 
-object MainFooter:
+object Main5Footer:
     def apply(): ReactiveHtmlElement[html.Element] =
-        new MainFooter().comp  
+        new Main5Footer().comp  
 
-end MainFooter
+end Main5Footer

@@ -30,11 +30,11 @@ case class DmnConfig(
     else Some(s"This must be a correct XML identifier (regex: $regex)")
   }
   lazy val dmnPathError: Option[String] = {
-    val regex = """^([^\\\/?%*:|"<>\.])+(\/[^\\\/?%*:|"<>\.]+)*\.dmn$""".r
+    val regex = """^([^\\/?%*:|"<>.])+(/[^\\/?%*:|"<>.]+)*\.dmn$""".r
     if (regex.matches(dmnPathStr)) None
     else
       Some(
-        s"This must be a correct Path e.g 'myDmns/coutryTable.dmn' (regex: $regex)"
+        s"This must be a correct Path e.g 'myDmns/countryTable.dmn' (regex: $regex)"
       )
   }
 
@@ -59,7 +59,7 @@ case class TesterData(
 
   /** this creates all variations of the inputs you provide
     */
-  def cartesianProduct(
+  private def cartesianProduct(
       xss: List[(String, List[Any])]
   ): List[List[(String, Any)]] =
     xss match {
@@ -107,13 +107,13 @@ case class TesterInput(
     key -> allValues
   }
 
-  lazy val keyError = {
+  lazy val keyError: Option[String] = {
     val regex = """^[A-Za-z_][A-Za-z0-9-_.]*$""".r
     if (regex.matches(key)) None
     else Some(s"This must be a correct key - e.g. 'contractId' (regex: $regex)")
   }
 
-  lazy val valuesError = {
+  lazy val valuesError: Option[String] = {
     if (valuesAsString.trim.nonEmpty) None
     else Some("Values are required. Examples: '1,2,3', 'hello', 'true, false'")
   }
@@ -228,9 +228,6 @@ case class TestCase(
     inputs: Map[String, TesterValue],
     results: List[TestResult]
 ) {
-
-  lazy val resultsOutputMap: Seq[Map[String, String]] =
-    results.map(_.outputs.view.mapValues(_.valueStr).toMap)
 
   def checkIndex(rowIndex: Int): TestedValue =
     if (results.exists(_.rowIndex == rowIndex))

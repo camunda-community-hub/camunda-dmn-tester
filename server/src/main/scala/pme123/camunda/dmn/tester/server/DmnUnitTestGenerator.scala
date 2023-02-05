@@ -8,6 +8,7 @@ import zio.{IO, Runtime, UIO, Unsafe, ZIO}
 
 import scala.util.Try
 
+//TODO Fix this functionality
 case class UnitTestGeneratorConfig(
     packageName: String = "pme123.camunda.dmn.tester.test",
     outputPath: List[String] = List("server", "target", "generated-tests")

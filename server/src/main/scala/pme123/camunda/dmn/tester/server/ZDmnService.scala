@@ -40,13 +40,6 @@ object ZDmnService {
     } yield dmnConfigs
   }
 
-  def addConfig(
-      dmnConfig: DmnConfig,
-      path: Seq[String]
-  ): IO[HandledTesterException, Seq[DmnConfig]] =
-    DmnConfigHandler.write(dmnConfig, path.toList) *>
-      loadConfigs(path)
-
   def updateConfig(
       dmnConfig: DmnConfig,
       path: Seq[String]

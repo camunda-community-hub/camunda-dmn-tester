@@ -139,7 +139,7 @@ final case class DmnConfigEditor(
         width := "100%",
         _.events.onClick --> (_ => dataInputsVar.update(_ :+ TesterInput()))
       ),
-      h4("Test Variables used in Inpts and Outputs"),
+      h4("Test Variables used in Inputs and Outputs"),
       inputValueVariableTables(dataVariablesVar),
       Button(
         _.icon := IconName.add,
@@ -176,33 +176,30 @@ final case class DmnConfigEditor(
 
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
     def renderInputsTableRow(id: Int, inputSignal: Signal[TesterInput]) =
+
+      def updater[A](copyFunction: (TesterInput, A) => TesterInput) =
+        inputsVar.updater[A] { (data, newValue) =>
+          data.map(item =>
+            if item.id.contains(id) then copyFunction(item, newValue)
+            else item
+          )
+        }
+
       def keyUpdater =
-        inputsVar.updater[String] { (data, newValue) =>
-          data.map(item =>
-            if item.id.contains(id) then item.copy(key = newValue)
-            else item
-          )
-        }
+        updater[String]((item, newValue) => item.copy(key = newValue))
       def nullValueUpdater =
-        inputsVar.updater[Boolean] { (data, newValue) =>
-          data.map(item =>
-            if item.id.contains(id) then item.copy(nullValue = newValue)
-            else item
-          )
-        }
+        updater[Boolean]((item, newValue) => item.copy(nullValue = newValue))
+
       def valuesUpdater =
-        inputsVar.updater[String] { (data, newValue) =>
-          data.map(item =>
-            if (item.id.contains(id)) {
-              val values = newValue
-                .split(",")
-                .map(_.trim)
-                .filter(_.nonEmpty)
-              val testerValues = values.map(TesterValue.fromString)
-              item.copy(values = testerValues.toList)
-            } else item
-          )
-        }
+        updater[String]((item, newValue) =>
+          if (item.id.contains(id)) {
+            val values = newValue
+              .split(",")
+              .map(_.trim)
+              .filter(_.nonEmpty)
+            val testerValues = values.map(TesterValue.fromString)
+            item.copy(values = testerValues.toList)
+          } else item)
 
       Table.row(
         _.stringInputCell(
@@ -279,7 +276,7 @@ final case class DmnConfigEditor(
       else
         BackendClient
           .updateConfig(newConfig, path)
-          .map(responseToHtml(configs =>{
+          .map(responseToHtml(configs => {
             dmnConfigsVar.set(configs)
             openEditDialogBus.emit(false)
             span("")

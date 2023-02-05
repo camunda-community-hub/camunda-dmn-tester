@@ -31,49 +31,35 @@ case class RowCreator(
     else {
       val maxStatus = maxEvalStatus(filteredRows)
       val rows: Seq[HtmlElement] = filteredRows
-        .map {
-          case rtr @ ResultTableRow(
-                key,
-                status,
-                testInputs,
-                matchedRulesPerTable,
-                outputMessage
-              ) =>
-            val DmnTable(
-              decisionId,
-              name,
-              hitPolicy,
-              aggregation,
-              inputCols,
-              outputCols,
-              ruleRows
-            ) = allDmnTables.mainTable
-            val matchedInputs: Seq[HtmlElement] = inputCols.zipWithIndex.map {
-              case _ -> index =>
-                collectCellTable(
-                  rtr.mainMatchedRules.map(mRule => mRule.inputs(index)._2)
-                )
-            }
-            val matchedOutputs: Seq[HtmlElement] = outputCols.zipWithIndex.map {
-              case _ -> index =>
-                collectCellTable(
-                  rtr.mainMatchedRules.map(mRule => mRule.outputs(index)._2)
-                )
-            }
+        .map { case rtr: ResultTableRow =>
+          val inputCols = allDmnTables.mainTable.inputCols
+          val outputCols = allDmnTables.mainTable.outputCols
+          val matchedInputs: Seq[HtmlElement] = inputCols.zipWithIndex.map {
+            case _ -> index =>
+              collectCellTable(
+                rtr.mainMatchedRules.map(mRule => mRule.inputs(index)._2)
+              )
+          }
+          val matchedOutputs: Seq[HtmlElement] = outputCols.zipWithIndex.map {
+            case _ -> index =>
+              collectCellTable(
+                rtr.mainMatchedRules.map(mRule => mRule.outputs(index)._2)
+              )
+          }
 
-            Table.row(
-              accessKey := rtr.key,
-              tr =>
-                (inputKeys
-                  .map(rtr.testInputs(_).toString)
-                  .map(ellipsis(_, tr)) :+
-                  collectCellTable(rtr.mainMatchedRules.map(_.rowIndex))) ++
-                  matchedInputs ++
-                  matchedOutputs ++
-                  (if (rtr.hasRequiredTables)
-                     Seq(tr.cell(showRequiredTables(rtr)))
-                   else Seq.empty)
-            )
+          Table.row(
+            accessKey := rtr.key,
+            tr =>
+              (inputKeys
+                .map(rtr.testInputs(_).toString)
+                .map(ellipsis(_, tr)) :+
+                collectCellTable(rtr.mainMatchedRules.map(_.rowIndex))) ++
+                matchedInputs ++
+                matchedOutputs ++
+                (if (rtr.hasRequiredTables)
+                   Seq(tr.cell(showRequiredTables(rtr)))
+                 else Seq.empty)
+          )
         }
       val matchedInputsCols: Seq[HtmlElement] =
         //  allDmnTables.tables.flatMap(t =>
@@ -277,7 +263,7 @@ case class RowCreator(
       case r @ DmnEvalRowResult(status, testInputs, _, maybeError)
           if r.hasNoMatch =>
         Seq(
-          new ResultTableRow(
+          ResultTableRow(
             testInputs.values.mkString("-"),
             status,
             testInputs,
@@ -363,16 +349,16 @@ case class RowCreator(
       onMouseOut.mapTo(None -> "") --> openPopoverBus
     )
 
-  private def cellParagr = p(className := "cellParagr")
+  private def cellParagraph = p(className := "cellParagraph")
   private def ellipsis(
       result: TestedValue
   ): HtmlElement = result match
     case TestFailure(value, msg) =>
-      ellipsis(value, cellParagr, "failedCell", Some(msg))
+      ellipsis(value, cellParagraph, "failedCell", Some(msg))
     case TestSuccess(value) =>
-      ellipsis(value, cellParagr, "succeededCell", None)
+      ellipsis(value, cellParagraph, "succeededCell", None)
     case NotTested(value) =>
-      ellipsis(value, cellParagr, "notTestedCell", None)
+      ellipsis(value, cellParagraph, "notTestedCell", None)
 
   private def ellipsis(
       value: String
@@ -402,9 +388,7 @@ case class RowCreator(
         onMouseOver
           .map(_.target.asInstanceOf[HTMLElement])
           .map(
-            Some(
-              _
-            ) -> s"Matched Input from the Decision Table $decisionId"
+            Some(_) -> s"Matched Input from the Decision Table $decisionId"
           ) --> openPopoverBus,
         onMouseOut.mapTo(None -> "") --> openPopoverBus
       )
@@ -509,57 +493,39 @@ case class RowCreator(
       tableRow: ResultTableRow
   ) =
     div(
-      allDmnTables.requiredTables.map {
-        case DmnTable(
-              decisionId,
-              _,
-              hitPolicy,
-              aggregation,
-              inputCols,
-              outputCols,
-              _
-            ) =>
-          Panel(
-            _.accessibleRole := PanelAccessibleRole.Complementary,
-            className := "testResultsPanel",
-            className := "flex-column",
-            className := "full-width",
-            h2(s"Table: $decisionId"),
-            p(s"Hitpolicy: ${hitPolicy}"),
-            aggregation.map(a => s"Aggregation: $a").getOrElse(""),
-            tableRow.matchedRulesPerTable
-              .find(_.decisionId == decisionId)
-              .map { mrpt =>
-                val rows =
-                  mrpt.matchedRules.map(mRules =>
-                    Table.row(tr =>
-                      ((mRules.rowIndex.value +:
-                        mRules.inputs.map(_._2)) ++
-                        mRules.outputs.map(_._2.value))
-                        .map(ellipsis(_, tr))
-                    )
-                  )
-
-                Table(
-                  className := "testResultsTable",
-                  _.stickyColumnHeader := true,
-                  _.slots.columns := Table.column(
-                    span("Dmn Row")
-                  ),
-                  _.slots.columns := matchedInputsColumns(
-                    decisionId,
-                    mrpt.inputKeys
-                  ),
-                  _.slots.columns := resultOutputsColumns(
-                    decisionId,
-                    mrpt.outputKeys
-                  ),
-                  rows
-                )
-
-              }
-              .getOrElse(span(s"No matching table found for $decisionId"))
-          )
+      allDmnTables.requiredTables.map { case dmnTable: DmnTable =>
+        Panel(
+          _.accessibleRole := PanelAccessibleRole.Complementary,
+          className := "testResultsPanel",
+          className := "flex-column",
+          className := "full-width",
+          h2(s"Table: ${dmnTable.decisionId}"),
+          p(s"Hit Policy: ${dmnTable.hitPolicy}"),
+          dmnTable.aggregation.map(a => s"Aggregation: $a").getOrElse(""),
+          tableRow.matchedRulesPerTable
+            .find(_.decisionId == dmnTable.decisionId)
+            .map { matchedRulesPerTable =>
+              Table(
+                className := "testResultsTable",
+                _.stickyColumnHeader := true,
+                _.slots.columns := Table.column(
+                  span("Dmn Row")
+                ),
+                _.slots.columns := matchedInputsColumns(
+                  dmnTable.decisionId,
+                  matchedRulesPerTable.inputKeys
+                ),
+                _.slots.columns := resultOutputsColumns(
+                  dmnTable.decisionId,
+                  matchedRulesPerTable.outputKeys
+                ),
+                simpleRows(matchedRulesPerTable.matchedRules)
+              )
+            }
+            .getOrElse(
+              span(s"No matching table found for ${dmnTable.decisionId}")
+            )
+        )
       }
     )
 

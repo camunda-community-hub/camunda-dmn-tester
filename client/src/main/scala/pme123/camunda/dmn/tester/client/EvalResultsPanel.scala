@@ -33,7 +33,7 @@ case class EvalResultsPanel(
         else "Integrated Test - experimental ☠️ \uD83D\uDE0A"
       )
     ),
-    p(s"Hitpolicy: ${mainTable.hitPolicy}"),
+    p(s"Hit Policy: ${mainTable.hitPolicy}"),
     mainTable.aggregation.map(a => s"Aggregation: $a").getOrElse(""),
     if (dmnConfig.data.variables.nonEmpty)
       p(

@@ -131,10 +131,8 @@ final case class Main2SelectConfigs(
     )
 
   private lazy val dmnConfigs = dmnConfigsPathSignal
-    .flatMap(
-      BackendClient
-        .getConfigs)
-    .map(responseToHtml((configs) =>
+    .flatMap(BackendClient.getConfigs)
+    .map(responseToHtml(configs =>
       dmnConfigsVar.set(configs)
       span("")
     ))
@@ -154,8 +152,7 @@ final case class Main2SelectConfigs(
         .map(responseToHtml(configs => {
           dmnConfigsVar.set(configs)
           span("ok")
-        }
-        ))
+        }))
     }
 
 object Main2SelectConfigs:

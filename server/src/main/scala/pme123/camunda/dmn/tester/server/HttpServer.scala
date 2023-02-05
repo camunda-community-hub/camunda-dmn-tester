@@ -51,7 +51,7 @@ object HttpServer extends IOApp {
 
   private lazy val apiServices = HttpRoutes.of[IO] {
     case GET -> Root / "basePath" =>
-      Try(DmnService.getBasePath()) match {
+      Try(DmnService.getBasePath) match {
         case Failure(exception) =>
           exception.printStackTrace()
           InternalServerError(exception.getMessage)
@@ -59,7 +59,7 @@ object HttpServer extends IOApp {
           Ok.apply(value)
       }
     case GET -> Root / "configPaths" =>
-      Try(DmnService.getConfigPaths().asJson) match {
+      Try(DmnService.getConfigPaths.asJson) match {
         case Failure(exception) =>
           exception.printStackTrace()
           InternalServerError(exception.getMessage)

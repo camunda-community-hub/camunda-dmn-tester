@@ -33,7 +33,7 @@ object Main:
       Main1SelectConfigPath(basePathVar, dmnConfigsPathVar),
       Main2SelectConfigs(basePathSignal, dmnConfigsPathVar.signal, selectedConfigsVar, dmnConfigsVar),
       Main3CheckTheResults(testsAreRunningVar, dmnConfigsPathVar.signal, selectedConfigsVar.signal, dmnConfigsVar),
-      MainFooter(),
+      Main5Footer(),
     )
 
 end Main

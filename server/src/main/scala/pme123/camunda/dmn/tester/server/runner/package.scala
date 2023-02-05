@@ -20,15 +20,6 @@ package object runner {
       case other                      => os.pwd / other
     }
 
-  def printError(msg: String): IO[ConsoleException, Unit] =
-    print(
-      scala.Console.RED + msg + scala.Console.RESET
-    )
-  def printWarning(msg: String): IO[ConsoleException, Unit] =
-    print(
-      scala.Console.YELLOW + msg + scala.Console.RESET
-    )
-
   def print(msg: String): IO[ConsoleException, Unit] = {
     printLine(msg).mapError(exc => ConsoleException(s"ERROR: Problem with printing to console: ${exc.getMessage}"))
   }

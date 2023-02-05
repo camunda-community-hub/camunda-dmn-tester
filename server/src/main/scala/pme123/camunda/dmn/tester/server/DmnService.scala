@@ -3,26 +3,18 @@ package pme123.camunda.dmn.tester.server
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult}
-import zio.{IO, Runtime, Unsafe, ZIO}
+import zio.{IO, Runtime, Unsafe}
 
 class DmnService {
 
-  def getBasePath(): String =
+  def getBasePath: String =
     run(z.basePath())
 
-  def getConfigPaths(): Seq[String] =
+  def getConfigPaths: Seq[String] =
     run(z.loadConfigPaths())
 
   def getConfigs(path: Seq[String]): Seq[DmnConfig] =
     run(z.loadConfigs(path))
-
-  def addConfig(
-      dmnConfig: DmnConfig,
-      path: Seq[String]
-  ): Seq[DmnConfig] =
-    run(
-      z.addConfig(dmnConfig, path)
-    )
 
   def updateConfig(
       dmnConfig: DmnConfig,
@@ -40,7 +32,7 @@ class DmnService {
       z.deleteConfig(dmnConfig, path)
     )
 
-  def dmnPathExists(dmnPath: String) =
+  def dmnPathExists(dmnPath: String): Boolean =
     run(
       z.dmnPathExists(dmnPath)
     )
@@ -58,6 +50,4 @@ class DmnService {
     }
 }
 
-object DmnService extends DmnService {
-
-}
+object DmnService extends DmnService

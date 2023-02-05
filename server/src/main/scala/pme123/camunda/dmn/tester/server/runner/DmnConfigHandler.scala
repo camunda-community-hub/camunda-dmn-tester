@@ -69,19 +69,10 @@ object hocon {
   import ConfigDescriptor._
   import zio.config.typesafe._
 
-  def testerValueToJson(testerValue: TesterValue): Some[Any] =
-    testerValue match {
-      case NumberValue(value)  => Some(value)
-      case StringValue(value)  => Some(value)
-      case BooleanValue(value) => Some(value)
-      case DateValue(value)    => Some(value)
-      case NullValue           => Some(null)
-    }
-
   lazy val stringValue: ConfigDescriptor[TesterValue] =
     string(
       TesterValue.fromAny,
-      (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
+      (bd: TesterValue) => // specific as otherwise there is a ClassCastException
         bd match {
           case NullValue          => Some(NullValue.constant)
           case DateValue(value)   => Some(value)
@@ -93,7 +84,7 @@ object hocon {
   private lazy val bigDecimalValue: ConfigDescriptor[TesterValue] =
     bigDecimal(
       NumberValue.apply,
-      (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
+      (bd: TesterValue) => // specific as otherwise there is a ClassCastException
         bd match {
           case NumberValue(value) => Some(value)
           case _                  => None
@@ -103,7 +94,7 @@ object hocon {
   private lazy val booleanValue: ConfigDescriptor[TesterValue] =
     boolean(
       BooleanValue.apply,
-      (bd: TesterValue) => // specific as otherwise there is a ClassCastExceptio
+      (bd: TesterValue) => // specific as otherwise there is a ClassCastException
         bd match {
           case BooleanValue(value) => Some(value)
           case _                   => None
