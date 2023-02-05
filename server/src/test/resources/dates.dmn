@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_dates" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.11.1">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="drd_dates" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.2.0">
   <inputData id="InputData_0die4vm" name="date" />
   <decision id="dates" name="dates">
     <informationRequirement id="InformationRequirement_0ifcef0">
@@ -22,7 +22,7 @@
       </rule>
       <rule id="DecisionRule_0caaj80">
         <inputEntry id="UnaryTests_16v8i9p">
-          <text>-</text>
+          <text></text>
         </inputEntry>
         <outputEntry id="LiteralExpression_1pzpzit">
           <text>date and time("2020-12-12T00:00")</text>

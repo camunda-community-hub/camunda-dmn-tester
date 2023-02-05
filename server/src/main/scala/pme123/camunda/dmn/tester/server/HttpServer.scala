@@ -4,7 +4,6 @@ import cats.effect._
 import com.comcast.ip4s._
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe._
 import org.http4s.dsl.io._
@@ -12,12 +11,14 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
 import org.http4s.server.middleware.CORS
 import org.http4s.server.{Router, Server}
+import org.http4s.{EntityDecoder, _}
 import org.slf4j.{Logger, LoggerFactory}
 import org.typelevel.ci._
 import pme123.camunda.dmn.tester.shared._
 
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import scala.util.{Failure, Success, Try}
 
 object HttpServer extends IOApp {
 
@@ -50,45 +51,79 @@ object HttpServer extends IOApp {
 
   private lazy val apiServices = HttpRoutes.of[IO] {
     case GET -> Root / "basePath" =>
-      Ok(DmnService.getBasePath())
+      Try(DmnService.getBasePath()) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
     case GET -> Root / "configPaths" =>
-      Ok(DmnService.getConfigPaths().asJson)
+      Try(DmnService.getConfigPaths().asJson) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
     case GET -> Root / "dmnConfigs" :? ConfigPathQueryParamMatcher(
           configPath
         ) =>
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
-      val configs =
+      Try(
         if (decConfigPath.isBlank)
-          Seq.empty
-        else
-          DmnService
-            .getConfigs(decConfigPath.split("/"))
-      Ok(configs.asJson)
+           Seq.empty
+         else
+           DmnService
+             .getConfigs(decConfigPath.split("/"))
+      ) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
     case GET -> Root / "validateDmnPath" :? ConfigPathQueryParamMatcher(
           dmnPath
         ) =>
       val decDmnPath = URLDecoder.decode(dmnPath, StandardCharsets.UTF_8)
-      val pathExists = DmnService
-            .dmnPathExists(decDmnPath)
-      Ok(pathExists)
+      Try(
+        DmnService
+          .dmnPathExists(decDmnPath)
+      ) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
 
     case req @ POST -> Root / "runDmnTests" =>
-      Ok(
+      Try(
         req
           .as[Option[Seq[DmnConfig]]]
           .map(configs =>
             if (configs.nonEmpty && configs.get.nonEmpty) {
-              val result = DmnService.runTests(configs.get).asJson
-              result
+              DmnService.runTests(configs.get).asJson
             } else
               Seq.empty.asJson
-          )
-      )
+          ).handleError{
+          exception =>
+            exception.printStackTrace()
+            exception.getMessage.asJson
+        }
+      ) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
     case req @ PUT -> Root / "dmnConfig" :? ConfigPathQueryParamMatcher(
           configPath
         ) =>
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
-      Ok(
+      Try(
         req
           .as[DmnConfig]
           .map(config => {
@@ -96,20 +131,30 @@ object HttpServer extends IOApp {
               .updateConfig(config, decConfigPath.split("/"))
           })
           .map(_.asJson)
-      )
+      ) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
     case req @ DELETE -> Root / "dmnConfig" :? ConfigPathQueryParamMatcher(
           configPath
         ) =>
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
-      Ok(
-        req
-          .as[DmnConfig]
-          .map(config => {
-            DmnService
-              .deleteConfig(config, decConfigPath.split("/"))
-          })
-          .map(_.asJson)
-      )
+      Try(req
+        .as[DmnConfig]
+        .map(config => {
+          DmnService
+            .deleteConfig(config, decConfigPath.split("/"))
+        })
+        .map(_.asJson)) match {
+        case Failure(exception) =>
+          exception.printStackTrace()
+          InternalServerError(exception.getMessage)
+        case Success(value) =>
+          Ok.apply(value)
+      }
   }
 
   private lazy val guiServices = HttpRoutes.of[IO] {

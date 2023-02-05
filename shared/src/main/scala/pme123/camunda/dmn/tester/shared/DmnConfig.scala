@@ -17,9 +17,8 @@ case class DmnConfig(
 ) {
 
   lazy val dmnPathStr: String = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
-  lazy val dmnConfigPathStr = s"${decisionId}${if(testUnit) "" else "-INT"}.conf"
+  lazy val dmnConfigPathStr = s"$decisionId${if(testUnit) "" else "-INT"}.conf"
   lazy val inputKeys: Seq[String] = data.inputKeys
-
 
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
     data.findTestCase(testInputs)

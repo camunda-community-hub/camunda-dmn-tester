@@ -30,16 +30,10 @@ final case class Main1SelectConfigPath(
           Label(
             className := "configPathsSelect",
             "Base Path: ",
-            child <-- basePath.map {
-              case Right(path) =>
-                basePathVar.set(path)
-                span(path)
-              case Left(error) =>
-                div(
-                  width := "40rem",
-                  errorMessage("Problem getting Base Path", error)
-                )
-            }
+            child <-- basePath.map(responseToHtml(path => {
+              basePathVar.set(path)
+              span(path)
+            }))
           ),
           Select(
             className := "configPathsSelect",
@@ -58,15 +52,12 @@ final case class Main1SelectConfigPath(
   private lazy val configPathEvents
       : EventStream[ReactiveHtmlElement[html.Element]] =
     BackendClient.getConfigPaths
-      .map {
-        case Right(paths) =>
-          configPathsVar.set(paths)
-          if (dmnConfigsPathVar.now().isEmpty)
-            dmnConfigsPathVar.set(paths.head)
-          span("")
-        case Left(error) =>
-          errorMessage("Problem getting Dmn Config Paths", error)
-      }
+      .map(responseToHtml(paths => {
+        configPathsVar.set(paths)
+        if (dmnConfigsPathVar.now().isEmpty)
+          dmnConfigsPathVar.set(paths.head)
+        span("")
+      }))
 
   private lazy val configuredPaths
       : Signal[Seq[ReactiveHtmlElement[html.Element]]] =

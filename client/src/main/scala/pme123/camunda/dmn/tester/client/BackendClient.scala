@@ -30,7 +30,7 @@ object BackendClient {
   def updateConfig(
       dmnConfig: DmnConfig,
       path: String
-  ): EventStream[Either[String, Seq[DmnConfig]]] =
+  ): EventStream[Either[ErrorMessage, Seq[DmnConfig]]] =
     AjaxEventStream
       .put(
         s"$url/api/dmnConfig?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
@@ -38,116 +38,145 @@ object BackendClient {
       )
       .map(extractBody[Seq[DmnConfig]])
       .recover(err =>
-        Some(Left(s"Problem updating Dmn Config: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              "Problem updating Dmn Config",
+              s"Message: ${err.getMessage} "
+            )
+          )
+        )
       )
 
   // delete DmnConfig
   def deleteConfig(
       dmnConfig: DmnConfig,
       path: String
-  ): EventStream[Seq[DmnConfig]] =
+  ): EventStream[Either[ErrorMessage, Seq[DmnConfig]]] =
     AjaxEventStream
       .delete(
         s"$url/api/dmnConfig?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}",
         data = dmnConfig.asJson.toString
       )
-      .map(req =>
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[Seq[DmnConfig]])
-          .getOrElse(Seq.empty)
+      .map(extractBody[Seq[DmnConfig]])
+      .recover(err =>
+        Some(
+          Left(
+            ErrorMessage(
+              "Problem getting Base Paths",
+              s"Message: ${err.getMessage} "
+            )
+          )
+        )
       )
 
   // gets the absolute path of the server / or where you run the testRunner.sc Script
-  def getBasePath: EventStream[Either[String, String]] =
+  def getBasePath: EventStream[Either[ErrorMessage, String]] =
     AjaxEventStream
       .get(s"$url/api/basePath")
-      .map(req =>
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[String])
-          .left
-          .map(exc =>
-            s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
-          )
-      )
+      .map(extractBody[String])
       .recover(err =>
-        Some(Left(s"Problem getting Base Paths: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              "Problem getting Base Paths",
+              s"Message: ${err.getMessage}"
+            )
+          )
+        )
       )
+  end getBasePath
 
   // get configured Paths
-  def getConfigPaths: EventStream[Either[String, Seq[String]]] =
+  def getConfigPaths: EventStream[Either[ErrorMessage, Seq[String]]] =
     AjaxEventStream
       .get(s"$url/api/configPaths")
-      .map(req =>
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[Seq[String]])
-          .left
-          .map(exc =>
-            s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
-          )
-      )
+      .map(extractBody[Seq[String]])
       .recover(err =>
-        Some(Left(s"Problem getting Config Paths: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              "Problem getting Config Paths",
+              s"Message: ${err.getMessage}"
+            )
+          )
+        )
       )
+  end getConfigPaths
 
-    // get DmnConfigs items
-  def getConfigs(path: String): EventStream[Either[String, Seq[DmnConfig]]] =
+  // get DmnConfigs items
+  def getConfigs(
+      path: String
+  ): EventStream[Either[ErrorMessage, Seq[DmnConfig]]] =
     AjaxEventStream
       .get(
         s"$url/api/dmnConfigs?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
       )
       .map(extractBody[Seq[DmnConfig]])
       .recover(err =>
-        err.printStackTrace()
-        Some(Left(s"Problem getting Dmn Configs: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              "Problem getting Dmn Configs",
+              s"Message: ${err.getMessage}"
+            )
+          )
+        )
       )
 
   end getConfigs
 
-  // get DmnConfigs items
-  def validateDmnPath(path: String): EventStream[Either[String, Boolean]] =
+  def validateDmnPath(
+      path: String
+  ): EventStream[Either[ErrorMessage, Boolean]] =
     AjaxEventStream
       .get(
         s"$url/api/validateDmnPath?path=${URLEncoder.encode(path, StandardCharsets.UTF_8)}"
       )
       .map(extractBody[Boolean])
       .recover(err =>
-        err.printStackTrace()
-        Some(Left(s"Problem validating Dmn Path $path: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              s"Problem validating Dmn Path $path",
+              s"Message: ${err.getMessage}"
+            )
+          )
+        )
       )
 
   end validateDmnPath
 
   def runTests(
       configs: Seq[DmnConfig]
-  ): EventStream[Either[String, Seq[Either[EvalException, DmnEvalResult]]]] =
+  ): EventStream[
+    Either[ErrorMessage, Seq[Either[EvalException, DmnEvalResult]]]
+  ] =
     AjaxEventStream
       .post(s"$url/api/runDmnTests", data = configs.asJson.toString)
-      .map(req => {
-        println(s"EVALRESULT: ${req.responseText}")
-        parser
-          .parse(req.responseText)
-          .flatMap(_.as[Seq[Either[EvalException, DmnEvalResult]]])
-          .left
-          .map(exc =>
-            s"Problem parsing response body: ${req.responseText}\n${exc.getMessage}"
-          )
-      }
-      )
+      .map(extractBody[Seq[Either[EvalException, DmnEvalResult]]])
       .recover(err =>
-        Some(Left(s"Problem running Dmn Tests: ${err.getMessage} "))
+        Some(
+          Left(
+            ErrorMessage(
+              s"Problem running Dmn Tests",
+              s"Message: ${err.getMessage}"
+            )
+          )
+        )
       )
 
   end runTests
 
-  private def extractBody[T : Decoder](req: XMLHttpRequest) =
+  private def extractBody[T: Decoder](req: XMLHttpRequest) =
     parser
       .parse(req.responseText)
       .flatMap(_.as[T])
       .left
       .map(exc =>
-        s"Problem parsing body: ${req.responseText}\n${exc.getMessage}"
+        ErrorMessage(
+          "Problem parsing body from Server.",
+          s"Message:${exc.getMessage}\nBody: ${req.responseText}"
+        )
       )
 }

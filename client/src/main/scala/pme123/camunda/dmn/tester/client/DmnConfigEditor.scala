@@ -128,7 +128,7 @@ final case class DmnConfigEditor(
           case Right(_) =>
             div(icon(EvalStatus.WARN), "Be aware that this DMN does not exist.")
           case Left(error) =>
-            errorMessage("Problem updating Dmn Config", error)
+            errorMessage(error)
         }
       ),
       h4("Test Inputs "),
@@ -160,10 +160,12 @@ final case class DmnConfigEditor(
     dmnConfigVar.updater[String] { (config, newValue) =>
       config.copy(decisionId = newValue)
     }
-  private lazy val dmnExistsStream: EventStream[Either[String, Boolean]] =
-    newPathBus
-      .events
-      .flatMap(path => BackendClient.validateDmnPath(path))
+  private lazy val dmnExistsStream =
+    newPathBus.events
+      .flatMap(path =>
+        BackendClient
+          .validateDmnPath(path)
+      )
 
   private lazy val newPathBus: EventBus[String] = EventBus()
   private lazy val dmnPathUpdater: Observer[String] =
@@ -184,8 +186,7 @@ final case class DmnConfigEditor(
       def nullValueUpdater =
         inputsVar.updater[Boolean] { (data, newValue) =>
           data.map(item =>
-            if item.id.contains(id) then
-              item.copy(nullValue = newValue)
+            if item.id.contains(id) then item.copy(nullValue = newValue)
             else item
           )
         }
@@ -269,22 +270,20 @@ final case class DmnConfigEditor(
       if (newConfig.hasErrors)
         EventStream.fromValue(
           errorMessage(
-            "Validation Error(s)",
-            "There are incorrect data, please correct them before saving."
+            ErrorMessage(
+              "Validation Error(s)",
+              "There are incorrect data, please correct them before saving."
+            )
           )
         )
-      else {
+      else
         BackendClient
           .updateConfig(newConfig, path)
-          .map {
-            case Right(configs) =>
-              dmnConfigsVar.set(configs)
-              openEditDialogBus.emit(false)
-              span("")
-            case Left(error) =>
-              errorMessage("Problem updating Dmn Config", error)
-          }
-      }
+          .map(responseToHtml(configs =>{
+            dmnConfigsVar.set(configs)
+            openEditDialogBus.emit(false)
+            span("")
+          }))
     }
 
 object DmnConfigEditor:

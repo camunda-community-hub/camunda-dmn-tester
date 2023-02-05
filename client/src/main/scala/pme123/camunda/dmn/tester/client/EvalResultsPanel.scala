@@ -12,7 +12,8 @@ case class EvalResultsPanel(
     dmnConfigPathSignal: Signal[String],
     dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  private lazy val dmn = result.dmn
+  private lazy val dmnConfig = result.dmnTables.dmnConfig
+  private lazy val mainTable = result.dmnTables.mainTable
   private lazy val creator = RowCreator(result)
   private lazy val saveConfigBus = EventBus[Boolean]()
 
@@ -22,23 +23,30 @@ case class EvalResultsPanel(
     className := "flex-column",
     className := "full-width",
     _.collapsed := true,
-    _.slots.header := panelHeader(dmn.dmnConfig, result.maxEvalStatus),
+    _.slots.header := panelHeader(dmnConfig, result.maxEvalStatus),
     div(
       child <-- submitDmnConfig
     ),
-    p(s"Hitpolicy: ${dmn.hitPolicy}"),
     p(
-      "Variables: " + (if (dmn.dmnConfig.data.variables.nonEmpty)
-                         dmn.dmnConfig.data.variables
-                           .map(_.key)
-                           .mkString(", ")
-                       else "--")
+      b(
+        if (dmnConfig.testUnit) "Unit Test"
+        else "Integrated Test - experimental ☠️ \uD83D\uDE0A"
+      )
     ),
+    p(s"Hitpolicy: ${mainTable.hitPolicy}"),
+    mainTable.aggregation.map(a => s"Aggregation: $a").getOrElse(""),
+    if (dmnConfig.data.variables.nonEmpty)
+      p(
+        "Variables: " + dmnConfig.data.variables
+          .map(_.key)
+          .mkString(", ")
+      )
+    else "",
     creator.errorRows,
     creator.noMatchingRows,
     creator.noMatchingInputs,
     creator.testCasesTable,
-    creator.failedTestCasePopup,
+    creator.generalPopup,
     Button(
       _.icon := IconName.`add-activity-2`,
       "Create Test Cases from the checked Rows",
@@ -56,6 +64,7 @@ case class EvalResultsPanel(
   private lazy val openPopoverBus: EventBus[Option[HTMLElement]] = new EventBus
   private lazy val warnCreateTestCasesPopup =
     Popover(
+      _.placementType := PopoverPlacementType.Top,
       _.showAtFromEvents(openPopoverBus.events.collect { case Some(opener) =>
         opener
       }),
@@ -69,21 +78,19 @@ case class EvalResultsPanel(
       if (newConfig.hasErrors)
         EventStream.fromValue(
           errorMessage(
-            "Validation Error(s)",
-            "There are incorrect data, please correct them in the Config Editor before creating Test Cases."
+            ErrorMessage(
+              "Validation Error(s)",
+              "There are incorrect data, please correct them in the Config Editor before creating Test Cases."
+            )
           )
         )
-      else {
+      else
         BackendClient
           .updateConfig(newConfig, path)
-          .map {
-            case Right(configs) =>
-              dmnConfigsVar.set(configs)
-              span("")
-            case Left(error) =>
-              errorMessage("Problem creating Test Cases in Dmn Config", error)
-          }
-      }
+          .map(responseToHtml(configs => {
+            dmnConfigsVar.set(configs)
+            span("")
+          }))
     }
 object EvalResultsPanel:
   def apply(
@@ -91,6 +98,8 @@ object EvalResultsPanel:
       dmnConfigPathSignal: Signal[String],
       dmnConfigsVar: Var[Seq[DmnConfig]]
   ): HtmlElement = new EvalResultsPanel(
-    result, dmnConfigPathSignal, dmnConfigsVar
+    result,
+    dmnConfigPathSignal,
+    dmnConfigsVar
   ).comp
 end EvalResultsPanel

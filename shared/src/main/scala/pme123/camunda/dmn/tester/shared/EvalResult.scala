@@ -3,12 +3,12 @@ package pme123.camunda.dmn.tester.shared
 import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
 
 case class DmnEvalResult(
-                          dmn: Dmn,
-                          inputKeys: Seq[String],
-                          outputKeys: Seq[String],
-                          evalResults: Seq[DmnEvalRowResult],
-                          missingRules: Seq[DmnRule]
-                        ) {
+    dmnTables: AllDmnTables,
+    inputKeys: Seq[String],
+    outputKeys: Seq[String],
+    evalResults: Seq[DmnEvalRowResult],
+    missingRules: Seq[DmnRule]
+) {
   def maxEvalStatus: EvalStatus = {
     val status = evalResults.map(_.status) ++ missingRules.headOption.map(_ =>
       EvalStatus.WARN
@@ -18,64 +18,69 @@ case class DmnEvalResult(
 }
 
 case class DmnEvalRowResult(
-                             status: EvalStatus,
-                             decisionId: String,
-                             testInputs: Map[String, String],
-                             matchedRules: Seq[MatchedRule],
-                             maybeError: Option[EvalError]
-                           )
-
-case class Dmn(
-                id: String,
-                hitPolicy: HitPolicy,
-                dmnConfig: DmnConfig,
-                rules: Seq[DmnRule]
-              )
-
-case class DmnRule(
-                    index: Int,
-                    ruleId: String,
-                    inputs: Seq[(String,String)],
-                    outputs: Seq[String]
-                  )
+    status: EvalStatus,
+    testInputs: Map[String, String],
+    matchedRulesPerTable: Seq[MatchedRulesPerTable],
+    maybeError: Option[EvalError]
+) {
+  lazy val hasNoMatch: Boolean =
+    matchedRulesPerTable.flatMap(_.matchedRules).isEmpty
+}
 
 case class EvalResult(
-                       status: EvalStatus,
-                       decisionId: String,
-                       matchedRules: Seq[MatchedRule],
-                       failed: Option[EvalError]
-                     )
+    status: EvalStatus,
+    matchedRules: Seq[MatchedRulesPerTable],
+    failed: Option[EvalError]
+)
 
 object EvalResult {
 
   import EvalStatus._
 
   def apply(
-             decisionId: String,
-             matchedRules: Seq[MatchedRule],
-             failed: Option[EvalError]
-           ): EvalResult = {
-    val status = (matchedRules, failed) match {
-      case (_, Some(_)) => ERROR
-      case (Nil, _) => WARN
-      case _ =>
-        val check = matchedRules.map(_.hasError)
-        if (matchedRules.exists(_.hasError))
-          ERROR
-        else
-          INFO
-    }
-    EvalResult(status, decisionId, matchedRules, failed)
+      matchedRulesPerTable: Seq[MatchedRulesPerTable]
+  ): EvalResult = {
+    val matchedRules = matchedRulesPerTable.flatMap(_.matchedRules)
+    val maybeError = matchedRulesPerTable.find(_.hasError).flatMap(_.maybeError)
+    val status =
+      if (matchedRulesPerTable.exists(_.hasError))
+        ERROR
+      else if (matchedRules.isEmpty)
+        WARN
+      else
+        INFO
+
+    EvalResult(status, matchedRulesPerTable, maybeError)
   }
 }
 
+case class MatchedRulesPerTable(
+    decisionId: String,
+    matchedRules: Seq[MatchedRule],
+    maybeError: Option[EvalError]
+) {
+  def hasError: Boolean = maybeError.nonEmpty || matchedRules.exists(_.hasError)
+
+  def isForMainTable(decId: String): Boolean = decId == decisionId
+
+  lazy val inputKeys: Seq[String] =
+    matchedRules.headOption.toSeq
+      .flatMap(_.inputs)
+      .map(_._1)
+  lazy val outputKeys: Seq[String] =
+    matchedRules.headOption.toSeq
+      .flatMap(_.outputs)
+      .map(_._1)
+}
+
 case class MatchedRule(
-                        ruleId: String,
-                        rowIndex: TestedValue,
-                        inputs: Seq[(String, String)],
-                        outputs: Seq[(String, TestedValue)]
-                      ) {
-  def hasError: Boolean = rowIndex.isError || outputs.exists(_._2.isError)
+    ruleId: String,
+    rowIndex: TestedValue,
+    inputs: Seq[(String, String)],
+    outputs: Seq[(String, TestedValue)]
+) {
+  def hasError: Boolean =
+    rowIndex.isError || outputs.exists(_._2.isError)
 
 }
 
@@ -124,35 +129,4 @@ object EvalStatus {
     val order = 1
   }
 
-}
-
-sealed trait HitPolicy{
-  def isSingle: Boolean
-}
-
-object HitPolicy {
-
-  case object UNIQUE extends HitPolicy {
-    val isSingle = true
-  }
-
-  case object FIRST extends HitPolicy {
-    val isSingle = true
-  }
-
-  case object ANY extends HitPolicy {
-    val isSingle = true
-  }
-
-  case object COLLECT extends HitPolicy {
-    val isSingle = false
-  }
-
-  def apply(value: String): HitPolicy =
-    value.toUpperCase match {
-      case "UNIQUE" => UNIQUE
-      case "FIRST" => FIRST
-      case "ANY" => ANY
-      case "COLLECT" => COLLECT
-    }
 }

@@ -44,7 +44,7 @@ case class DmnUnitTestGenerator(
         } yield ()
       case Right(result) =>
         for {
-          name <- className(result.dmn.id)
+          name <- className(result.dmnTables.mainTable.decisionId)
           testMethods <- testMethods(result)
           missingMethods <- ZIO.foreach(result.missingRules)(r =>
             missingRuleMethod(r, result.inputKeys)
@@ -76,7 +76,7 @@ case class DmnUnitTestGenerator(
         s"""fail(\"\"\"There is no Rule that matched for these Inputs:
                        |${inputKeys
           .zip(dmnRule.inputs)
-          .map { case (k: String, (k2: String, v: String)) =>
+          .map { case (k: String, (_: String, v: String)) =>
             s"|- $k: $v"
           }
           .mkString("\n")}\"\"\".stripMargin)""".stripMargin
@@ -90,11 +90,11 @@ case class DmnUnitTestGenerator(
     ZIO.succeed {
       val DmnEvalRowResult(
         status,
-        decisionId,
         testInputs,
         matchedRules,
         maybeError
       ) = dmnEvalRow
+      /*
       val inset: String = "   "
       def matchRule(rule: MatchedRule): String = {
         val MatchedRule(ruleId, ruleIndex, inputs, outputs) = rule
@@ -118,6 +118,8 @@ case class DmnUnitTestGenerator(
         matchedRules.map { mr => s"\n${matchRule(mr)}" }.mkString}
          |- Error: ${maybeError.map { e => s"\n   - ${e.msg}" }.getOrElse("-")}
          |""".stripMargin
+      */
+      "TODO"
     }
 
   private[server] def testMethod(
@@ -132,7 +134,7 @@ case class DmnUnitTestGenerator(
             case EvalStatus.INFO =>
                   successfulTestCase(info)
             case status =>
-              s"""fail(\"\"\"Dmn Row of'${dmnEvalRow.decisionId}' failed with Status $status:
+              s"""fail(\"\"\"Dmn Row of'${/*TODO dmnEvalRow.decisionId*/}' failed with Status $status:
                |$info\"\"\")""".stripMargin
           }
         )

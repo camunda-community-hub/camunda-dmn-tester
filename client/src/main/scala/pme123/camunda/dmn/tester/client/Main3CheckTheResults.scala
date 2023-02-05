@@ -19,7 +19,7 @@ final case class Main3CheckTheResults(
     private val testsAreRunningVar: Var[Boolean],
     private val dmnConfigPathSignal: Signal[String],
     private val selectedConfigsSignal: Signal[List[DmnConfig]],
-    private val dmnConfigsVar: Var[Seq[DmnConfig]],
+    private val dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
   private lazy val hideSection =
     selectedConfigsSignal.map { selConfigs =>
@@ -46,18 +46,13 @@ final case class Main3CheckTheResults(
       )
     )
 
-  private lazy val testResultsList = selectedConfigsSignal.signal
+  private lazy val testResultsList: Signal[HtmlElement] = selectedConfigsSignal.signal
     .map { conf =>
       if (conf.nonEmpty)
         div(
-          children <-- BackendClient
+          child <-- BackendClient
             .runTests(conf)
-            .map {
-              case Right(configs) =>
-                handleTestResults(configs)
-              case Left(error) =>
-                Seq(errorMessage("Problem running Dmn Tests", error))
-            }
+            .map(responseToHtml(handleTestResults))
         )
       else
         div()
@@ -65,15 +60,19 @@ final case class Main3CheckTheResults(
 
   private def handleTestResults(
       configs: Seq[Either[EvalException, DmnEvalResult]]
-  ) = configs
-    .map {
-      case Right(result) => EvalResultsPanel(result, dmnConfigPathSignal, dmnConfigsVar)
-      case Left(error)   => errorPanel(error)
-    }
-    .map { r =>
-      testsAreRunningVar.set(false)
-      r
-    }
+  ): HtmlElement =
+    div(
+      configs
+        .map {
+          case Right(result) =>
+            EvalResultsPanel(result, dmnConfigPathSignal, dmnConfigsVar)
+          case Left(error) => errorPanel(error)
+        }
+        .map { r =>
+          testsAreRunningVar.set(false)
+          r
+        }
+    )
 
   private def errorPanel(evalException: EvalException) =
     val EvalException(dmnConfig, msg) = evalException
@@ -81,10 +80,16 @@ final case class Main3CheckTheResults(
       className := "testResultsPanel",
       _.collapsed := true,
       _.slots.header := panelHeader(dmnConfig, EvalStatus.ERROR),
-      div(padding := "6px", msg.split("\n").map {
-        case v if v.startsWith(">") => li(v.replace("> ", ""))
-        case v => p(v)
-      }.toSeq)
+      div(
+        padding := "6px",
+        msg
+          .split("\n")
+          .map {
+            case v if v.startsWith(">") => li(v.replace("> ", ""))
+            case v                      => p(v)
+          }
+          .toSeq
+      )
     )
   end errorPanel
 
@@ -93,7 +98,7 @@ object Main3CheckTheResults:
       testsAreRunningVar: Var[Boolean],
       dmnConfigPathSignal: Signal[String],
       selectedConfigsSignal: Signal[List[DmnConfig]],
-      dmnConfigsVar: Var[Seq[DmnConfig]],
+      dmnConfigsVar: Var[Seq[DmnConfig]]
   ): ReactiveHtmlElement[html.Element] =
     new Main3CheckTheResults(
       testsAreRunningVar,

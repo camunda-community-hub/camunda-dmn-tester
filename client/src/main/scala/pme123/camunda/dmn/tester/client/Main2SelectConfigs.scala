@@ -10,10 +10,10 @@ import org.scalajs.dom.{HTMLElement, html}
 import pme123.camunda.dmn.tester.shared.DmnConfig
 
 final case class Main2SelectConfigs(
-                                basePathSignal: Signal[String],
-                                dmnConfigsPathSignal: Signal[String],
-                                selectedConfigsVar: Var[List[DmnConfig]],
-                                dmnConfigsVar: Var[Seq[DmnConfig]]
+    basePathSignal: Signal[String],
+    dmnConfigsPathSignal: Signal[String],
+    selectedConfigsVar: Var[List[DmnConfig]],
+    dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
 
   lazy val comp: ReactiveHtmlElement[html.Element] =
@@ -55,14 +55,16 @@ final case class Main2SelectConfigs(
           ) --> selectedConfigsVar,
           children <-- dmnConfigsVar.signal
             .map { configs =>
-              allConfigsVar.set(configs.map { c => s"${c.decisionId}-${c.testUnit}" -> c }.toMap)
+              allConfigsVar.set(configs.map { c =>
+                s"${c.decisionId}-${c.testUnit}" -> c
+              }.toMap)
               configs
                 .sortBy(_.decisionId)
                 .map(config =>
                   Table.row(
                     accessKey := s"${config.decisionId}-${config.testUnit}",
                     _.cell(config.decisionId),
-                    _.cell(if(config.testUnit) "yes" else "no"),
+                    _.cell(if (config.testUnit) "yes" else "no"),
                     _.cell(config.dmnPath.mkString("/")),
                     _.cell(
                       Button(
@@ -129,14 +131,13 @@ final case class Main2SelectConfigs(
     )
 
   private lazy val dmnConfigs = dmnConfigsPathSignal
-    .flatMap(BackendClient.getConfigs)
-    .map {
-      case Right(configs) =>
-        dmnConfigsVar.set(configs)
-        span("")
-      case Left(error) =>
-        errorMessage("Problem getting Dmn Configs", error)
-    }
+    .flatMap(
+      BackendClient
+        .getConfigs)
+    .map(responseToHtml((configs) =>
+      dmnConfigsVar.set(configs)
+      span("")
+    ))
 
   private lazy val allConfigsVar = Var(Map.empty[String, DmnConfig])
 
@@ -150,17 +151,19 @@ final case class Main2SelectConfigs(
     .flatMap { case (_, config, path) =>
       BackendClient
         .deleteConfig(config, path)
-        .map { configs =>
+        .map(responseToHtml(configs => {
           dmnConfigsVar.set(configs)
-          "ok"
+          span("ok")
         }
+        ))
     }
+
 object Main2SelectConfigs:
   def apply(
-             basePathSignal: Signal[String],
-             dmnConfigsPathSignal: Signal[String],
-             selectedConfigsVar: Var[List[DmnConfig]],
-             dmnConfigsVar: Var[Seq[DmnConfig]]
+      basePathSignal: Signal[String],
+      dmnConfigsPathSignal: Signal[String],
+      selectedConfigsVar: Var[List[DmnConfig]],
+      dmnConfigsVar: Var[Seq[DmnConfig]]
   ): ReactiveHtmlElement[html.Element] =
     new Main2SelectConfigs(
       basePathSignal,

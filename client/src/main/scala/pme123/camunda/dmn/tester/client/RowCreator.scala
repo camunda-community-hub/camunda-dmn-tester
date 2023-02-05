@@ -31,42 +31,64 @@ case class RowCreator(
     else {
       val maxStatus = maxEvalStatus(filteredRows)
       val rows: Seq[HtmlElement] = filteredRows
-        .map { r =>
-          val matchedInputs: Seq[HtmlElement] =
-            if (inputKeys.size == filteredRows.head.inputs.size)
-              println("CORRECT INPUT SIZE")
-              r.inputs.zipWithIndex.map { case _ -> index =>
+        .map {
+          case rtr @ ResultTableRow(
+                key,
+                status,
+                testInputs,
+                matchedRulesPerTable,
+                outputMessage
+              ) =>
+            val DmnTable(
+              decisionId,
+              name,
+              hitPolicy,
+              aggregation,
+              inputCols,
+              outputCols,
+              ruleRows
+            ) = allDmnTables.mainTable
+            val matchedInputs: Seq[HtmlElement] = inputCols.zipWithIndex.map {
+              case _ -> index =>
                 collectCellTable(
-                  r.children.map {
-                    _.inputs(index)._2
-                  }
+                  rtr.mainMatchedRules.map(mRule => mRule.inputs(index)._2)
                 )
-              }
-            else Seq(TableRow.cell("-"))
+            }
+            val matchedOutputs: Seq[HtmlElement] = outputCols.zipWithIndex.map {
+              case _ -> index =>
+                collectCellTable(
+                  rtr.mainMatchedRules.map(mRule => mRule.outputs(index)._2)
+                )
+            }
 
-          Table.row(
-            accessKey := r.key,
-            tr =>
-              (inputKeys
-                .map(r.testInputs(_).toString)
-                .map(ellipsis(_, tr)) :+
-                collectCellTable(r.children.map {
-                  _.dmnRowIndex
-                })) ++
-                matchedInputs ++
-                r.outputs.zipWithIndex.map { case _ -> index =>
-                  collectCellTable(
-                    r.children.map {
-                      _.outputs(index)._2
-                    }
-                  )
-                }
-          )
+            Table.row(
+              accessKey := rtr.key,
+              tr =>
+                (inputKeys
+                  .map(rtr.testInputs(_).toString)
+                  .map(ellipsis(_, tr)) :+
+                  collectCellTable(rtr.mainMatchedRules.map(_.rowIndex))) ++
+                  matchedInputs ++
+                  matchedOutputs ++
+                  (if (rtr.hasRequiredTables)
+                     Seq(tr.cell(showRequiredTables(rtr)))
+                   else Seq.empty)
+            )
         }
       val matchedInputsCols: Seq[HtmlElement] =
-        if (inputKeys.size == filteredRows.head.inputs.size)
-          matchedInputsColumns(filteredRows.head.inputs)
-        else
+        //  allDmnTables.tables.flatMap(t =>
+        matchedInputsColumns(
+          allDmnTables.mainTable.decisionId,
+          filteredRows.head.mainInputKeys
+        )
+      //   )
+      val matchedOutputsCols: Seq[HtmlElement] =
+        //  if (inputKeys.size == filteredRows.head.inputs.size)
+        resultOutputsColumns(
+          allDmnTables.mainTable.decisionId,
+          filteredRows.head.mainOutputKeys
+        )
+      /*   else
           Seq(
             Table.column(
               className := "matchedInputHeader",
@@ -83,7 +105,7 @@ case class RowCreator(
                 ) --> openPopoverBus,
               onMouseOut.mapTo(None -> "") --> openPopoverBus
             )
-          )
+          )*/
 
       Seq(
         h3(
@@ -108,7 +130,10 @@ case class RowCreator(
             span("Dmn Row")
           ),
           _.slots.columns := matchedInputsCols,
-          _.slots.columns := outputKeysColumns,
+          _.slots.columns := matchedOutputsCols,
+          if (allDmnTables.hasRequiredTables)
+            _.slots.columns := Table.column(width := "0")
+          else "",
           rows
         )
       )
@@ -137,6 +162,7 @@ case class RowCreator(
             .map(r =>
               Table.row { tr =>
                 r.testInputs
+                  .filter(i => inputKeys.contains(i._1))
                   .map(_._2.toString)
                   .map(ellipsis(_, tr))
                   .toSeq
@@ -150,7 +176,6 @@ case class RowCreator(
     if (filteredRows.isEmpty)
       Seq()
     else
-      println(s"INPUTS: ${filteredRows.head.inputs}")
       Seq(
         h3("Rules with no matching Test Inputs ", icon(EvalStatus.WARN)),
         p(
@@ -162,17 +187,17 @@ case class RowCreator(
           _.slots.columns := Table.column(
             span("Dmn Row")
           ),
-          _.slots.columns := matchedInputsColumns(filteredRows.head.inputs),
-          _.slots.columns := outputKeysColumns,
-          filteredRows
-            .map(r =>
-              Table.row { tr =>
-                (Seq(r.dmnRowIndex.intValue.toString) ++
-                  r.inputs.map(_._2) ++
-                  r.outputs.map(_._2.value))
-                  .map(ellipsis(_, tr))
-              }
-            )
+          _.slots.columns :=
+            matchedInputsColumns(
+              allDmnTables.mainTable.decisionId,
+              filteredRows.head.mainInputKeys
+            ),
+          _.slots.columns :=
+            resultOutputsColumns(
+              allDmnTables.mainTable.decisionId,
+              filteredRows.head.mainOutputKeys
+            ),
+          filteredRows.map(r => simpleRows(r.mainMatchedRules))
         )
       )
 
@@ -214,108 +239,100 @@ case class RowCreator(
         )
       )
 
-  lazy val failedTestCasePopup: HtmlElement =
+  lazy val generalPopup: HtmlElement =
     Popover(
       _.placementType := PopoverPlacementType.Bottom,
       _.showAtFromEvents(openPopoverBus.events.collect {
         case Some(opener) -> _ =>
           opener
       }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ => () }),
-      p(child <-- openPopoverBus.events.collect { case _ -> msg =>
-        msg
-      })
+      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ =>
+        ()
+      }),
+      _.slots.header <-- openPopoverBus.events.collect {
+        case _ -> (resultTableRow: ResultTableRow) =>
+          h2(s"Required Tables for ${resultTableRow.mainDecisionId}")
+        case _ => span("")
+      },
+      child <-- openPopoverBus.events.collect {
+        case _ -> (msg: String) => div(msg)
+        case _ -> (resultTableRow: ResultTableRow) =>
+          displayRequiredTables(resultTableRow)
+      }
     )
 
-  private lazy val selectedTableRowsVar: Var[List[TableRow]] = Var(List.empty)
+  private lazy val selectedTableRowsVar: Var[List[ResultTableRow]] = Var(
+    List.empty
+  )
   private lazy val DmnEvalResult(
-    dmn,
+    allDmnTables,
     inputKeys,
     outputKeys,
     evalResults,
     missingRules
   ) = dmnEvalResult
 
-  private lazy val evaluatedRows: Seq[TableRow] =
-    evalResults.sortBy(_.decisionId).flatMap {
-      case DmnEvalRowResult(status, _, testInputs, Nil, maybeError) =>
+  private lazy val evaluatedRows: Seq[ResultTableRow] =
+    evalResults.flatMap {
+      case r @ DmnEvalRowResult(status, testInputs, _, maybeError)
+          if r.hasNoMatch =>
         Seq(
-          new TableRow(
+          new ResultTableRow(
             testInputs.values.mkString("-"),
             status,
             testInputs,
-            NotTested("0"),
             Seq.empty,
-            Seq.empty,
-            Some(maybeError.map(_.msg).getOrElse(noMatchingRowsMsg)),
-            Seq()
+            Some(maybeError.map(_.msg).getOrElse(noMatchingRowsMsg))
           )
         )
       case DmnEvalRowResult(
             status,
-            _,
             testInputs,
-            matchedRules,
+            matchedRulesPerTable,
             maybeError
           ) =>
-        val rows =
-          matchedRules.map {
-            case MatchedRule(_, rowIndex, inputs, outputs) =>
-              new TableRow(
-                testInputs.values.mkString("-"),
-                status,
-                testInputs,
-                rowIndex,
-                rowInputs(inputs),
-                outputs,
-                None,
-                Seq()
-              )
-          }
-        maybeError
-          .map(msg =>
-            Seq(
-              new TableRow(
-                testInputs.values.mkString("-") + "_error",
-                status,
-                testInputs,
-                NotTested("1"),
-                Seq.empty,
-                Seq.empty,
-                Some(msg.msg),
-                Seq(rows.map(_.toChildRow()): _*)
-              )
-            )
-          )
-          .getOrElse(rows)
+        val mainRow = ResultTableRow(
+          testInputs.values.mkString("-"),
+          status,
+          testInputs,
+          matchedRulesPerTable,
+          maybeError.map(_.msg)
+        )
+        Seq(
+          mainRow
+        )
 
     }
-  private lazy val missingRows =
+  private lazy val missingRows: Seq[ResultTableRow] =
     missingRules.map { case DmnRule(index, ruleId, inputs, outputs) =>
-      new TableRow(
+      ResultTableRow(
         ruleId + index + "Warn",
         EvalStatus.WARN,
         inputKeys.map(_ -> "").toMap,
-        NotTested(index.toString),
-        inputs,
-        // if there are errors in the evaluation - there might be no outputs.
-        outputKeys.zip(outputs.map(NotTested.apply)),
-        outputMessage = None,
-        children = Seq.empty
+        Seq(
+          MatchedRulesPerTable(
+            allDmnTables.dmnConfig.decisionId,
+            Seq(
+              MatchedRule(
+                ruleId,
+                NotTested(index.toString),
+                inputs,
+                outputs.map(o => o._1 -> NotTested(o._2))
+              )
+            ),
+            None
+          )
+        ),
+        outputMessage = None
       )
     }
 
-  private lazy val allRowsVar = Var(Map.empty[String, TableRow])
+  private lazy val allRowsVar = Var(Map.empty[String, ResultTableRow])
 
-  private lazy val resultRows: Seq[TableRow] = {
-    evaluatedRows.groupBy(_.testInputs.values.toSeq).map {
-      // work with children - to support also HitPolicies with multiple Result Rules
-      case (_, rows) if rows.head.children.isEmpty =>
-        rows.head.toParentRow(rows.map(_.toChildRow()))
-      // errors with list of rows that are involved (HitPolicy UNIQUE with multiple results)
-      case (_, others) => others.head
-    }
-  }.toSeq.sortBy(_.dmnRowIndex.intValue).sortBy(_.status)
+  private lazy val resultRows: Seq[ResultTableRow] =
+    evaluatedRows
+      .sortBy(_.mainIndex.intValue)
+      .sortBy(_.status)
 
   private def ellipsis(
       value: String,
@@ -334,9 +351,10 @@ case class RowCreator(
     val manyCols = (inputKeys.size * 2 + outputKeys.size) > 4
     val maxSize = 20
     val shorten = manyCols && value.length > maxSize
+    val valueStr = if (value.isBlank) "-" else value
     elem.amend(
       className := clsName,
-      if (shorten) value.take(maxSize) + ".." else value,
+      if (shorten) value.take(maxSize) + ".." else valueStr,
       onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
       onMouseOver
         .filter(_ => msg.nonEmpty || shorten)
@@ -361,7 +379,9 @@ case class RowCreator(
   ): HtmlElement =
     ellipsis(value, p(), "notTestedCell", None)
 
-  private def inputKeysColumns(inputKs: Seq[String] = inputKeys): Seq[HtmlElement] =
+  private def inputKeysColumns(
+      inputKs: Seq[String] = inputKeys
+  ): Seq[HtmlElement] =
     inputKs.map(ik =>
       Table.column(
         className := "resultInputHeader",
@@ -370,56 +390,72 @@ case class RowCreator(
       )
     )
 
-  private def matchedInputsColumns(inputs: Seq[(String, String)]) =
+  private def matchedInputsColumns(
+      decisionId: String,
+      inputs: Seq[String]
+  ) =
     inputs.map(ik =>
       Table.column(
         className := "matchedInputHeader",
-        span(ik._1),
-        title := "Matched Input"
+        span(ik),
+        onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
+        onMouseOver
+          .map(_.target.asInstanceOf[HTMLElement])
+          .map(
+            Some(
+              _
+            ) -> s"Matched Input from the Decision Table $decisionId"
+          ) --> openPopoverBus,
+        onMouseOut.mapTo(None -> "") --> openPopoverBus
       )
     )
-  private def outputKeysColumns = outputKeys.map(ik =>
-    Table.column(
-      className := "resultOutputHeader",
-      span(ik),
-      title := "Result Output"
+
+  private def resultOutputsColumns(
+      decisionId: String,
+      outputKeys: Seq[String]
+  ) =
+    outputKeys.map(key =>
+      Table.column(
+        className := "resultOutputHeader",
+        span(key),
+        onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
+        onMouseOver
+          .map(_.target.asInstanceOf[HTMLElement])
+          .map(
+            Some(
+              _
+            ) -> s"Result Output from the Decision Table $decisionId"
+          ) --> openPopoverBus,
+        onMouseOut.mapTo(None -> "") --> openPopoverBus
+      )
     )
-  )
 
-  private def rowInputs(
-      inputs: Seq[(String, String)]
-  ): Seq[(String, String)] =
-    val ins = inputKeys
-      .map(ik => ik -> inputs.toMap.get(ik))
-      .filter(_._2.nonEmpty)
-      .map(i => i._1 -> i._2.get)
-    if (ins.size != inputKeys.size)
-      inputs
+  private def matchedRowsTable(row: ResultTableRow) =
+    if (row.tableWithMatchedRules.isEmpty) span("")
     else
-      ins
-
-  private def matchedRowsTable(row: TableRow) =
-    if (row.children.isEmpty || row.children.head.outputs.isEmpty)
-      span("")
-    else
-      Table(
-        className := "testResultsTable",
-        _.slots.columns := Table.column(
-          className := "smallColHeader",
-          span("Dmn Row")
-        ),
-        _.slots.columns := matchedInputsColumns(row.inputs),
-        _.slots.columns := outputKeysColumns,
-        row.children
-          .map(r =>
-            Table.row { tr =>
-              (Seq(r.dmnRowIndex.intValue.toString) ++
-                r.inputs.map(_._2) ++
-                r.outputs.map(_._2.value))
-                .map(ellipsis(_, tr))
-            }
+      val maybeTable = row.tableWithMatchedRules
+      maybeTable
+        .map(table =>
+          Table(
+            className := "testResultsTable",
+            _.slots.columns := Table.column(
+              className := "smallColHeader",
+              span("Dmn Row")
+            ),
+            _.slots.columns :=
+              matchedInputsColumns(
+                table.decisionId,
+                table.inputKeys
+              ),
+            _.slots.columns :=
+              resultOutputsColumns(
+                table.decisionId,
+                table.outputKeys
+              ),
+            simpleRows(table.matchedRules)
           )
-      )
+        )
+        .getOrElse(span("No matched Rules."))
 
   // if HitPolicy COLLECT one inputs variation may have more than one result
   private def collectCellTable(
@@ -437,15 +473,15 @@ case class RowCreator(
       cells
     )
 
-  private lazy val exConfig = dmn.dmnConfig
+  private lazy val exConfig = allDmnTables.dmnConfig
   lazy val newConfigSignal: Signal[DmnConfig] =
     selectedTableRowsVar.signal.map(selectedRows =>
       exConfig.copy(data = exConfig.data.copy(testCases = selectedRows.map {
         row =>
-          val results = row.children
+          val results = row.mainMatchedRules
             .map(r =>
               TestResult(
-                r.dmnRowIndex.value.toInt,
+                r.rowIndex.intValue,
                 TesterValue.valueMap(asStrMap(r.outputs).toMap)
               )
             )
@@ -457,7 +493,84 @@ case class RowCreator(
       }))
     )
 
-  private lazy val openPopoverBus: EventBus[(Option[HTMLElement], String)] =
+  private lazy val openPopoverBus: EventBus[(Option[HTMLElement], Any)] =
     new EventBus
+
+  private def showRequiredTables(tableRow: ResultTableRow) =
+    Button(
+      _.icon := IconName.`table-view`,
+      onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
+      onMouseOver
+        .map(_.target.asInstanceOf[HTMLElement])
+        .map(Some(_) -> tableRow) --> openPopoverBus,
+      onMouseOut.mapTo(None -> "") --> openPopoverBus
+    )
+  private def displayRequiredTables(
+      tableRow: ResultTableRow
+  ) =
+    div(
+      allDmnTables.requiredTables.map {
+        case DmnTable(
+              decisionId,
+              _,
+              hitPolicy,
+              aggregation,
+              inputCols,
+              outputCols,
+              _
+            ) =>
+          Panel(
+            _.accessibleRole := PanelAccessibleRole.Complementary,
+            className := "testResultsPanel",
+            className := "flex-column",
+            className := "full-width",
+            h2(s"Table: $decisionId"),
+            p(s"Hitpolicy: ${hitPolicy}"),
+            aggregation.map(a => s"Aggregation: $a").getOrElse(""),
+            tableRow.matchedRulesPerTable
+              .find(_.decisionId == decisionId)
+              .map { mrpt =>
+                val rows =
+                  mrpt.matchedRules.map(mRules =>
+                    Table.row(tr =>
+                      ((mRules.rowIndex.value +:
+                        mRules.inputs.map(_._2)) ++
+                        mRules.outputs.map(_._2.value))
+                        .map(ellipsis(_, tr))
+                    )
+                  )
+
+                Table(
+                  className := "testResultsTable",
+                  _.stickyColumnHeader := true,
+                  _.slots.columns := Table.column(
+                    span("Dmn Row")
+                  ),
+                  _.slots.columns := matchedInputsColumns(
+                    decisionId,
+                    mrpt.inputKeys
+                  ),
+                  _.slots.columns := resultOutputsColumns(
+                    decisionId,
+                    mrpt.outputKeys
+                  ),
+                  rows
+                )
+
+              }
+              .getOrElse(span(s"No matching table found for $decisionId"))
+          )
+      }
+    )
+
+  private def simpleRows(matchedRules: Seq[MatchedRule]) =
+    matchedRules.map(mRules =>
+      Table.row(tr =>
+        ((mRules.rowIndex.value +:
+          mRules.inputs.map(_._2)) ++
+          mRules.outputs.map(_._2.value))
+          .map(ellipsis(_, tr))
+      )
+    )
 
 end RowCreator

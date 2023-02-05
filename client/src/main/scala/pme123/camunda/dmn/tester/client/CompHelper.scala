@@ -19,7 +19,10 @@ def icon(status: EvalStatus) =
     color := backgroungColor
   )
 
-def errorMessage(title: String, error: String) =
+case class ErrorMessage(title: String, error: String)
+
+def errorMessage(msg: ErrorMessage) =
+  val ErrorMessage(title, error) = msg
   IllustratedMessage(
     _.name := IllustratedMessageType.ErrorScreen,
     _.titleText := title,
@@ -54,6 +57,18 @@ def stringInputRow(
       "700px"
     )
   )
+
+def responseToHtml[T](
+                       body: T => HtmlElement
+                     )(resp: Either[ErrorMessage, T]): HtmlElement =
+  resp match
+    case Right(value) =>
+      body(value)
+    case Left(error) =>
+      div(
+        width := "40rem",
+        errorMessage(error)
+      )
 
 def panelHeader(dmnConfig: DmnConfig, evalStatus: EvalStatus) =
   Seq(
