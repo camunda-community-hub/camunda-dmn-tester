@@ -46,7 +46,7 @@ case class EvalResultsPanel(
     creator.noMatchingRows,
     creator.noMatchingInputs,
     creator.testCasesTable,
-    creator.generalPopup,
+    creator.creatorPopover,
     Button(
       _.icon := IconName.`add-activity-2`,
       "Create Test Cases from the checked Rows",
@@ -63,12 +63,7 @@ case class EvalResultsPanel(
 
   private lazy val openPopoverBus: EventBus[Option[HTMLElement]] = new EventBus
   private lazy val warnCreateTestCasesPopup =
-    Popover(
-      _.placementType := PopoverPlacementType.Top,
-      _.showAtFromEvents(openPopoverBus.events.collect { case Some(opener) =>
-        opener
-      }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None => () }),
+    generalPopover(
       p("BE AWARE that this overwrites all existing Test Cases!")
     )
 

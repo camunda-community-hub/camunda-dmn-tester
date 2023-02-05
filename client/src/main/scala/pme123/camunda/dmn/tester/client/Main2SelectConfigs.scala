@@ -82,7 +82,7 @@ final case class Main2SelectConfigs(
                         _.events.onClick.mapTo(config) --> dmnConfigVar,
                         _.events.onClick
                           .map(_.target)
-                          .map(Some(_)) --> openPopoverBus
+                          .map(Some(_) -> "") --> openPopoverBus
                       )
                     )
                   )
@@ -108,27 +108,23 @@ final case class Main2SelectConfigs(
     )
 
   private lazy val deletePopup =
-    Popover(
-      _.showAtFromEvents(openPopoverBus.events.collect { case Some(opener) =>
-        opener
-      }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None => () }),
-      _.headerText := "Confirm Delete",
-      p("Do you really want to remove the DMN Config:"),
-      child <-- dmnConfigVar.signal.map(c => p(b(c.decisionId))),
-      _.slots.footer := div(
-        padding := "6px",
-        div(flex := "1"),
-        Button(
-          className := "dialogButton",
-          _.design := ButtonDesign.Negative,
-          "Delete",
-          _.events.onClick.mapTo(true) --> deleteConfigBus,
-          _.events.onClick.mapTo(None) --> openPopoverBus.writer
-        )
-      ),
-      div(hidden := true, child <-- deleteServiceEvents.map(_ => "ok"))
-    )
+    generalPopover(
+        Popover.slots.header := h3("Confirm Delete"),
+        p("Do you really want to remove the DMN Config:"),
+        child <-- dmnConfigVar.signal.map(c => p(b(c.decisionId))),
+        Popover.slots.footer := div(
+          padding := "6px",
+          div(flex := "1"),
+          Button(
+            className := "dialogButton",
+            _.design := ButtonDesign.Negative,
+            "Delete",
+            _.events.onClick.mapTo(true) --> deleteConfigBus,
+            _.events.onClick.mapTo(None -> "") --> openPopoverBus.writer
+          )
+        ),
+        div(hidden := true, child <-- deleteServiceEvents.map(_ => "ok"))
+      )
 
   private lazy val dmnConfigs = dmnConfigsPathSignal
     .flatMap(BackendClient.getConfigs)
@@ -140,7 +136,6 @@ final case class Main2SelectConfigs(
   private lazy val allConfigsVar = Var(Map.empty[String, DmnConfig])
 
   private lazy val openEditDialogBus: EventBus[Boolean] = new EventBus
-  private lazy val openPopoverBus: EventBus[Option[HTMLElement]] = new EventBus
   private lazy val deleteConfigBus = EventBus[Boolean]()
   private lazy val dmnConfigVar: Var[DmnConfig] = Var(DmnConfig())
 

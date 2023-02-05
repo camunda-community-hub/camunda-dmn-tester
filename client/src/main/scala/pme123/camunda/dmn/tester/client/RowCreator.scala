@@ -3,7 +3,6 @@ package pme123.camunda.dmn.tester.client
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
-import com.raquo.domtypes.generic.codecs.BooleanAsAttrPresenceCodec
 import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveElement
 import io.circe.*
@@ -62,36 +61,15 @@ case class RowCreator(
           )
         }
       val matchedInputsCols: Seq[HtmlElement] =
-        //  allDmnTables.tables.flatMap(t =>
         matchedInputsColumns(
           allDmnTables.mainTable.decisionId,
           filteredRows.head.mainInputKeys
         )
-      //   )
       val matchedOutputsCols: Seq[HtmlElement] =
-        //  if (inputKeys.size == filteredRows.head.inputs.size)
         resultOutputsColumns(
           allDmnTables.mainTable.decisionId,
           filteredRows.head.mainOutputKeys
         )
-      /*   else
-          Seq(
-            Table.column(
-              className := "matchedInputHeader",
-              "No Matching Inputs available.",
-              Icon(_.name := IconName.`question-mark`, marginLeft := "5px"),
-              onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
-              onMouseOver
-                .map(_.target.asInstanceOf[HTMLElement])
-                .map(
-                  Some(
-                    _
-                  ) -> ("The reason is that your integrated Test, has inputs that are not specified in the Dmn Config. " +
-                    "This is fine in Integrated Tests!")
-                ) --> openPopoverBus,
-              onMouseOut.mapTo(None -> "") --> openPopoverBus
-            )
-          )*/
 
       Seq(
         h3(
@@ -225,27 +203,19 @@ case class RowCreator(
         )
       )
 
-  lazy val generalPopup: HtmlElement =
-    Popover(
-      _.placementType := PopoverPlacementType.Bottom,
-      _.showAtFromEvents(openPopoverBus.events.collect {
-        case Some(opener) -> _ =>
-          opener
-      }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ =>
-        ()
-      }),
-      _.slots.header <-- openPopoverBus.events.collect {
-        case _ -> (resultTableRow: ResultTableRow) =>
-          h2(s"Required Tables for ${resultTableRow.mainDecisionId}")
-        case _ => span("")
-      },
-      child <-- openPopoverBus.events.collect {
-        case _ -> (msg: String) => div(msg)
-        case _ -> (resultTableRow: ResultTableRow) =>
-          displayRequiredTables(resultTableRow)
-      }
-    )
+  lazy val creatorPopover: HtmlElement =
+    generalPopover(
+        Popover.slots.header <-- openPopoverBus.events.collect {
+          case _ -> (resultTableRow: ResultTableRow) =>
+            h2(s"Required Tables for ${resultTableRow.mainDecisionId}")
+          case _ => span("")
+        },
+        child <-- openPopoverBus.events.collect {
+          case _ -> (msg: String) => div(msg)
+          case _ -> (resultTableRow: ResultTableRow) =>
+            displayRequiredTables(resultTableRow)
+        }
+      )
 
   private lazy val selectedTableRowsVar: Var[List[ResultTableRow]] = Var(
     List.empty
@@ -476,9 +446,6 @@ case class RowCreator(
           )
       }))
     )
-
-  private lazy val openPopoverBus: EventBus[(Option[HTMLElement], Any)] =
-    new EventBus
 
   private def showRequiredTables(tableRow: ResultTableRow) =
     Button(
