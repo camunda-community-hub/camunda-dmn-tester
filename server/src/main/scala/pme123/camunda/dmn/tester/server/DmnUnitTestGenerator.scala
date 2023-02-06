@@ -18,9 +18,9 @@ case class DmnUnitTestGenerator(
 ) {
   private val runtime = Runtime.default
 
-  private def run[E, A](body: => IO[E, A]): A =
+  def run() =
     Unsafe.unsafe { implicit unsafe =>
-      runtime.unsafe.run(body).getOrThrowFiberFailure()
+      runtime.unsafe.run(generate()).getOrThrowFiberFailure()
     }
 
   def generate(): IO[Any, Unit] =
@@ -92,10 +92,10 @@ case class DmnUnitTestGenerator(
       val DmnEvalRowResult(
         status,
         testInputs,
-        matchedRules,
+        matchedRulesPerTable,
         maybeError
       ) = dmnEvalRow
-      /*
+      val mainTable = matchedRulesPerTable.head
       val inset: String = "   "
       def matchRule(rule: MatchedRule): String = {
         val MatchedRule(ruleId, ruleIndex, inputs, outputs) = rule
@@ -110,17 +110,15 @@ case class DmnUnitTestGenerator(
       }
       s"""DmnEvalRowResult
          |- Status: $status
-         |- DMN Table: $decisionId
+         |- DMN Table: ${mainTable.decisionId}
          |- Test Inputs: ${testInputs.map { case (k, v) =>
         s"\n   - $k: $v"
-      }.mkString}${if (matchedRules.isEmpty)
+      }.mkString}${if (mainTable.matchedRules.isEmpty)
         "\n- There is no Matching Rule for these input(s)"
       else
-        matchedRules.map { mr => s"\n${matchRule(mr)}" }.mkString}
+        mainTable.matchedRules.map { mr => s"\n${matchRule(mr)}" }.mkString}
          |- Error: ${maybeError.map { e => s"\n   - ${e.msg}" }.getOrElse("-")}
          |""".stripMargin
-      */
-      "TODO"
     }
 
   private[server] def testMethod(

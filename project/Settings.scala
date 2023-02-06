@@ -109,6 +109,7 @@ object Settings {
         Deps.zioTest % Test,
         Deps.zioTestJUnit % Test,
         Deps.zioTestSbt % Test,
+        Deps.scalaTest % Test,
       )
     )
 

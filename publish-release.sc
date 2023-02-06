@@ -7,10 +7,10 @@ import mainargs._
   *
   * amm ./publish-release.sc <VERSION>
   *
-  * # Example SNAPSHOT (only publish to SNAPSHOT Repo, e.g. bpfpkg-maven-dev)
+  * # Example SNAPSHOT (only publish to Local Repo)
   * amm ./publish-release.sc 0.2.5-SNAPSHOT
   *
-  * # Example (publish to Release Repo (e.g. bpfpkg-maven-release) and GIT Tagging and increasing Version to next minor Version)
+  * # Example (publish to Release Repo (e.g. Maven Central) and GIT Tagging and increasing Version to next minor Version)
   * amm ./publish-release.sc 0.2.5
   */
 
@@ -31,7 +31,7 @@ private def replaceVersion(version: String) = {
   newVersion
 }
 
-private def publishCIDocker(version: String) = {
+private def buildCIDocker(version: String) = {
   os.write.over(os.pwd / "docker" / "data" / "testerVersion", version)
   runAndPrint( "docker",
     "build",
@@ -39,6 +39,9 @@ private def publishCIDocker(version: String) = {
     "-t",
     s"pame/camunda-dmn-tester-ci:$version"
   )
+}
+
+private def pushCIDocker(version: String) = {
   runAndPrint( "docker",
     "push",
     s"pame/camunda-dmn-tester-ci:$version"
@@ -154,7 +157,8 @@ def release(version: String): Unit = {
   val isSnapshot = version.contains("-")
   if (!isSnapshot) {
     publishTesterDocker(version)
-    publishCIDocker(version)
+    buildCIDocker(version)
+    pushCIDocker(version)
     updateGit(version)
     println("""Due to problems with the `"org.xerial.sbt" % "sbt-sonatype"` Plugin you have to release manually:
               |- https://s01.oss.sonatype.org/#stagingRepositories
@@ -164,6 +168,7 @@ def release(version: String): Unit = {
               |  - hit _release_ Button""".stripMargin)
   } else {
     publishTesterDockerLocal
+    buildCIDocker(version)
   }
 
 }

@@ -7,4 +7,4 @@ docker run \
    -v $(pwd)/dmns:/opt/workspace/dmns \
    -v $(pwd)/target:/opt/workspace/target \
    -v $HOME/.ivy2:/root/.ivy2 \
-   pame/camunda-dmn-tester-ci
+   pame/camunda-dmn-tester-ci:0.18.0-SNAPSHOT

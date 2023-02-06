@@ -1,12 +1,16 @@
 import $file.BaseScript
 
-//import $ivy.`io.github.pme123::camunda-dmn-tester-server:$testerVersion`
-import pme123.camunda.dmn.tester.server.runner._
-import ammonite.ops._
+//import $ivy.`io.github.pme123::camunda-dmn-tester-server:$testerVersion`,
+import pme123.camunda.dmn.tester.server._
 
-private implicit val workDir: Path = pwd
+private implicit val workDir: os.Path = os.pwd
 
-%.sbt(
+def runAndPrint(commands: os.Shellable*) = {
+  println(s"Commands: ${commands.mkString(", ")}")
+  println(os.proc(commands:_*).call())
+}
+
+runAndPrint("sbt",
   "clean"
 )
 
@@ -16,7 +20,7 @@ DmnUnitTestGenerator(UnitTestGeneratorConfig(
 )).run()
 
 try {
-  %.sbt(
+  runAndPrint("sbt",
     "-mem",
     "3000",
     "test"
