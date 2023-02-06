@@ -43,8 +43,10 @@ final case class Main2SelectConfigs(
       span("")
     ))
   private lazy val openEditDialogBus: EventBus[Boolean] = new EventBus
-  private lazy val deleteConfigBus = EventBus[Boolean]()
+  private lazy val deleteConfigBus = EventBus[(Option[HTMLElement], Boolean)]()
   private lazy val deleteDmnConfigEvents = deleteConfigBus.events
+    .map(_._2)
+    .filter((b: Boolean) => b)
     .withCurrentValueOf(dmnConfigVar.signal, dmnConfigsPathSignal)
     .flatMap { case (_, config, path) =>
       BackendClient
@@ -67,7 +69,7 @@ final case class Main2SelectConfigs(
         }
       ),
       dmnConfigsTable,
-      deletePopup,
+      deletePopover,
       addDmnConfigButton,
       child <-- getDmnConfigsEvents // just loading Dmn Configs.
     )
@@ -130,13 +132,13 @@ final case class Main2SelectConfigs(
           _.events.onClick.mapTo(config) --> dmnConfigVar,
           _.events.onClick
             .map(_.target)
-            .map(Some(_) -> "") --> openPopoverBus
+            .map(Some(_) -> false) --> deleteConfigBus.writer
         )
       )
     )
 
-  private lazy val deletePopup =
-    generalPopover(
+  private lazy val deletePopover =
+    generalPopover(deleteConfigBus.events)(
       Popover.slots.header := h3("Confirm Delete"),
       p("Do you really want to remove the DMN Config:"),
       child <-- dmnConfigVar.signal.map(c => p(b(c.decisionId))),
@@ -147,8 +149,7 @@ final case class Main2SelectConfigs(
           className := "dialogButton",
           _.design := ButtonDesign.Negative,
           "Delete",
-          _.events.onClick.mapTo(true) --> deleteConfigBus,
-          _.events.onClick.mapTo(None -> "") --> openPopoverBus.writer
+          _.events.onClick.mapTo(None -> true) --> deleteConfigBus.writer
         )
       ),
       child <-- deleteDmnConfigEvents

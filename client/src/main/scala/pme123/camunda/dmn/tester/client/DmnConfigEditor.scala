@@ -70,7 +70,7 @@ final case class DmnConfigEditor(
         BackendClient
           .validateDmnPath(path)
       )
-  
+
   private lazy val testUnitUpdater =
     dmnConfigVar.updater[Boolean] { (config, newValue) =>
       config.copy(testUnit = newValue)
@@ -84,23 +84,32 @@ final case class DmnConfigEditor(
       newPathBus.emit(newValue)
       config.copy(dmnPath = newValue.split("/").toList)
     }
-    
+
   // components
   private lazy val editDmnConfigForm =
     form(
       className := "configDialogForm",
       editDmnConfigTable,
       div(
+        className := "editTitle",
+        paddingLeft :="100px",
         child <-- dmnExistsEvents.map {
           case Right(exists) if exists =>
             span("")
           case Right(_) =>
-            div(icon(EvalStatus.WARN), "Be aware that this DMN does not exist.")
+            Title(
+              _.level := TitleLevel.H5,
+              icon(EvalStatus.WARN),
+              "Be aware that this DMN does not exist."
+            )
           case Left(error) =>
             errorMessage(error)
         }
       ),
-      h4("Test Inputs "),
+      div(
+        className := "editTitle",
+        Title(_.level := TitleLevel.H4, "Test Inputs ")
+      ),
       inputValueVariableTables(dataInputsVar),
       Button(
         _.icon := IconName.add,
@@ -108,7 +117,13 @@ final case class DmnConfigEditor(
         width := "100%",
         _.events.onClick --> (_ => dataInputsVar.update(_ :+ TesterInput()))
       ),
-      h4("Test Variables used in Inputs and Outputs"),
+      div(
+        className := "editTitle",
+        Title(
+          _.level := TitleLevel.H4,
+          "Test Variables used in Inputs and Outputs"
+        )
+      ),
       inputValueVariableTables(dataVariablesVar),
       Button(
         _.icon := IconName.add,
@@ -166,7 +181,7 @@ final case class DmnConfigEditor(
         dmnPathUpdater
       )
     )
-    
+
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
     def renderInputsTableRow(id: Int, inputSignal: Signal[TesterInput]) =
 

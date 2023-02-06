@@ -6,17 +6,15 @@ import com.raquo.laminar.api.L.{*, given}
 
 import org.scalajs.dom.HTMLElement
 
-lazy val openPopoverBus: EventBus[(Option[HTMLElement], Any)] =
-  new EventBus
 
-def generalPopover(mods: Modifier[HtmlElement]*): HtmlElement =
+def generalPopover[T](openPopoverEvents: EventStream[(Option[HTMLElement], T)])(mods: Modifier[HtmlElement]*): HtmlElement =
     Popover(
       _.placementType := PopoverPlacementType.Bottom,
-      _.showAtFromEvents(openPopoverBus.events.collect {
+      _.showAtFromEvents(openPopoverEvents.collect {
         case Some(opener) -> _ =>
           opener
       }),
-      _.closeFromEvents(openPopoverBus.events.collect { case None -> _ =>
+      _.closeFromEvents(openPopoverEvents.collect { case None -> _ =>
         ()
       }),
 

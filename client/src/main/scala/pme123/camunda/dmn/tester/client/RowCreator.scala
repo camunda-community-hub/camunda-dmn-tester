@@ -20,6 +20,10 @@ case class RowCreator(
     dmnEvalResult: DmnEvalResult
 ):
 
+  // events
+  lazy val openPopoverBus: EventBus[(Option[HTMLElement], Any)] =
+    new EventBus
+  // components
   lazy val testCasesTable: Seq[HtmlElement] =
     val filteredRows = resultRows
       .filter(r =>
@@ -204,7 +208,7 @@ case class RowCreator(
       )
 
   lazy val creatorPopover: HtmlElement =
-    generalPopover(
+    generalPopover(openPopoverBus.events)(
         Popover.slots.header <-- openPopoverBus.events.collect {
           case _ -> (resultTableRow: ResultTableRow) =>
             h2(s"Required Tables for ${resultTableRow.mainDecisionId}")

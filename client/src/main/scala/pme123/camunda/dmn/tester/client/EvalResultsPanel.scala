@@ -66,7 +66,7 @@ case class EvalResultsPanel(
 
   // components
   private lazy val warnCreateTestCasesPopover =
-    generalPopover(
+    generalPopover(openPopoverBus.events.map(_ -> true))(
       p("BE AWARE that this overwrites all existing Test Cases!")
     )
 

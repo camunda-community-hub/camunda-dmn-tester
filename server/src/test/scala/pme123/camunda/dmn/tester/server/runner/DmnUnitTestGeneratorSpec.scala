@@ -138,38 +138,43 @@ object DmnUnitTestGeneratorSpec extends JUnitRunnableSpec {
       Seq.empty
     )
 
-  private lazy val matchedRule = MatchedRule(
-    "asdfe4",
-    NotTested("1"),
-    Seq("in1" -> "hello3", "in2" -> "4.5"),
-    Seq("out1" -> NotTested("val1"), "out2" -> NotTested("val2"))
-  )
+  private lazy val matchedRulePerTable = {
+    MatchedRulesPerTable(
+      decisionId,
+      Seq(
+        MatchedRule(
+          "asdfe4",
+          NotTested("1"),
+          Seq("in1" -> "hello3", "in2" -> "4.5"),
+          Seq("out1" -> NotTested("val1"), "out2" -> NotTested("val2"))
+        )
+      ),
+      None
+    )
+  }
   private lazy val infoRowResult = DmnEvalRowResult(
     EvalStatus.INFO,
-    decisionId,
     Map("in1" -> "hello Peter! how are you.", "in2" -> "4.5"),
     Seq(
-      matchedRule
+      matchedRulePerTable
     ),
     None
   )
 
   private lazy val infoRowResultTestCase = DmnEvalRowResult(
     EvalStatus.INFO,
-    decisionId,
     Map("in1" -> "hello", "in2" -> "4"),
     Seq(
-      matchedRule
+      matchedRulePerTable
     ),
     None
   )
 
   private lazy val warnRowResult = DmnEvalRowResult(
     EvalStatus.WARN,
-    decisionId,
     Map("in1" -> "hello", "in2" -> "3"),
     Seq(
-      matchedRule
+      matchedRulePerTable
     ),
     Some(EvalError("This was wrong"))
   )

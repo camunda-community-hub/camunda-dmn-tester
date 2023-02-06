@@ -69,17 +69,6 @@ def responseToHtml[T](
     case Left(error) =>
       errorMessage(error)
 
-def responseToHtmls[T](
-    body: T => Seq[HtmlElement]
-)(resp: Either[ErrorMessage, T]): Seq[HtmlElement] =
-  resp match
-    case Right(value) =>
-      body(value)
-    case Left(error) =>
-      Seq(
-        errorMessage(error)
-      )
-
 def panelHeader(dmnConfig: DmnConfig, evalStatus: EvalStatus) =
   Seq(
     h2(icon(evalStatus), dmnConfig.decisionId),
