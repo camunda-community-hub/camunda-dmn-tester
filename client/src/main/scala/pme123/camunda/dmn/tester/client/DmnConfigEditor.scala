@@ -17,9 +17,6 @@ final case class DmnConfigEditor(
     dmnConfigVar: Var[DmnConfig],
     dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  private lazy val dmnConfigSignal = dmnConfigVar.signal
-
-  private lazy val saveConfigBus = EventBus[Boolean]()
 
   private lazy val comp = Dialog(
     _.showFromEvents(openEditDialogBus.events.filter(identity).mapTo(())),
@@ -29,10 +26,8 @@ final case class DmnConfigEditor(
     _.headerText := "DMN Config Editor",
     section(
       className := "editDialog",
-      div(
-        child <-- submitDmnConfig
-      ),
-      configForm
+      child <-- submitDmnConfig,
+      editDmnConfigForm
     ),
     p(""),
     _.slots.footer := section(
@@ -60,69 +55,43 @@ final case class DmnConfigEditor(
     )
   )
 
-  private lazy val configForm =
+  // state
+  private lazy val dataInputsVar: Var[List[TesterInput]] = Var(List.empty)
+  private lazy val dataVariablesVar: Var[List[TesterInput]] = Var(List.empty)
+  private lazy val dmnConfigSignal = dmnConfigVar.signal
+
+  // events
+  private lazy val saveConfigBus = EventBus[Boolean]()
+  private lazy val newPathBus: EventBus[String] = EventBus()
+
+  private lazy val dmnExistsEvents =
+    newPathBus.events
+      .flatMap(path =>
+        BackendClient
+          .validateDmnPath(path)
+      )
+  
+  private lazy val testUnitUpdater =
+    dmnConfigVar.updater[Boolean] { (config, newValue) =>
+      config.copy(testUnit = newValue)
+    }
+  private lazy val decisionIdUpdater =
+    dmnConfigVar.updater[String] { (config, newValue) =>
+      config.copy(decisionId = newValue)
+    }
+  private lazy val dmnPathUpdater: Observer[String] =
+    dmnConfigVar.updater[String] { (config, newValue) =>
+      newPathBus.emit(newValue)
+      config.copy(dmnPath = newValue.split("/").toList)
+    }
+    
+  // components
+  private lazy val editDmnConfigForm =
     form(
       className := "configDialogForm",
-      /*    onMountCallback{ ctx =>
-          dmnConfigVar.zoom{ c =>
-            c.data.inputs}{ inputs =>
-             val dmnConfig = dmnConfigVar.now()
-             dmnConfig.copy(data = dmnConfig.data.copy(inputs = inputs))
-          }(ctx.owner) --> dataInputsVar
-          dmnConfigVar.zoom(_.data.variables){ variables =>
-             val dmnConfig = dmnConfigVar.now()
-             dmnConfig.copy(data = dmnConfig.data.copy(variables = variables))
-          }(ctx.owner) --> dataVariablesVar
-      },*/
-      Table(
-        className := "dialogTable",
-        _.slots.columns := Table.column(
-          "Base Path"
-        ),
-        _.slots.columns := Table.column(
-          child.text <-- basePathSignal
-        ),
-        Table.row(
-          title := "Check if you want test your DMN independently.",
-          _.cell(
-            Label(
-              className := "dialogLabel",
-              _.forId := "testUnit",
-              _.required := true,
-              "Test is Unit"
-            )
-          ),
-          _.cell(
-            CheckBox(
-              _.id := "testUnit",
-              _.checked <-- dmnConfigSignal.map(_.testUnit),
-              _.events.onChange.map(_.target.checked) --> testUnitUpdater
-            )
-          )
-        ),
-        stringInputRow(
-          "decisionId",
-          "Decision Id",
-          dmnConfigSignal.map(_.decisionIdError),
-          dmnConfigSignal
-            .map { c => // work around - zoom not working
-              dataInputsVar.set(c.data.inputs.map(_.withId))
-              dataVariablesVar.set(c.data.variables.map(_.withId))
-              c
-            }
-            .map(_.decisionId),
-          decisionIdUpdater
-        ),
-        stringInputRow(
-          "dmnPath",
-          "Path to DMN",
-          dmnConfigSignal.map(_.dmnPathError),
-          dmnConfigSignal.map(_.dmnPathStr),
-          dmnPathUpdater
-        )
-      ),
+      editDmnConfigTable,
       div(
-        child <-- dmnExistsStream.map {
+        child <-- dmnExistsEvents.map {
           case Right(exists) if exists =>
             span("")
           case Right(_) =>
@@ -149,31 +118,55 @@ final case class DmnConfigEditor(
       )
     )
 
-  private lazy val dataInputsVar: Var[List[TesterInput]] = Var(List.empty)
-  private lazy val dataVariablesVar: Var[List[TesterInput]] = Var(List.empty)
-
-  private lazy val testUnitUpdater =
-    dmnConfigVar.updater[Boolean] { (config, newValue) =>
-      config.copy(testUnit = newValue)
-    }
-  private lazy val decisionIdUpdater =
-    dmnConfigVar.updater[String] { (config, newValue) =>
-      config.copy(decisionId = newValue)
-    }
-  private lazy val dmnExistsStream =
-    newPathBus.events
-      .flatMap(path =>
-        BackendClient
-          .validateDmnPath(path)
+  private def editDmnConfigTable =
+    Table(
+      className := "dialogTable",
+      _.slots.columns := Table.column(
+        "Base Path"
+      ),
+      _.slots.columns := Table.column(
+        child.text <-- basePathSignal
+      ),
+      Table.row(
+        title := "Check if you want test your DMN independently.",
+        _.cell(
+          Label(
+            className := "dialogLabel",
+            _.forId := "testUnit",
+            _.required := true,
+            "Test is Unit"
+          )
+        ),
+        _.cell(
+          CheckBox(
+            _.id := "testUnit",
+            _.checked <-- dmnConfigSignal.map(_.testUnit),
+            _.events.onChange.map(_.target.checked) --> testUnitUpdater
+          )
+        )
+      ),
+      stringInputRow(
+        "decisionId",
+        "Decision Id",
+        dmnConfigSignal.map(_.decisionIdError),
+        dmnConfigSignal
+          .map { c => // work around - zoom not working
+            dataInputsVar.set(c.data.inputs.map(_.withId))
+            dataVariablesVar.set(c.data.variables.map(_.withId))
+            c
+          }
+          .map(_.decisionId),
+        decisionIdUpdater
+      ),
+      stringInputRow(
+        "dmnPath",
+        "Path to DMN",
+        dmnConfigSignal.map(_.dmnPathError),
+        dmnConfigSignal.map(_.dmnPathStr),
+        dmnPathUpdater
       )
-
-  private lazy val newPathBus: EventBus[String] = EventBus()
-  private lazy val dmnPathUpdater: Observer[String] =
-    dmnConfigVar.updater[String] { (config, newValue) =>
-      newPathBus.emit(newValue)
-      config.copy(dmnPath = newValue.split("/").toList)
-    }
-
+    )
+    
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =
     def renderInputsTableRow(id: Int, inputSignal: Signal[TesterInput]) =
 
@@ -189,7 +182,6 @@ final case class DmnConfigEditor(
         updater[String]((item, newValue) => item.copy(key = newValue))
       def nullValueUpdater =
         updater[Boolean]((item, newValue) => item.copy(nullValue = newValue))
-
       def valuesUpdater =
         updater[String]((item, newValue) =>
           if (item.id.contains(id)) {
@@ -199,7 +191,8 @@ final case class DmnConfigEditor(
               .filter(_.nonEmpty)
             val testerValues = values.map(TesterValue.fromString)
             item.copy(values = testerValues.toList)
-          } else item)
+          } else item
+        )
 
       Table.row(
         _.stringInputCell(

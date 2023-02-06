@@ -16,21 +16,15 @@ import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult, EvalStatus}
 
 final case class Main3CheckTheResults(
-    private val testsAreRunningVar: Var[Boolean],
     private val dmnConfigPathSignal: Signal[String],
     private val selectedConfigsSignal: Signal[List[DmnConfig]],
     private val dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  private lazy val hideSection =
-    selectedConfigsSignal.map { selConfigs =>
-      if (selConfigs.isEmpty)
-        testsAreRunningVar.set(true)
-      selConfigs.isEmpty
-    }
+
   private lazy val comp =
     section(
       className := "App-section",
-      hidden <-- hideSection,
+      hidden <-- hideSectionSignal,
       Card(
         cls := "medium",
         cls := "App-card",
@@ -42,11 +36,19 @@ final case class Main3CheckTheResults(
       BusyIndicator(
         className := "busyIndication",
         _.active <-- testsAreRunningVar.signal,
-        child <-- testResultsList
+        child <-- testResultsListSignal
       )
     )
 
-  private lazy val testResultsList: Signal[HtmlElement] = selectedConfigsSignal.signal
+  // state
+  private lazy val testsAreRunningVar: Var[Boolean] = Var(false)
+  private lazy val hideSectionSignal =
+    selectedConfigsSignal.map { selConfigs =>
+      if (selConfigs.isEmpty)
+        testsAreRunningVar.set(true)
+      selConfigs.isEmpty
+    }
+  private lazy val testResultsListSignal: Signal[HtmlElement] = selectedConfigsSignal.signal
     .map { conf =>
       if (conf.nonEmpty)
         div(
@@ -58,19 +60,17 @@ final case class Main3CheckTheResults(
         div()
     }
 
+  // components
   private def handleTestResults(
       configs: Seq[Either[EvalException, DmnEvalResult]]
   ): HtmlElement =
+    testsAreRunningVar.set(false)
     div(
       configs
         .map {
           case Right(result) =>
             EvalResultsPanel(result, dmnConfigPathSignal, dmnConfigsVar)
           case Left(error) => errorPanel(error)
-        }
-        .map { r =>
-          testsAreRunningVar.set(false)
-          r
         }
     )
 
@@ -95,13 +95,11 @@ final case class Main3CheckTheResults(
 
 object Main3CheckTheResults:
   def apply(
-      testsAreRunningVar: Var[Boolean],
       dmnConfigPathSignal: Signal[String],
       selectedConfigsSignal: Signal[List[DmnConfig]],
       dmnConfigsVar: Var[Seq[DmnConfig]]
   ): ReactiveHtmlElement[html.Element] =
     new Main3CheckTheResults(
-      testsAreRunningVar,
       dmnConfigPathSignal,
       selectedConfigsSignal,
       dmnConfigsVar

@@ -6,21 +6,31 @@ import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.html
 
-final case class Main5Footer():
+object Main5Footer:
 
-  lazy val comp: ReactiveHtmlElement[html.Element] =
+  def apply(): ReactiveHtmlElement[html.Element] =
     section(
-        className := "App-footer",
+      className := "App-footer",
+      Label(
         "Check it out on Github: ",
-        a(
+        Link(
           href := "https://github.com/pme123/camunda-dmn-tester",
           "camunda-dmn-tester"
         )
+      ),
+      br(),
+      Label(
+        "UI powered by ",
+        Link(href := "https://laminar.dev", "Laminar"),
+        " and ",
+        Link(
+          href := "https://github.com/sherpal/LaminarSAPUI5Bindings",
+          "Laminar bindings for SAP ui5 web-components"
+        ),
+        "."
       )
-  end comp
+    )
+  end apply
 
-object Main5Footer:
-    def apply(): ReactiveHtmlElement[html.Element] =
-        new Main5Footer().comp  
 
 end Main5Footer

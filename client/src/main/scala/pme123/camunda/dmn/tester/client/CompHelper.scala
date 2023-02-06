@@ -25,6 +25,7 @@ case class ErrorMessage(title: String, error: String)
 def errorMessage(msg: ErrorMessage) =
   val ErrorMessage(title, error) = msg
   IllustratedMessage(
+    width := "40rem",
     _.name := IllustratedMessageType.ErrorScreen,
     _.titleText := title,
     _.slots.subtitle := div(
@@ -60,14 +61,22 @@ def stringInputRow(
   )
 
 def responseToHtml[T](
-                       body: T => HtmlElement
-                     )(resp: Either[ErrorMessage, T]): HtmlElement =
+    body: T => HtmlElement
+)(resp: Either[ErrorMessage, T]): HtmlElement =
   resp match
     case Right(value) =>
       body(value)
     case Left(error) =>
-      div(
-        width := "40rem",
+      errorMessage(error)
+
+def responseToHtmls[T](
+    body: T => Seq[HtmlElement]
+)(resp: Either[ErrorMessage, T]): Seq[HtmlElement] =
+  resp match
+    case Right(value) =>
+      body(value)
+    case Left(error) =>
+      Seq(
         errorMessage(error)
       )
 

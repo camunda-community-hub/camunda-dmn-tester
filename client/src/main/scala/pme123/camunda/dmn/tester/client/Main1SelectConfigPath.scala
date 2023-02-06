@@ -10,8 +10,8 @@ import org.scalajs.dom
 import org.scalajs.dom.html
 
 final case class Main1SelectConfigPath(
-    basePathVar: Var[String],
-    dmnConfigsPathVar: Var[String]
+                                        basePathVar: Var[String],
+                                        dmnConfigPathVar: Var[String]
 ):
   private lazy val basePath = BackendClient.getBasePath
 
@@ -19,30 +19,17 @@ final case class Main1SelectConfigPath(
     section(
       className := "App-section",
       Card(
-        cls := "medium",
         cls := "App-card",
         _.slots.header := Card.header(
           _.titleText := "1. Select Path where your DMN Configurations are."
         ),
-        child <-- configPathEvents,
         div(
           className := "configPathsRow",
-          Label(
-            className := "configPathsSelect",
-            "Base Path: ",
-            child <-- basePath.map(responseToHtml(path => {
-              basePathVar.set(path)
-              span(path)
-            }))
-          ),
-          Select(
-            className := "configPathsSelect",
-            children <-- configuredPaths,
-            _.events.onChange
-              .map(_.detail.selectedOption.textContent) --> dmnConfigsPathVar
-          ),
-          newConfigPath
-        )
+          basePathLabel,
+          dmnConfigPathsSelect,
+          newConfigPathDiv
+        ),
+        child <-- configPathEvents, // needed to start fetching
       )
     )
   end comp
@@ -54,11 +41,29 @@ final case class Main1SelectConfigPath(
     BackendClient.getConfigPaths
       .map(responseToHtml(paths => {
         configPathsVar.set(paths)
-        if (dmnConfigsPathVar.now().isEmpty)
-          dmnConfigsPathVar.set(paths.head)
+        if (dmnConfigPathVar.now().isEmpty)
+          dmnConfigPathVar.set(paths.head)
         span("")
       }))
 
+  private lazy val basePathLabel =
+    Label(
+      className := "configPathsSelect",
+      "Base Path: ",
+      child <-- basePath.map(responseToHtml(path => {
+        basePathVar.set(path)
+        span(path)
+      }))
+    )
+    
+  private lazy val dmnConfigPathsSelect =
+    Select(
+      className := "configPathsSelect",
+      children <-- configuredPaths,
+      _.events.onChange
+        .map(_.detail.selectedOption.textContent) --> dmnConfigPathVar
+    )
+    
   private lazy val configuredPaths
       : Signal[Seq[ReactiveHtmlElement[html.Element]]] =
     configPathsVar.signal.map(
@@ -66,18 +71,17 @@ final case class Main1SelectConfigPath(
         Select.option(
           value := p,
           p,
-          _.selected <-- dmnConfigsPathVar.signal.map(p == _)
+          _.selected <-- dmnConfigPathVar.signal.map(p == _)
         )
       })
     )
 
-  private lazy val newConfigPath =
+  private lazy val newConfigPathDiv =
     val newPathVar = Var("")
 
     div(
       className := "configPathsRow",
       Input(
-        _.id := "selectFolder",
         className := "configPathsSelect",
         _.required := true,
         _.placeholder := "Add new path",
@@ -87,16 +91,16 @@ final case class Main1SelectConfigPath(
       Button(
         _.icon := IconName.add,
         _.events.onClick.map { _ =>
-          dmnConfigsPathVar.set(newPathVar.now())
-          configPathsVar.set(
-            configPathsVar.now() :+ newPathVar.now()
+          dmnConfigPathVar.set(newPathVar.now())
+          configPathsVar.update(existing =>
+            existing :+ newPathVar.now()
           )
           ""
         } --> newPathVar,
         "Add Path"
       )
     )
-  end newConfigPath
+  end newConfigPathDiv
 
 object Main1SelectConfigPath:
   def apply(

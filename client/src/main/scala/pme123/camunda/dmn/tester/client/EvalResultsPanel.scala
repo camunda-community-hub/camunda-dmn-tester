@@ -12,10 +12,6 @@ case class EvalResultsPanel(
     dmnConfigPathSignal: Signal[String],
     dmnConfigsVar: Var[Seq[DmnConfig]]
 ):
-  private lazy val dmnConfig = result.dmnTables.dmnConfig
-  private lazy val mainTable = result.dmnTables.mainTable
-  private lazy val creator = RowCreator(result)
-  private lazy val saveConfigBus = EventBus[Boolean]()
 
   private lazy val comp = Panel(
     _.accessibleRole := PanelAccessibleRole.Complementary,
@@ -24,9 +20,7 @@ case class EvalResultsPanel(
     className := "full-width",
     _.collapsed := true,
     _.slots.header := panelHeader(dmnConfig, result.maxEvalStatus),
-    div(
-      child <-- submitDmnConfig
-    ),
+    child <-- submitDmnConfig,
     p(
       b(
         if (dmnConfig.testUnit) "Unit Test"
@@ -58,11 +52,20 @@ case class EvalResultsPanel(
         .map(Some(_)) --> openPopoverBus,
       onMouseOut.mapTo(None) --> openPopoverBus
     ),
-    warnCreateTestCasesPopup
+    warnCreateTestCasesPopover
   )
 
+  // helper variables
+  private lazy val dmnConfig = result.dmnTables.dmnConfig
+  private lazy val mainTable = result.dmnTables.mainTable
+  private lazy val creator = RowCreator(result)
+
+  // events
+  private lazy val saveConfigBus = EventBus[Boolean]()
   private lazy val openPopoverBus: EventBus[Option[HTMLElement]] = new EventBus
-  private lazy val warnCreateTestCasesPopup =
+
+  // components
+  private lazy val warnCreateTestCasesPopover =
     generalPopover(
       p("BE AWARE that this overwrites all existing Test Cases!")
     )
@@ -87,6 +90,7 @@ case class EvalResultsPanel(
             span("")
           }))
     }
+
 object EvalResultsPanel:
   def apply(
       result: DmnEvalResult,
