@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="dinnerDecisions" name="Dinner Decisions" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.2.0">
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="dinnerDecisions" name="Dinner Decisions" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.7.0">
   <decision id="beverages" name="Beverages">
     <informationRequirement id="InformationRequirement_08lf6cc">
-      <requiredDecision href="#dish" />
+      <requiredDecision href="#desiredDish" />
     </informationRequirement>
     <informationRequirement id="InformationRequirement_1t6fqwy">
       <requiredInput href="#InputData_0pgvdj9" />
     </informationRequirement>
     <informationRequirement id="InformationRequirement_0f5gick">
-      <requiredDecision href="#dish" />
+      <requiredDecision href="#desiredDish" />
     </informationRequirement>
     <decisionTable id="DecisionTable_1qpfmp3" hitPolicy="COLLECT">
       <input id="InputClause_1acmlkd" label="Dish" camunda:inputVariable="">
@@ -91,7 +91,7 @@
       </rule>
     </decisionTable>
   </decision>
-  <decision id="dish" name="Dish">
+  <decision id="desiredDish" name="Dish">
     <informationRequirement id="InformationRequirement_0zuzpy2">
       <requiredInput href="#InputData_0rin549" />
     </informationRequirement>
@@ -191,42 +191,42 @@
   <dmndi:DMNDI>
     <dmndi:DMNDiagram id="DMNDiagram_0m2sdp5">
       <dmndi:DMNShape id="DMNShape_1mfrbw4" dmnElementRef="beverages">
-        <dc:Bounds height="80" width="180" x="55" y="153" />
+        <dc:Bounds height="80" width="180" x="515" y="83" />
       </dmndi:DMNShape>
       <dmndi:DMNEdge id="DMNEdge_0cwiw3d" dmnElementRef="InformationRequirement_1t6fqwy">
-        <di:waypoint x="216" y="306" />
-        <di:waypoint x="160" y="233" />
+        <di:waypoint x="676" y="236" />
+        <di:waypoint x="620" y="163" />
       </dmndi:DMNEdge>
       <dmndi:DMNEdge id="DMNEdge_04hz8i3" dmnElementRef="InformationRequirement_08lf6cc">
-        <di:waypoint x="38" y="307" />
-        <di:waypoint x="98" y="233" />
+        <di:waypoint x="498" y="237" />
+        <di:waypoint x="558" y="163" />
       </dmndi:DMNEdge>
-      <dmndi:DMNShape id="DMNShape_0cdsu9z" dmnElementRef="dish">
-        <dc:Bounds height="80" width="180" x="-84" y="307" />
+      <dmndi:DMNShape id="DMNShape_0cdsu9z" dmnElementRef="desiredDish">
+        <dc:Bounds height="80" width="180" x="376" y="237" />
       </dmndi:DMNShape>
       <dmndi:DMNEdge id="DMNEdge_1d545hu" dmnElementRef="AuthorityRequirement_1yejubk">
-        <di:waypoint x="-140" y="376" />
-        <di:waypoint x="-17" y="376" />
+        <di:waypoint x="320" y="306" />
+        <di:waypoint x="443" y="306" />
       </dmndi:DMNEdge>
       <dmndi:DMNEdge id="DMNEdge_0cfvm0s" dmnElementRef="InformationRequirement_0zuzpy2">
-        <di:waypoint x="-101" y="466" />
-        <di:waypoint x="-30" y="387" />
+        <di:waypoint x="359" y="396" />
+        <di:waypoint x="430" y="317" />
       </dmndi:DMNEdge>
       <dmndi:DMNEdge id="DMNEdge_1liitzw" dmnElementRef="InformationRequirement_0zws8vo">
-        <di:waypoint x="97" y="466" />
-        <di:waypoint x="42" y="387" />
+        <di:waypoint x="557" y="396" />
+        <di:waypoint x="502" y="317" />
       </dmndi:DMNEdge>
       <dmndi:DMNShape id="DMNShape_0gxn8xn" dmnElementRef="InputData_0rin549">
-        <dc:Bounds height="45" width="125" x="-171" y="466" />
+        <dc:Bounds height="45" width="125" x="289" y="396" />
       </dmndi:DMNShape>
       <dmndi:DMNShape id="DMNShape_0v7ewz7" dmnElementRef="InputData_1axnom3">
-        <dc:Bounds height="45" width="125" x="50" y="466" />
+        <dc:Bounds height="45" width="125" x="510" y="396" />
       </dmndi:DMNShape>
       <dmndi:DMNShape id="DMNShape_0etqzbq" dmnElementRef="InputData_0pgvdj9">
-        <dc:Bounds height="45" width="125" x="170" y="306" />
+        <dc:Bounds height="45" width="125" x="630" y="236" />
       </dmndi:DMNShape>
       <dmndi:DMNShape id="DMNShape_05h05iy" dmnElementRef="KnowledgeSource_0b8hnqo">
-        <dc:Bounds height="63" width="100" x="-307" y="313" />
+        <dc:Bounds height="63" width="100" x="153" y="243" />
       </dmndi:DMNShape>
     </dmndi:DMNDiagram>
   </dmndi:DMNDI>
