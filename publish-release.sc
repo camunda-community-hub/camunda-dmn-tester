@@ -106,7 +106,7 @@ def publishTesterDocker(version: String) = {
     "sbt",
     "-J-Xmx3G",
     "release",
-    "+ publishSigned",
+    "+publishSigned",
     "server/docker:publish"
   )
 }

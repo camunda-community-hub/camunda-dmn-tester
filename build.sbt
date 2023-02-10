@@ -5,7 +5,8 @@ ThisBuild / evictionErrorLevel := Level.Warn
 lazy val root = project
   .settings(
     name := s"$projectName-root",
-    commands ++= Seq(ReleaseCmd, ReleaseClientCmd)
+    commands ++= Seq(ReleaseCmd, ReleaseClientCmd),
+    crossScalaVersions := Nil,
   )
   .in(file("."))
   .aggregate(shared.jvm, shared.js, client, server)
