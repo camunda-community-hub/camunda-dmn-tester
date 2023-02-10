@@ -2,13 +2,20 @@ package pme123.camunda.dmn.tester.server
 
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.runner._
-import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException, EvalException}
-import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult, HandledTesterException}
-
-import scala.util.Try
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{
+  ConfigException,
+  DecisionDmnCreatorException,
+  EvalException
+}
+import pme123.camunda.dmn.tester.shared.{
+  DmnConfig,
+  DmnEvalResult,
+  HandledTesterException
+}
 import zio.{IO, Task, UIO, ZIO}
 
-import java.io.{File, IOException}
+import java.io.File
+import scala.util.Try
 
 object ZDmnService {
 
@@ -56,10 +63,12 @@ object ZDmnService {
       loadConfigs(path)
 
   def dmnPathExists(dmnPath: String): UIO[Boolean] =
-    (for{
+    (for {
       basePath <- basePath()
-      dmnExists <- ZIO.fromTry(Try(os.Path(s"$basePath/$dmnPath").toIO.exists()))
-    }yield dmnExists).catchAll(ex => ZIO.succeed(false))
+      dmnExists <- ZIO.fromTry(
+        Try(os.Path(s"$basePath/$dmnPath").toIO.exists())
+      )
+    } yield dmnExists).catchAll(ex => ZIO.succeed(false))
 
   /** for a DmnConfig -> Either[EvalException, DmnEvalResult]
     */
@@ -77,8 +86,16 @@ object ZDmnService {
       )
     } yield results
 
-  private def readConfigs(path: List[String]): IO[HandledTesterException, Array[DmnConfig]] = {
-    ZIO.fromTry(Try(osPath(path).toIO))
+  def createCaseClasses(
+      dmnPath: os.Path
+  ): IO[DecisionDmnCreatorException, String] =
+    DecisionDmnCreator(dmnPath).run()
+
+  private def readConfigs(
+      path: List[String]
+  ): IO[HandledTesterException, Array[DmnConfig]] = {
+    ZIO
+      .fromTry(Try(osPath(path).toIO))
       .mapError { ex =>
         ex.printStackTrace()
         ConfigException(ex.getMessage)
@@ -96,20 +113,23 @@ object ZDmnService {
         case file =>
           for {
             files <- getConfigFiles(file)
-            e <- ZIO.foreach(files)(f =>
-              DmnConfigHandler.read(os.Path(f).toIO)
-            )
+            e <- ZIO.foreach(files)(f => DmnConfigHandler.read(os.Path(f).toIO))
           } yield e
       }
   }
 
-  private def getConfigFiles(f: File) = ZIO.fromTry (Try(
-    f.listFiles
-      .filter(f2 => f2.getName.endsWith(".conf") && !f2.getName.startsWith("."))
-
-  )).mapError { ex =>
-    ex.printStackTrace()
-    ConfigException(ex.getMessage)
-  }
+  private def getConfigFiles(f: File) = ZIO
+    .fromTry(
+      Try(
+        f.listFiles
+          .filter(f2 =>
+            f2.getName.endsWith(".conf") && !f2.getName.startsWith(".")
+          )
+      )
+    )
+    .mapError { ex =>
+      ex.printStackTrace()
+      ConfigException(ex.getMessage)
+    }
 
 }

@@ -24,7 +24,8 @@ lazy val shared =
       )
     )
     .jvmSettings(
-      scalaVersion := scala2V
+      scalaVersion := scala2V,
+      crossScalaVersions := Seq(scala2V,scala3V)
     )
     .jsSettings(
       scalaVersion := scala3V

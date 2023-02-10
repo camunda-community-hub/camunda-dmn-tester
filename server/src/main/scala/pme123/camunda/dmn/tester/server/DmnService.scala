@@ -42,6 +42,9 @@ class DmnService {
   ): Seq[Either[EvalException, DmnEvalResult]] =
     run(z.runTests(dmnConfigs))
 
+  def createCaseClasses(path: os.Path): String =
+    run(z.createCaseClasses(path))
+
   private val runtime = Runtime.default
 
   private def run[E, A](body: => IO[E, A]): A =

@@ -52,19 +52,8 @@ case class DmnTester(
     ZIO
       .fromEither(engine.parse(streamToTest))
       .mapError {
-        case Failure(message)
-            if message.contains("FEEL expression: failed to parse expression") =>
-          EvalException(
-            dmnConfig,
-            s"""|$message
-                |Hints:
-                |> Read the message carefully - '' means you forgot to set a value.
-                |> All outputs need a value.
-                |> All Input-/ Output-Columns need an expression.
-                |> Did you miss to wrap Strings in " - e.g. "TEXT"?
-                |> Check if there is an 'empty' Rule you accidentally created.
-                |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/""".stripMargin
-          )
+        case Failure(message) if message.contains(feelParseErrMsg) =>
+          EvalException(dmnConfig, feelParseErrHelp(message))
         case Failure(msg) =>
           EvalException(dmnConfig, msg)
       }

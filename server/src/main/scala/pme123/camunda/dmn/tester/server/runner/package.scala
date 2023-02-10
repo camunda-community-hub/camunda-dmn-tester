@@ -11,6 +11,16 @@ package object runner {
   val defaultConfigPaths: Seq[String] = Seq(
     "/server/src/test/resources/dmn-configs"
   )
+  val feelParseErrMsg = "FEEL expression: failed to parse expression"
+  def feelParseErrHelp(message: String): String =
+    s"""|$message
+        |Hints:
+        |> Read the message carefully - '' means you forgot to set a value.
+        |> All outputs need a value.
+        |> All Input-/ Output-Columns need an expression.
+        |> Did you miss to wrap Strings in " - e.g. "TEXT"?
+        |> Check if there is an 'empty' Rule you accidentally created.
+        |> Check if all Values are valid FEEL expressions - see https://camunda.github.io/feel-scala/1.12/""".stripMargin
 
   def osPath(path: List[String]): os.Path =
     path.filterNot(_.isBlank) match {

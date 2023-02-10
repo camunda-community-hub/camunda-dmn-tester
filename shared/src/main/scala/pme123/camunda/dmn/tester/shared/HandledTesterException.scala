@@ -7,5 +7,6 @@ object HandledTesterException {
   case class ConfigException(msg: String) extends HandledTesterException
   case class EvalException(dmnConfig: DmnConfig, msg: String) extends HandledTesterException
   case class ConsoleException(msg: String) extends HandledTesterException
+  case class DecisionDmnCreatorException(msg: String) extends HandledTesterException
 }
 
