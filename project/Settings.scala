@@ -22,7 +22,7 @@ object Settings {
   lazy val projectSettings: Project => Project =
     _.settings(
       organization := "io.github.pme123",
-      version := projectVersion,
+      version := projectVersion
     )
 
   lazy val ReleaseCmd = Command.command("release") { state =>
@@ -91,11 +91,14 @@ object Settings {
 
     lazy val serverDeps: Project => Project =
       _.settings(
+        Compile / mainClass := Some(
+          "pme123.camunda.dmn.tester.server.HttpServer"
+        ),
         libraryDependencies ++= Seq(
           Deps.http4sDsl,
           Deps.http4sCirce,
           Deps.http4sServer,
-          Deps.logback,
+          Deps.logback
         )
       )
 
@@ -109,7 +112,7 @@ object Settings {
         Deps.zioTest % Test,
         Deps.zioTestJUnit % Test,
         Deps.zioTestSbt % Test,
-        Deps.scalaTest % Test,
+        Deps.scalaTest % Test
       )
     )
 
