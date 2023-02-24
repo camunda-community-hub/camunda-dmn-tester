@@ -2,16 +2,8 @@ package pme123.camunda.dmn.tester.server
 
 import org.camunda.dmn.DmnEngine
 import pme123.camunda.dmn.tester.server.runner._
-import pme123.camunda.dmn.tester.shared.HandledTesterException.{
-  ConfigException,
-  DecisionDmnCreatorException,
-  EvalException
-}
-import pme123.camunda.dmn.tester.shared.{
-  DmnConfig,
-  DmnEvalResult,
-  HandledTesterException
-}
+import pme123.camunda.dmn.tester.shared.HandledTesterException.{ConfigException, DecisionDmnCreatorException, EvalException}
+import pme123.camunda.dmn.tester.shared.{DmnConfig, DmnEvalResult, HandledTesterException, TESTER_CONFIG_PATHS}
 import zio.{IO, Task, UIO, ZIO}
 
 import java.io.File
@@ -24,8 +16,8 @@ object ZDmnService {
 
   def loadConfigPaths(): Task[Seq[String]] = ZIO.succeed {
     val maybeConfigs =
-      sys.props.get("TESTER_CONFIG_PATHS") orElse
-        sys.env.get("TESTER_CONFIG_PATHS")
+      sys.props.get(TESTER_CONFIG_PATHS) orElse
+        sys.env.get(TESTER_CONFIG_PATHS)
     maybeConfigs
       .map(
         _.split(",")

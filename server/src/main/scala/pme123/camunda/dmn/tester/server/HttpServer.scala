@@ -43,7 +43,8 @@ object HttpServer extends IOApp {
         .withAllowMethodsIn(Set(Method.GET))
         .withAllowCredentials(false)
         .apply(guiServices),
-      "/api" -> apiServices
+      "/api" -> apiServices,
+      "/info" -> infoService,
     ).orNotFound
 
   private object ConfigPathQueryParamMatcher
@@ -155,6 +156,12 @@ object HttpServer extends IOApp {
         case Success(value) =>
           Ok.apply(value)
       }
+  }
+
+  private lazy val infoService = HttpRoutes.of[IO] {
+    case GET -> Root =>
+      Ok.apply((sys.props.get(STARTING_APP) orElse
+        sys.env.get(STARTING_APP)).getOrElse("Undefined Starting App. Please define STARTING_APP environment variable."))
   }
 
   private lazy val guiServices = HttpRoutes.of[IO] {
