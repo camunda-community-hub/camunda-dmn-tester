@@ -3,7 +3,6 @@ package pme123.camunda.dmn.tester.client
 import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
-
 import org.scalajs.dom.HTMLElement
 
 

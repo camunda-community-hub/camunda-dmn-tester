@@ -4,7 +4,7 @@ import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.scalajs.dom.html
+import org.scalajs.dom.{HTMLElement, html}
 import pme123.camunda.dmn.tester.shared.*
 import pme123.camunda.dmn.tester.shared.TesterValue.*
 
@@ -52,6 +52,11 @@ final case class DmnConfigEditor(
           _.events.onClick.mapTo(true) --> saveConfigBus
         )
       )
+    ),
+    generalPopover(openPopoverBus.events)(
+      child <-- openPopoverBus.events.collect {
+        case _ -> help => p(help)
+      }
     )
   )
 
@@ -63,6 +68,7 @@ final case class DmnConfigEditor(
   // events
   private lazy val saveConfigBus = EventBus[Boolean]()
   private lazy val newPathBus: EventBus[String] = EventBus()
+  private given openPopoverBus: EventBus[(Option[HTMLElement], String)] = new EventBus
 
   private lazy val dmnExistsEvents =
     newPathBus.events

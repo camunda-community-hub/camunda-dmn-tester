@@ -59,22 +59,26 @@ def stringInputRow(
       "700px"
     )
   )
+
 def booleanInputRow(
     id: String,
     label: String,
     help: String,
     valueSignal: Signal[Boolean],
     valueUpdater: Observer[Boolean]
-) =
+)(using openPopoverBus: EventBus[(Option[HTMLElement], String)]) =
   Table.row(
-    title := help,
     _.cell(
       Label(
         className := "dialogLabel",
         _.forId := id,
         _.required := true,
-        label
-      )
+        label,
+        onMouseOver
+          .map(_.target.asInstanceOf[HTMLElement])
+          .map(Some(_) -> help) --> openPopoverBus,
+        onMouseOut.mapTo(None -> help) --> openPopoverBus
+      ),
     ),
     _.cell(
       CheckBox(
@@ -82,9 +86,8 @@ def booleanInputRow(
         _.checked <-- valueSignal,
         _.events.onChange.map(_.target.checked) --> valueUpdater
       )
-    )
+    ),
   )
-
 
 def responseToHtml[T](
     body: T => HtmlElement
