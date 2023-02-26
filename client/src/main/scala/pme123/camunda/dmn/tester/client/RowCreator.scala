@@ -77,10 +77,10 @@ case class RowCreator(
 
       Seq(
         h3(
+          icon(maxStatus),
           if (maxStatus == EvalStatus.INFO)
             "Successful Tests "
           else "Failed TestCases",
-          icon(maxStatus)
         ),
         if (maxStatus == EvalStatus.INFO) span("")
         else p("Your DMN is correct, but you expected some different results."),
@@ -118,8 +118,8 @@ case class RowCreator(
     else
       Seq(
         h3(
-          "Test Inputs with no matching Row ",
-          icon(EvalStatus.WARN)
+          icon(EvalStatus.WARN),
+          "Test Inputs with no matching Row "
         ),
         p("For the following inputs, there is no matching row in the DMN."),
         Table(
@@ -143,9 +143,18 @@ case class RowCreator(
     val filteredRows = missingRows
     if (filteredRows.isEmpty)
       Seq()
+    else if (allDmnTables.dmnConfig.acceptMissingRules)
+      Seq(
+        p(
+          icon(EvalStatus.WARN),
+          "You have missing Rows, but that seems to be fine for you, as you configured ",
+          i("'acceptMissingRules = true'"),
+          "."
+        )
+      )
     else
       Seq(
-        h3("Rules with no matching Test Inputs ", icon(EvalStatus.WARN)),
+        h3(icon(EvalStatus.WARN), "Rules with no matching Test Inputs "),
         p(
           "There are no Test Inputs that match these Rules."
         ),
@@ -177,8 +186,8 @@ case class RowCreator(
     else
       Seq(
         h3(
-          "Tests with Errors ",
-          icon(EvalStatus.ERROR)
+          icon(EvalStatus.ERROR),
+          "Tests with Errors "
         ),
         p("For the following inputs, evaluating the DMN created an error."),
         Table(
@@ -209,17 +218,17 @@ case class RowCreator(
 
   lazy val creatorPopover: HtmlElement =
     generalPopover(openPopoverBus.events)(
-        Popover.slots.header <-- openPopoverBus.events.collect {
-          case _ -> (resultTableRow: ResultTableRow) =>
-            h2(s"Required Tables for ${resultTableRow.mainDecisionId}")
-          case _ => span("")
-        },
-        child <-- openPopoverBus.events.collect {
-          case _ -> (msg: String) => div(msg)
-          case _ -> (resultTableRow: ResultTableRow) =>
-            displayRequiredTables(resultTableRow)
-        }
-      )
+      Popover.slots.header <-- openPopoverBus.events.collect {
+        case _ -> (resultTableRow: ResultTableRow) =>
+          h2(s"Required Tables for ${resultTableRow.mainDecisionId}")
+        case _ => span("")
+      },
+      child <-- openPopoverBus.events.collect {
+        case _ -> (msg: String) => div(msg)
+        case _ -> (resultTableRow: ResultTableRow) =>
+          displayRequiredTables(resultTableRow)
+      }
+    )
 
   private lazy val selectedTableRowsVar: Var[List[ResultTableRow]] = Var(
     List.empty

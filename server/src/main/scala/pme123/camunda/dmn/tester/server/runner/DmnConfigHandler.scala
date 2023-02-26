@@ -18,7 +18,6 @@ object DmnConfigHandler {
     hocon
       .loadConfig(file)
 
-
   def write(
       dmnConfig: DmnConfig,
       path: List[String]
@@ -125,8 +124,9 @@ object hocon {
   lazy val dmnConfig: ConfigDescriptor[DmnConfig] =
     (string("decisionId") zip nested("data")(testerData) zip nested("dmnPath")(
       list(string)
-    ) zip boolean("isActive").default(false) zip boolean("testUnit")
-      .default(true)).to[DmnConfig]
+    ) zip boolean("isActive").default(false) zip boolean("testUnit").default(
+      true
+    ) zip boolean("acceptMissingRules").default(false)).to[DmnConfig]
 
   def loadConfig(configFile: File): IO[HandledTesterException, DmnConfig] = {
     print(s"load file $configFile") *>
@@ -140,7 +140,9 @@ object hocon {
 
   private[runner] def readConfig(configSource: ConfigSource) =
     read(dmnConfig from configSource)
-      .mapError(exc => ConfigException(s"Problem reading Config Source: ${exc.getMessage()}"))
+      .mapError(exc =>
+        ConfigException(s"Problem reading Config Source: ${exc.getMessage()}")
+      )
 
   private[runner] def writeConfig(config: DmnConfig): IO[String, String] =
     ZIO

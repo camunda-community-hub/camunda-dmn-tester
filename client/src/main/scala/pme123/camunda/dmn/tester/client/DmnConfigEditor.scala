@@ -75,6 +75,10 @@ final case class DmnConfigEditor(
     dmnConfigVar.updater[Boolean] { (config, newValue) =>
       config.copy(testUnit = newValue)
     }
+  private lazy val acceptMissingRulesUpdater =
+    dmnConfigVar.updater[Boolean] { (config, newValue) =>
+      config.copy(acceptMissingRules = newValue)
+    }
   private lazy val decisionIdUpdater =
     dmnConfigVar.updater[String] { (config, newValue) =>
       config.copy(decisionId = newValue)
@@ -142,23 +146,12 @@ final case class DmnConfigEditor(
       _.slots.columns := Table.column(
         child.text <-- basePathSignal
       ),
-      Table.row(
-        title := "Check if you want test your DMN independently.",
-        _.cell(
-          Label(
-            className := "dialogLabel",
-            _.forId := "testUnit",
-            _.required := true,
-            "Test is Unit"
-          )
-        ),
-        _.cell(
-          CheckBox(
-            _.id := "testUnit",
-            _.checked <-- dmnConfigSignal.map(_.testUnit),
-            _.events.onChange.map(_.target.checked) --> testUnitUpdater
-          )
-        )
+      booleanInputRow(
+        "testUnit",
+        "Test is Unit",
+        "Check if you want test your DMN independently.",
+        dmnConfigSignal.map(_.testUnit),
+        testUnitUpdater
       ),
       stringInputRow(
         "decisionId",
@@ -179,7 +172,14 @@ final case class DmnConfigEditor(
         dmnConfigSignal.map(_.dmnPathError),
         dmnConfigSignal.map(_.dmnPathStr),
         dmnPathUpdater
-      )
+      ),
+      booleanInputRow(
+        "acceptMissingRules",
+        "Accept Missing Rules",
+        "If you have lots of possible inputs and you only want to test a few of them.",
+        dmnConfigSignal.map(_.acceptMissingRules),
+        acceptMissingRulesUpdater
+      ),
     )
 
   private def inputValueVariableTables(inputsVar: Var[List[TesterInput]]) =

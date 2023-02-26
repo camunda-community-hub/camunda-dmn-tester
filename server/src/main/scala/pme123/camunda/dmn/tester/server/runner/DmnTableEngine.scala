@@ -19,7 +19,7 @@ case class DmnTableEngine(
     dmnConfig: DmnConfig,
     engine: DmnEngine = new DmnEngine()
 ) {
-  val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
+  val DmnConfig(decisionId, _, dmnPath, _, testUnit, _) = dmnConfig
 
   /** If `testUnit` is set: removes all dependent Decisions - so we can Unit
     * Test it.
@@ -105,7 +105,7 @@ case class DmnTableEngine(
       log: AuditLog,
       inputMap: Map[String, Any],
       dmnTables: AllDmnTables
-  ) = {
+  ): EvalResult = {
 
     def matchedInputs(ruleId: String, rules: Seq[DmnRule]) = {
       val ins = rules

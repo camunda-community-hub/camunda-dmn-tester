@@ -11,7 +11,8 @@ case class DmnEvalResult(
 ) {
   def maxEvalStatus: EvalStatus = {
     val status = evalResults.map(_.status) ++ missingRules.headOption.map(_ =>
-      EvalStatus.WARN
+      if (dmnTables.dmnConfig.acceptMissingRules) EvalStatus.INFO
+      else EvalStatus.WARN
     )
     status.sorted.headOption.getOrElse(INFO)
   }

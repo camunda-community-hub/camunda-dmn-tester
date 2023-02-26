@@ -16,7 +16,7 @@ case class DmnTester(
     dmnConfig: DmnConfig,
     engine: DmnEngine = new DmnEngine()
 ) {
-  val DmnConfig(decisionId, data, dmnPath, _, _) = dmnConfig
+  val DmnConfig(decisionId, data, dmnPath, _, _, _) = dmnConfig
 
   def run(): IO[EvalException, DmnEvalResult] =
     parsedDmn().flatMap(run)
@@ -67,7 +67,7 @@ object DmnTester {
       dmnConfig: DmnConfig,
       engine: DmnEngine
   ): IO[HandledTesterException, Either[EvalException, DmnEvalResult]] = {
-    val DmnConfig(decisionId, _, dmnPath, _, testUnit) = dmnConfig
+    val DmnConfig(decisionId, _, dmnPath, _, testUnit, _) = dmnConfig
     print(
       s"Start testing $decisionId (testUnit = $testUnit): $dmnPath (${osPath(dmnPath)})"
     ) *>

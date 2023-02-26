@@ -59,6 +59,32 @@ def stringInputRow(
       "700px"
     )
   )
+def booleanInputRow(
+    id: String,
+    label: String,
+    help: String,
+    valueSignal: Signal[Boolean],
+    valueUpdater: Observer[Boolean]
+) =
+  Table.row(
+    title := help,
+    _.cell(
+      Label(
+        className := "dialogLabel",
+        _.forId := id,
+        _.required := true,
+        label
+      )
+    ),
+    _.cell(
+      CheckBox(
+        _.id := id,
+        _.checked <-- valueSignal,
+        _.events.onChange.map(_.target.checked) --> valueUpdater
+      )
+    )
+  )
+
 
 def responseToHtml[T](
     body: T => HtmlElement

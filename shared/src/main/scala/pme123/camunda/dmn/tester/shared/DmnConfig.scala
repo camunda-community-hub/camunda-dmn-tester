@@ -13,7 +13,9 @@ case class DmnConfig(
     data: TesterData = TesterData(),
     dmnPath: List[String] = List.empty,
     isActive: Boolean = false,
-    testUnit: Boolean = true
+    testUnit: Boolean = true,
+    // if you have lots of inputs, and you don't want to cover all of them
+    acceptMissingRules: Boolean = false,
 ) {
 
   lazy val dmnPathStr: String = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
