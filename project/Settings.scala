@@ -16,12 +16,13 @@ object Settings {
   val scala3V = "3.2.1"
 
   val projectName = "camunda-dmn-tester"
+  val projectPackage = "io.github.pme123"
   lazy val projectVersion: String =
     Using(Source.fromFile("version"))(_.mkString.trim).get
 
   lazy val projectSettings: Project => Project =
     _.settings(
-      organization := "io.github.pme123",
+      organization := projectPackage,
       version := projectVersion
     )
 

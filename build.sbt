@@ -6,7 +6,7 @@ lazy val root = project
   .settings(
     name := s"$projectName-root",
     commands ++= Seq(ReleaseCmd, ReleaseClientCmd),
-    crossScalaVersions := Nil,
+    crossScalaVersions := Nil
   )
   .in(file("."))
   .aggregate(shared.jvm, shared.js, client, server)
@@ -22,11 +22,14 @@ lazy val shared =
       libraryDependencies ++= Seq(
         "io.circe" %%% "circe-generic" % Deps.version.circe,
         "io.circe" %%% "circe-parser" % Deps.version.circe
-      )
+      ),
+      buildInfoKeys := Seq[BuildInfoKey](name, version),
+      buildInfoPackage := projectPackage + ".camunda.dmn.tester"
     )
+    .enablePlugins(BuildInfoPlugin)
     .jvmSettings(
       scalaVersion := scala2V,
-      crossScalaVersions := Seq(scala2V,scala3V)
+      crossScalaVersions := Seq(scala2V, scala3V)
     )
     .jsSettings(
       scalaVersion := scala3V

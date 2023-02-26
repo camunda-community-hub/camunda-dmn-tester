@@ -4,6 +4,7 @@ import be.doeraene.webcomponents.ui5.*
 import be.doeraene.webcomponents.ui5.configkeys.*
 import com.raquo.laminar.api.L.{*, given}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import io.github.pme123.camunda.dmn.tester.BuildInfo
 import org.scalajs.dom.html
 
 object Main5Footer:
@@ -16,7 +17,8 @@ object Main5Footer:
         Link(
           href := "https://github.com/pme123/camunda-dmn-tester",
           "camunda-dmn-tester"
-        )
+        ),
+        s" Version ${BuildInfo.version}"
       ),
       br(),
       Label(
@@ -31,6 +33,5 @@ object Main5Footer:
       )
     )
   end apply
-
 
 end Main5Footer
