@@ -18,7 +18,7 @@ object Main5Footer:
           href := "https://github.com/pme123/camunda-dmn-tester",
           "camunda-dmn-tester"
         ),
-        s" Version ${BuildInfo.version}"
+        s". Version ${BuildInfo.version}"
       ),
       br(),
       Label(
