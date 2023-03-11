@@ -21,10 +21,16 @@ lazy val shared =
     .settings(
       libraryDependencies ++= Seq(
         "io.circe" %%% "circe-generic" % Deps.version.circe,
-        "io.circe" %%% "circe-parser" % Deps.version.circe
+        "io.circe" %%% "circe-parser" % Deps.version.circe,
+        "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
       ),
       buildInfoKeys := Seq[BuildInfoKey](name, version),
-      buildInfoPackage := projectPackage + ".camunda.dmn.tester"
+      buildInfoPackage := projectPackage + ".camunda.dmn.tester",
+      buildInfoOptions := Seq(
+        BuildInfoOption.ToJson, // Add a toJson method to BuildInfo
+        BuildInfoOption.ToMap, // Add a toMap method to BuildInfo
+        BuildInfoOption.BuildTime // Add timestamp values
+      )
     )
     .enablePlugins(BuildInfoPlugin)
     .jvmSettings(
