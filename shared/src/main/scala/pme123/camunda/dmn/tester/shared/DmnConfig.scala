@@ -1,9 +1,10 @@
 package pme123.camunda.dmn.tester.shared
 
-import pme123.camunda.dmn.tester.shared.TesterValue.DateValue
+import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder}
 import pme123.camunda.dmn.tester.shared.conversions._
 
-import java.time.{LocalDateTime, ZoneId}
+import java.time._
 import java.util.Date
 import scala.language.implicitConversions
 import scala.util.Random
@@ -15,11 +16,12 @@ case class DmnConfig(
     isActive: Boolean = false,
     testUnit: Boolean = true,
     // if you have lots of inputs, and you don't want to cover all of them
-    acceptMissingRules: Boolean = false,
+    acceptMissingRules: Boolean = false
 ) {
 
-  lazy val dmnPathStr: String = dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
-  lazy val dmnConfigPathStr = s"$decisionId${if(testUnit) "" else "-INT"}.conf"
+  lazy val dmnPathStr: String =
+    dmnPath.map(_.trim).filter(_.nonEmpty).mkString("/")
+  lazy val dmnConfigPathStr = s"$decisionId${if (testUnit) "" else "-INT"}.conf"
   lazy val inputKeys: Seq[String] = data.inputKeys
 
   def findTestCase(testInputs: Map[String, Any]): Option[TestCase] =
@@ -45,6 +47,11 @@ case class DmnConfig(
 
 }
 
+object DmnConfig {
+  implicit val decoder: Decoder[DmnConfig] = deriveDecoder
+  implicit val encoder: Encoder[DmnConfig] = deriveEncoder
+}
+
 case class TesterData(
     inputs: List[TesterInput] = List.empty,
     // simple input-, output-variables used in the DMN
@@ -62,8 +69,8 @@ case class TesterData(
   /** this creates all variations of the inputs you provide
     */
   private def cartesianProduct(
-      xss: List[(String, List[Any])]
-  ): List[List[(String, Any)]] =
+                                xss: List[(String, List[Any])]
+                              ): List[List[(String, Any)]] =
     xss match {
       case Nil => List(Nil)
       case (key, v) :: t =>
@@ -74,7 +81,11 @@ case class TesterData(
     testCases.find { tc =>
       tc.inputs.view.mapValues(_.value).toMap == testInputs
     }
+}
 
+object TesterData {
+  implicit val decoder: Decoder[TesterData] = deriveDecoder
+  implicit val encoder: Encoder[TesterData] = deriveEncoder
 }
 
 case class TesterInput(
@@ -100,10 +111,7 @@ case class TesterInput(
 
   def asValues(): (String, List[Any]) = {
     val allValues: List[Any] = values.map {
-      case DateValue(value) =>
-        val ldt = LocalDateTime.parse(value)
-        Date.from(ldt.atZone(ZoneId.systemDefault).toInstant)
-      case other => other.value
+      _.value
     } ++
       (if (nullValue) List(null) else List.empty)
     key -> allValues
@@ -138,6 +146,9 @@ object TesterInput {
     (input.key, input.nullValue, input.values)
   )
 
+  implicit val decoder: Decoder[TesterInput] = deriveDecoder
+  implicit val encoder: Encoder[TesterInput] = deriveEncoder
+
 }
 sealed trait TesterValue {
   def valueStr: String
@@ -151,15 +162,25 @@ object TesterValue {
 
   def fromAny(value: Any): TesterValue = {
     value match {
-      case b: Boolean                             => BooleanValue(b)
-      case n: Long                                => NumberValue(n)
-      case n: Double                              => NumberValue(n)
+      case b: Boolean       => BooleanValue(b)
+      case n: Int           => NumberValue(n)
+      case n: Long          => NumberValue(n)
+      case n: Float         => NumberValue(n)
+      case n: Double        => NumberValue(n)
+      case d: LocalDateTime => DateValue(d)
+      case d: Date =>
+        DateValue(
+          Instant
+            .ofEpochMilli(d.getTime())
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+        )
       case s: String if s == NullValue.constant   => NullValue
       case s: String if s.trim.matches(dateRegex) => DateValue(s)
       case s: String                              => StringValue(s)
       case o if o == null                         => NullValue
       case o =>
-        throw new IllegalArgumentException(s"Not expected value type: $o")
+        throw new IllegalArgumentException(s"Not expected value type: ${o.getClass} ($o)")
     }
   }
 
@@ -212,9 +233,16 @@ object TesterValue {
 
   }
 
-  case class DateValue(value: String) extends TesterValue {
-    val valueStr: String = value
+  lazy val datePattern = "yyyy-MM-dd'T'HH:mm:ss"
+  lazy val dateFormat = format.DateTimeFormatter.ofPattern(datePattern)
+
+  case class DateValue(value: LocalDateTime) extends TesterValue {
+    val valueStr: String = dateFormat.format(value)
     val valueType: String = "Date"
+  }
+  object DateValue {
+    def apply(dateStr: String): DateValue =
+      DateValue(LocalDateTime.parse(dateStr, dateFormat))
   }
 
   case object NullValue extends TesterValue {
@@ -224,6 +252,10 @@ object TesterValue {
 
     val value: Any = null
   }
+
+  implicit val decoder: Decoder[TesterValue] = deriveDecoder
+  implicit val encoder: Encoder[TesterValue] = deriveEncoder
+
 }
 
 case class TestCase(
@@ -235,7 +267,7 @@ case class TestCase(
     if (results.exists(_.rowIndex == rowIndex))
       TestSuccess(s"$rowIndex")
     else
-      TestFailure(s"There is no Output with the Index $rowIndex")
+      TestFailure(s"There is no Index $rowIndex")
 
   def checkOut(rowIndex: Int, outputKey: String, value: String): TestedValue =
     results
@@ -245,6 +277,10 @@ case class TestCase(
 
 }
 
+object TestCase {
+  implicit val decoder: Decoder[TestCase] = deriveDecoder
+  implicit val encoder: Encoder[TestCase] = deriveEncoder
+}
 case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
 
   def checkOut(outputKey: String, value: String): TestedValue =
@@ -261,6 +297,11 @@ case class TestResult(rowIndex: Int, outputs: Map[String, TesterValue]) {
       )
       .getOrElse(TestFailure(s"There is no Output with Key '$outputKey'"))
 
+}
+
+object TestResult {
+  implicit val decoder: Decoder[TestResult] = deriveDecoder
+  implicit val encoder: Encoder[TestResult] = deriveEncoder
 }
 
 object conversions {

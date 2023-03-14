@@ -11,8 +11,10 @@ import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 import zio.{IO, ZIO}
 
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.{DateTimeFormatter, FormatStyle}
+import java.util.Date
 
 case class DmnTableEngine(
     parsedDmn: ParsedDmn,
@@ -20,6 +22,7 @@ case class DmnTableEngine(
     engine: DmnEngine = new DmnEngine()
 ) {
   val DmnConfig(decisionId, _, dmnPath, _, testUnit, _) = dmnConfig
+  val dateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
 
   /** If `testUnit` is set: removes all dependent Decisions - so we can Unit
     * Test it.
@@ -76,13 +79,14 @@ case class DmnTableEngine(
       dmnTables: AllDmnTables
   ): ZIO[Any, EvalException, DmnEvalRowResult] = {
     for {
-      _ <- ZIO.succeed(
+      decEvaluator <- ZIO.succeed(
         engine.decisionEval
           .eval(
             parsedDecision,
             context
           ) // this is not used - only the AuditLog from the context
       )
+      _ = println(s"decEvaluator: $decEvaluator")
       evalResult <- ZIO
         .succeed(
           evalResult(
@@ -94,7 +98,13 @@ case class DmnTableEngine(
     } yield DmnEvalRowResult(
       evalResult.status,
       context.variables.view
-        .mapValues(v => if (v == null) "null" else v.toString)
+        .mapValues{
+          case v if v == null => "null"
+          case v: Date =>
+            println(s"TEST INPUTS ${dateFormat.format(v)}) - ${v.getClass}")
+            dateFormat.format(v)
+          case v => v.toString
+        }
         .toMap,
       evalResult.matchedRules,
       evalResult.failed
@@ -219,6 +229,7 @@ case class DmnTableEngine(
       case Some(value)          => value.toString
       case None                 => "NO VALUE"
       case value: LocalDateTime => dateFormatter.format(value)
+      case null                => "null"
       case value                => value.toString
     }
     unwrapAny(unwrapValue)

@@ -464,10 +464,9 @@ case class RowCreator(
     Button(
       _.icon := IconName.`table-view`,
       onMouseOver --> (e => e.target.asInstanceOf[HTMLElement].focus()),
-      onMouseOver
+      onClick
         .map(_.target.asInstanceOf[HTMLElement])
         .map(Some(_) -> tableRow) --> openPopoverBus,
-      onMouseOut.mapTo(None -> "") --> openPopoverBus
     )
   private def displayRequiredTables(
       tableRow: ResultTableRow

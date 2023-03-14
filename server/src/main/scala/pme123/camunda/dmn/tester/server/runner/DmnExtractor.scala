@@ -35,7 +35,8 @@ object DmnExtractor {
                   name,
                   FeelExpression(FeelParsedExpression(_, feelExprText))
                 ) =>
-              InputColumn(name, feelExprText)
+              val nameWithDefault = if (name == null) feelExprText else name
+              InputColumn(nameWithDefault, feelExprText)
           }.toSeq
           val outputCols = outputs.collect {
             case ParsedOutput(_, name, _, value, _) =>

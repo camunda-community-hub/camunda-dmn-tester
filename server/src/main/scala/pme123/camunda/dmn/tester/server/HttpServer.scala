@@ -14,6 +14,7 @@ import org.http4s.server.{Router, Server}
 import org.http4s.{EntityDecoder, _}
 import org.slf4j.{Logger, LoggerFactory}
 import org.typelevel.ci._
+import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 
 import java.net.URLDecoder
@@ -44,7 +45,7 @@ object HttpServer extends IOApp {
         .withAllowCredentials(false)
         .apply(guiServices),
       "/api" -> apiServices,
-      "/info" -> infoService,
+      "/info" -> infoService
     ).orNotFound
 
   private object ConfigPathQueryParamMatcher
@@ -73,10 +74,10 @@ object HttpServer extends IOApp {
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
       Try(
         if (decConfigPath.isBlank)
-           Seq.empty
-         else
-           DmnService
-             .getConfigs(decConfigPath.split("/"))
+          Seq.empty
+        else
+          DmnService
+            .getConfigs(decConfigPath.split("/"))
       ) match {
         case Failure(exception) =>
           exception.printStackTrace()
@@ -100,19 +101,22 @@ object HttpServer extends IOApp {
       }
 
     case req @ POST -> Root / "runDmnTests" =>
+
       Try(
         req
           .as[Option[Seq[DmnConfig]]]
           .map(configs =>
             if (configs.nonEmpty && configs.get.nonEmpty) {
-              DmnService.runTests(configs.get).asJson
+              val testResult = DmnService.runTests(configs.get).asJson
+              println(s"TEST RESULT: $testResult")
+              testResult
             } else
               Seq.empty.asJson
           ).handleError{
           exception =>
             exception.printStackTrace()
             exception.getMessage.asJson
-        }
+          }
       ) match {
         case Failure(exception) =>
           exception.printStackTrace()
@@ -143,13 +147,15 @@ object HttpServer extends IOApp {
           configPath
         ) =>
       val decConfigPath = URLDecoder.decode(configPath, StandardCharsets.UTF_8)
-      Try(req
-        .as[DmnConfig]
-        .map(config => {
-          DmnService
-            .deleteConfig(config, decConfigPath.split("/"))
-        })
-        .map(_.asJson)) match {
+      Try(
+        req
+          .as[DmnConfig]
+          .map(config => {
+            DmnService
+              .deleteConfig(config, decConfigPath.split("/"))
+          })
+          .map(_.asJson)
+      ) match {
         case Failure(exception) =>
           exception.printStackTrace()
           InternalServerError(exception.getMessage)
@@ -158,10 +164,13 @@ object HttpServer extends IOApp {
       }
   }
 
-  private lazy val infoService = HttpRoutes.of[IO] {
-    case GET -> Root =>
-      Ok.apply((sys.props.get(STARTING_APP) orElse
-        sys.env.get(STARTING_APP)).getOrElse("Undefined Starting App. Please define STARTING_APP environment variable."))
+  private lazy val infoService = HttpRoutes.of[IO] { case GET -> Root =>
+    Ok.apply(
+      (sys.props.get(STARTING_APP) orElse
+        sys.env.get(STARTING_APP)).getOrElse(
+        "Undefined Starting App. Please define STARTING_APP environment variable."
+      )
+    )
   }
 
   private lazy val guiServices = HttpRoutes.of[IO] {

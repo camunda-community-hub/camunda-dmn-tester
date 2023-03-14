@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:biodi="http://bpmn.io/schema/dmn/biodi/2.0" id="Definitions_1lwq9cq" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.7.0">
+  <decision id="notizKundenkontakt" name="notizKundenkontakt">
+    <informationRequirement id="InformationRequirement_0mbozj2">
+      <requiredDecision href="#receivedChannelAddressChange" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_0pk70fj">
+      <requiredDecision href="#reconfirmation" />
+    </informationRequirement>
+    <decisionTable id="decisionTable_1">
+      <input id="input_1" label="messageName">
+        <inputExpression id="inputExpression_1" typeRef="string">
+          <text>messageName</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_1bmy0ik" label="receivedChannelAddressChange" biodi:width="413">
+        <inputExpression id="LiteralExpression_1xrqyaa" typeRef="integer">
+          <text>receivedChannelAddressChange</text>
+        </inputExpression>
+      </input>
+      <output id="output_1" label="noteTextDe" name="noteTextDe" typeRef="string" biodi:width="518" />
+      <output id="OutputClause_1wm4htq" label="noteTextFr" name="noteTextFr" typeRef="string" biodi:width="512" />
+      <rule id="DecisionRule_0fdlygf">
+        <inputEntry id="UnaryTests_1eh3yns">
+          <text>"changeAddress"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1b3m9p4">
+          <text>1,2</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0et6vnc">
+          <text>notePreTextDe + receivedChannelAddressChange_DE + initiatorStrDe + " in Auftrag gegeben. Die Rückbestätigung erfolgte per " + reconfirmation_DE+ ". "</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_04b3jqw">
+          <text>notePreTextFr + receivedChannelAddressChange_FR + " le " + changeReceivedAtStr + initiatorStrFr + ". La confirmation a été effectuée par " + reconfirmation_FR + ". "</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0pv26ff">
+        <inputEntry id="UnaryTests_0aw5sak">
+          <text>"changeAddress"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1t31y8e">
+          <text>7</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_00qjsp3">
+          <text>notePreTextDe + receivedChannelAddressChange_DE + " in Auftrag gegeben."</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1edciq9">
+          <text>notePreTextFr + receivedChannelAddressChange_FR + " le " + changeReceivedAtStr + "."</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1yw8na0">
+        <inputEntry id="UnaryTests_1s0hget">
+          <text>"changeAddress"</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1huxkll">
+          <text>3, 4, 5, 6</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1t4bqwe">
+          <text>notePreTextDe + receivedChannelAddressChange_DE + initiatorStrDe + " in Auftrag gegeben."</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1g8526r">
+          <text>notePreTextFr + receivedChannelAddressChange_FR + " le " + changeReceivedAtStr + initiatorStrFr + "."</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="receivedChannelAddressChange" name="receivedChannelAddressChange">
+    <decisionTable id="DecisionTable_0rgyb6e">
+      <input id="InputClause_0kmybcb" biodi:width="271">
+        <inputExpression id="LiteralExpression_0a5s3i0" typeRef="integer">
+          <text>receivedChannelAddressChange</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1y44sv0" label="receivedChannelAddressChange" name="receivedChannelAddressChange" typeRef="integer" />
+      <output id="OutputClause_0egzujf" name="receivedChannelAddressChange_DE" typeRef="string" biodi:width="391" />
+      <output id="OutputClause_1g9lcp4" name="receivedChannelAddressChange_FR" typeRef="string" biodi:width="375" />
+      <rule id="DecisionRule_0y5erb0">
+        <description></description>
+        <inputEntry id="UnaryTests_1q5833x">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0yfhdn3">
+          <text>1</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_07sigzi">
+          <text>"Telefon mit Legitimierung"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0vukh0j">
+          <text>"Appel téléphonique avec légitimation"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_096o6ep">
+        <inputEntry id="UnaryTests_1rp7cll">
+          <text>2</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_09wvrhz">
+          <text>2</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_05al2iw">
+          <text>"E-Mail/Fax (nur wenn in Finnova Kontaktdaten hinterlegt)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1htou75">
+          <text>"E-mail/fax (uniquement si données de contact sont renseignées dans Finnova)"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0qm88gd">
+        <inputEntry id="UnaryTests_1tc61p2">
+          <text>3</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0a1fc1s">
+          <text>3</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0te0nmp">
+          <text>"Persönliche Vorsprache oder langjährige Geschäftsbeziehung"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0nekul3">
+          <text>"Entretien personnel ou une relation d’affaire de longue date"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0p8joja">
+        <inputEntry id="UnaryTests_1fw5sc1">
+          <text>4</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1dwd71h">
+          <text>4</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0z5g1fg">
+          <text>"Video mit Legitimierung"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1xn9nbv">
+          <text>"Légitimation par vidéo"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0t3qlsw">
+        <inputEntry id="UnaryTests_0bae4vz">
+          <text>5</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1l89v4c">
+          <text>5</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_00d7oy1">
+          <text>"sicherer Kontaktkanal (Zwei-Faktoren Authentifizierung)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1orgw89">
+          <text>"Canal de contact sécurisé (authentification à deux facteurs)"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_069qyfe">
+        <inputEntry id="UnaryTests_06dmp5x">
+          <text>6</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_083iubj">
+          <text>6</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1c1u24w">
+          <text>"Brief (physisch mit Originalunterschrift)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_185n5k1">
+          <text>"Courrier (version papier avec signature originale)"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_15wf5pn">
+        <inputEntry id="UnaryTests_0hdi9rf">
+          <text>7</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0ojsjfg">
+          <text>7</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0ljx4q2">
+          <text>"Postrücksendung (CRIF/Zefix)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_157vyeg">
+          <text>"Retour postal (CRIF/Zefix)"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <decision id="reconfirmation" name="reconfirmation">
+    <decisionTable id="DecisionTable_0e5zjqj">
+      <input id="InputClause_0dlf1ze" label="reconfirmation">
+        <inputExpression id="LiteralExpression_08n83pm" typeRef="integer">
+          <text>reconfirmation</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_0wajzkq" label="reconfirmation_DE" name="reconfirmation_DE" typeRef="string" />
+      <output id="OutputClause_086biru" label="reconfirmation_FR" name="reconfirmation_FR" typeRef="string" />
+      <rule id="DecisionRule_012sv5w">
+        <description></description>
+        <inputEntry id="UnaryTests_03rjm7c">
+          <text>1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1s0tfcc">
+          <text>"Telefon mit Legitimierung"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1vn3a86">
+          <text>"Appel téléphonique avec légitimation"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_19t7czk">
+        <inputEntry id="UnaryTests_00705zf">
+          <text>2</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_01gp7mz">
+          <text>"E-Mail/Fax (nur wenn in Finnova Kontaktdaten hinterlegt)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_1una51o">
+          <text>"E-mail/fax (uniquement si données de contact sont renseignées dans Finnova)"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_0k9afsi">
+        <inputEntry id="UnaryTests_06658e7">
+          <text>6</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0dbn2cv">
+          <text>"Brief (physisch mit Originalunterschrift)"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0s4xv7i">
+          <text>"Courrier (version papier avec signature originale)"</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_09s5mtu">
+        <description>Initialisiert beim Start des Address Change Prozesses</description>
+        <inputEntry id="UnaryTests_17wk2up">
+          <text>-1</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_051liuv">
+          <text>"-"</text>
+        </outputEntry>
+        <outputEntry id="LiteralExpression_0255jeg">
+          <text>"-"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1dhn85a">
+      <dmndi:DMNShape id="DMNShape_18jj1sa" dmnElementRef="notizKundenkontakt">
+        <dc:Bounds height="80" width="180" x="150" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0vhrwap" dmnElementRef="receivedChannelAddressChange">
+        <dc:Bounds height="80" width="180" x="120" y="230" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_1irdp9d" dmnElementRef="InformationRequirement_0mbozj2">
+        <di:waypoint x="210" y="230" />
+        <di:waypoint x="210" y="180" />
+        <di:waypoint x="210" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0vhwiv0" dmnElementRef="reconfirmation">
+        <dc:Bounds height="80" width="180" x="370" y="230" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_14aydty" dmnElementRef="InformationRequirement_0pk70fj">
+        <di:waypoint x="460" y="230" />
+        <di:waypoint x="270" y="180" />
+        <di:waypoint x="270" y="160" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

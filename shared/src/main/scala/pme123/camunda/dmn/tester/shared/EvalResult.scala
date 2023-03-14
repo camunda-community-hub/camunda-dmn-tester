@@ -1,5 +1,7 @@
 package pme123.camunda.dmn.tester.shared
 
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import pme123.camunda.dmn.tester.shared.EvalStatus.INFO
 
 case class DmnEvalResult(
@@ -18,6 +20,11 @@ case class DmnEvalResult(
   }
 }
 
+object DmnEvalResult {
+  implicit val decoder: Decoder[DmnEvalResult] = deriveDecoder
+  implicit val encoder: Encoder[DmnEvalResult] = deriveEncoder
+}
+
 case class DmnEvalRowResult(
     status: EvalStatus,
     testInputs: Map[String, String],
@@ -26,6 +33,10 @@ case class DmnEvalRowResult(
 ) {
   lazy val hasNoMatch: Boolean =
     matchedRulesPerTable.flatMap(_.matchedRules).isEmpty
+}
+object DmnEvalRowResult {
+  implicit val decoder: Decoder[DmnEvalRowResult] = deriveDecoder
+  implicit val encoder: Encoder[DmnEvalRowResult] = deriveEncoder
 }
 
 case class EvalResult(
@@ -53,6 +64,10 @@ object EvalResult {
 
     EvalResult(status, matchedRulesPerTable, maybeError)
   }
+
+  implicit val decoder: Decoder[EvalResult] = deriveDecoder
+  implicit val encoder: Encoder[EvalResult] = deriveEncoder
+
 }
 
 case class MatchedRulesPerTable(
@@ -73,6 +88,10 @@ case class MatchedRulesPerTable(
       .flatMap(_.outputs)
       .map(_._1)
 }
+object MatchedRulesPerTable {
+  implicit val decoder: Decoder[MatchedRulesPerTable] = deriveDecoder
+  implicit val encoder: Encoder[MatchedRulesPerTable] = deriveEncoder
+}
 
 case class MatchedRule(
     ruleId: String,
@@ -83,6 +102,10 @@ case class MatchedRule(
   def hasError: Boolean =
     rowIndex.isError || outputs.exists(_._2.isError)
 
+}
+object MatchedRule {
+  implicit val decoder: Decoder[MatchedRule] = deriveDecoder
+  implicit val encoder: Encoder[MatchedRule] = deriveEncoder
 }
 
 sealed trait TestedValue {
@@ -98,6 +121,11 @@ case class NotTested(value: String) extends TestedValue
 
 case class TestSuccess(value: String) extends TestedValue
 
+object TestedValue {
+  implicit val decoder: Decoder[TestedValue] = deriveDecoder
+  implicit val encoder: Encoder[TestedValue] = deriveEncoder
+}
+
 case class TestFailure(value: String, msg: String) extends TestedValue {
   override def isError = true
 }
@@ -105,9 +133,18 @@ case class TestFailure(value: String, msg: String) extends TestedValue {
 object TestFailure {
   def apply(msg: String): TestFailure =
     TestFailure(msg, msg)
+
+  implicit val decoder: Decoder[TestFailure] = deriveDecoder
+  implicit val encoder: Encoder[TestFailure] = deriveEncoder
+
 }
 
 case class EvalError(msg: String)
+
+object EvalError {
+  implicit val decoder: Decoder[EvalError] = deriveDecoder
+  implicit val encoder: Encoder[EvalError] = deriveEncoder
+}
 
 sealed trait EvalStatus extends Comparable[EvalStatus] {
   def order: Int
@@ -129,5 +166,8 @@ object EvalStatus {
   case object ERROR extends EvalStatus {
     val order = 1
   }
+
+  implicit val decoder: Decoder[EvalStatus] = deriveDecoder
+  implicit val encoder: Encoder[EvalStatus] = deriveEncoder
 
 }

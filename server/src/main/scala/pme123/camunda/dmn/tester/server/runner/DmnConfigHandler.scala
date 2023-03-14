@@ -74,7 +74,7 @@ object hocon {
       (bd: TesterValue) => // specific as otherwise there is a ClassCastException
         bd match {
           case NullValue          => Some(NullValue.constant)
-          case DateValue(value)   => Some(value)
+          case dv: DateValue   => Some(dv.valueStr)
           case StringValue(value) => Some(value)
           case _                  => None
         }

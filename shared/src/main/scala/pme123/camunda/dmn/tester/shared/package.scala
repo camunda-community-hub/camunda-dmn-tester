@@ -7,11 +7,15 @@ package object shared {
 
   def asStrMap(valueMap: Seq[(String, TestedValue)]): Seq[(String, String)] =
     valueMap.map {
-      case k -> v => k -> v.value
+      case k -> v =>
+        println(s"valueMap: Seq[(String, TestedValue)]: ${k} -> ${v.getClass} - $v")
+        k -> v.value
     }
 
   def asStrMap(valueMap: Map[String, Any]): Map[String, String] =
     valueMap.map {
-      case k -> v => k -> v.toString
-    }  
+      case k -> v =>
+        println(s"valueMap: Map[String, Any]: ${k} -> ${v.getClass} - $v")
+        k -> v.toString
+    }
 }

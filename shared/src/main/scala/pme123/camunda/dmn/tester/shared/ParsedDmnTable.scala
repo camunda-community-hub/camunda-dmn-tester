@@ -1,5 +1,8 @@
 package pme123.camunda.dmn.tester.shared
 
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+
 case class AllDmnTables(
     dmnConfig: DmnConfig,
     tables: Seq[DmnTable]
@@ -12,6 +15,11 @@ case class AllDmnTables(
     mainTable.decisionId == decisionId
 }
 
+object AllDmnTables {
+  implicit val decoder: Decoder[AllDmnTables] = deriveDecoder
+  implicit val encoder: Encoder[AllDmnTables] = deriveEncoder
+}
+
 case class DmnTable(
     decisionId: String,
     name: String,
@@ -21,16 +29,28 @@ case class DmnTable(
     outputCols: Seq[OutputColumn],
     ruleRows: Seq[DmnRule]
 )
+object DmnTable {
+  implicit val decoder: Decoder[DmnTable] = deriveDecoder
+  implicit val encoder: Encoder[DmnTable] = deriveEncoder
+}
 
 case class InputColumn(
     name: String,
     feelExprText: String
 )
+object InputColumn {
+  implicit val decoder: Decoder[InputColumn] = deriveDecoder
+  implicit val encoder: Encoder[InputColumn] = deriveEncoder
+}
 
 case class OutputColumn(
     name: String,
     value: Option[String]
 )
+object OutputColumn {
+  implicit val decoder: Decoder[OutputColumn] = deriveDecoder
+  implicit val encoder: Encoder[OutputColumn] = deriveEncoder
+}
 
 case class DmnRule(
     index: Int,
@@ -38,6 +58,10 @@ case class DmnRule(
     inputs: Seq[(String, String)],
     outputs: Seq[(String, String)]
 )
+object DmnRule {
+  implicit val decoder: Decoder[DmnRule] = deriveDecoder
+  implicit val encoder: Encoder[DmnRule] = deriveEncoder
+}
 
 sealed trait HitPolicy {
   def isSingle: Boolean
@@ -68,6 +92,10 @@ object HitPolicy {
       case "ANY"     => ANY
       case "COLLECT" => COLLECT
     }
+
+  implicit val decoder: Decoder[HitPolicy] = deriveDecoder
+  implicit val encoder: Encoder[HitPolicy] = deriveEncoder
+
 }
 
 sealed trait Aggregator
@@ -86,4 +114,8 @@ object Aggregator {
       case "MIN"   => MIN
       case "MAX"   => MAX
     }
+
+  implicit val decoder: Decoder[Aggregator] = deriveDecoder
+  implicit val encoder: Encoder[Aggregator] = deriveEncoder
+
 }
