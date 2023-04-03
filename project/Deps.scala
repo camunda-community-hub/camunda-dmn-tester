@@ -8,7 +8,7 @@ object Deps {
   val supportedScalaVersions: Seq[String] = List(scala212, scala213)
 
   object version {
-    val circe = "0.14.3"
+    val circe = "0.14.5"
     val osLib = "0.8.1"
     val dmnScala = "1.7.4"
     val http4s = "0.23.18"

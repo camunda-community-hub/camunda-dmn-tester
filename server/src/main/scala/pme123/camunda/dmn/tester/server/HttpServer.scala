@@ -107,9 +107,11 @@ object HttpServer extends IOApp {
           .as[Option[Seq[DmnConfig]]]
           .map(configs =>
             if (configs.nonEmpty && configs.get.nonEmpty) {
-              val testResult = DmnService.runTests(configs.get).asJson
-              println(s"TEST RESULT: $testResult")
-              testResult
+              val testResult = DmnService.runTests(configs.get)
+              // println(s"TEST RESULT: $testResult")
+              val jsonTestResult = testResult.asJson
+              println(s"JSON TEST RESULT: $jsonTestResult")
+              jsonTestResult
             } else
               Seq.empty.asJson
           ).handleError{

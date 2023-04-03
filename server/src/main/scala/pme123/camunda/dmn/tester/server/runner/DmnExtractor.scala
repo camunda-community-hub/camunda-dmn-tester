@@ -39,14 +39,20 @@ object DmnExtractor {
               InputColumn(nameWithDefault, feelExprText)
           }.toSeq
           val outputCols = outputs.collect {
-            case ParsedOutput(_, name, _, value, _) =>
-              OutputColumn(name, value)
+            case ParsedOutput(_, name, label, value, _) =>
+              val nameWithDefault = if(name != null) name else if(label != null) label else "undefined"
+              OutputColumn(nameWithDefault, value)
           }.toSeq
           val ruleRows = rules.zipWithIndex.map {
             case (
                   ParsedRule(id, inputs: Iterable[ParsedExpression], outputs),
                   index
                 ) =>
+              val checkedOutputs = outputs.toSeq.zip(outputCols).map {
+                  case (k -> v) -> col if k == null =>
+                    col.name -> v
+                  case (k -> v) -> _ => k -> v
+              }
               DmnRule(
                 index + 1,
                 id,
@@ -54,7 +60,7 @@ object DmnExtractor {
                   .map(_.name)
                   .zip(inputs.toSeq)
                   .map(i => i._1 -> extractFrom(i._2)),
-                outputs.map(o => o._1 -> extractFrom(o._2)).toSeq
+                checkedOutputs.map(o => o._1 -> extractFrom(o._2)).toSeq
               )
           }.toSeq
           DmnTable(

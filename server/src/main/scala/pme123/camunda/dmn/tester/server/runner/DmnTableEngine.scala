@@ -131,7 +131,7 @@ case class DmnTableEngine(
             _,
             _,
             _,
-            _,
+            outputCols,
             ruleRows
           ) =>
         val isMainTable = dmnTables.isMainTable(decisionId)
@@ -179,10 +179,11 @@ case class DmnTableEngine(
                             k -> NotTested(v)
                           }
                         else
-                          outputs.map { case (k, v) =>
+                          outputs.zip(outputCols).map { case (k -> v) -> col =>
+                            val key = if(k != null) k else col.name
                             val maybeTestCase =
                               dmnConfig.findTestCase(inputMap)
-                            k -> maybeTestCase
+                            key -> maybeTestCase
                               .map(_.checkOut(rowIndex.intValue, k, v))
                               .getOrElse(NotTested(v))
                           }
