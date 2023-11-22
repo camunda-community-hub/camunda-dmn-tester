@@ -12,7 +12,7 @@ import scala.util.Using
 
 object Settings {
 
-  val scala2V = "2.13.10"
+  val scala2V = "2.13.12"
   val scala3V = "3.2.1"
 
   val projectName = "camunda-dmn-tester"

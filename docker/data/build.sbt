@@ -1,4 +1,4 @@
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.12"
 lazy val testerVersion = scala.io.Source.fromFile("testerVersion").mkString.trim
 
 libraryDependencies ++= Seq(
