@@ -3,7 +3,7 @@ lazy val testerVersion = scala.io.Source.fromFile("testerVersion").mkString.trim
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.17" % Test,
-  "com.vladsch.flexmark" % "flexmark-all" % "0.35.10" % Test,
+  "com.vladsch.flexmark" % "flexmark-all" % "0.64.8" % Test,
   "io.github.pme123" %% "camunda-dmn-tester-server" % testerVersion % Test
 )
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports")
