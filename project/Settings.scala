@@ -13,7 +13,7 @@ import scala.util.Using
 object Settings {
 
   val scala2V = "2.13.12"
-  val scala3V = "3.2.1"
+  val scala3V = "3.2.2"
 
   val projectName = "camunda-dmn-tester"
   lazy val projectVersion: String =
