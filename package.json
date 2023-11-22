@@ -17,7 +17,7 @@
     "typescript": "4.6.2",
     "@types/chart.js": "2.9.41",
     "@ui5/webcomponents": "1.8.0",
-    "@ui5/webcomponents-fiori": "1.8.0",
+    "@ui5/webcomponents-fiori": "1.19.1",
     "@ui5/webcomponents-icons": "1.8.0"
   }
 }
