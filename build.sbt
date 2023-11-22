@@ -21,14 +21,14 @@ lazy val shared =
       scalaVersion := scala2V,
       libraryDependencies ++= Seq(
         "io.circe" %% "circe-generic" % "0.14.3",
-        "io.circe" %% "circe-parser" % "0.14.3"
+        "io.circe" %% "circe-parser" % "0.14.6"
       )
     )
     .jsSettings(
       scalaVersion := scala3V,
       libraryDependencies ++= Seq(
         "io.circe" %%% "circe-generic" % "0.14.3",
-        "io.circe" %%% "circe-parser" % "0.14.3"
+        "io.circe" %%% "circe-parser" % "0.14.6"
       )
     )
     .settings(name := s"$projectName-shared")
