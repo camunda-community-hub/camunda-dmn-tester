@@ -1,7 +1,6 @@
 package pme123.camunda.dmn.tester.server
 
 import cats.effect._
-import com.comcast.ip4s._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.circe.CirceEntityCodec._
@@ -13,8 +12,6 @@ import org.http4s.server.middleware.CORS
 import org.http4s.server.{Router, Server}
 import org.http4s.{EntityDecoder, _}
 import org.slf4j.{Logger, LoggerFactory}
-import org.typelevel.ci._
-import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared._
 
 import java.net.URLDecoder

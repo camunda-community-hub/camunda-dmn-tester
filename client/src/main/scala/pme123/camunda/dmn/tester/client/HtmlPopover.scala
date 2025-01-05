@@ -17,4 +17,4 @@ def generalPopover[T](openPopoverEvents: EventStream[(Option[HTMLElement], T)])(
         ()
       }),
 
-    ).amend(mods: _*)
+    ).amend(mods*)

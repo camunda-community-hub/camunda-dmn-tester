@@ -20,7 +20,7 @@ lazy val shared =
       libraryDependencies ++= Seq(
         "io.circe" %%% "circe-generic" % Deps.version.circe,
         "io.circe" %%% "circe-parser" % Deps.version.circe,
-        "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
+        "io.github.cquiroz" %%% "scala-java-time" % Deps.version.scalaJavaTime
       ),
       buildInfoKeys := Seq[BuildInfoKey](name, version),
       buildInfoPackage := projectPackage + ".camunda.dmn.tester",
@@ -33,18 +33,10 @@ lazy val shared =
     .enablePlugins(BuildInfoPlugin)
     .jvmSettings(
       scalaVersion := scala2V,
-      libraryDependencies ++= Seq(
-        "io.circe" %% "circe-generic" % "0.14.6",
-        "io.circe" %% "circe-parser" % "0.14.6"
-      ),
       crossScalaVersions := Seq(scala2V, scala3V)
     )
     .jsSettings(
-      scalaVersion := scala3V,
-      libraryDependencies ++= Seq(
-        "io.circe" %%% "circe-generic" % "0.14.6",
-        "io.circe" %%% "circe-parser" % "0.14.6"
-      )
+      scalaVersion := scala3V
     )
     .settings(
       name := s"$projectName-shared",
@@ -73,8 +65,11 @@ lazy val server =
       projectSettings,
       ser.settings,
       publicationSettings,
-      libraryDependencies ++= ser.deps ++ ser.serverDeps,
-      ser.docker
+      libraryDependencies ++= (ser.deps ++ ser.serverDeps),
+      ser.docker,
+      Compile / mainClass := Some(
+        "pme123.camunda.dmn.tester.server.HttpServer"
+      )
     )
     .enablePlugins(DockerPlugin)
     .enablePlugins(JavaAppPackaging)

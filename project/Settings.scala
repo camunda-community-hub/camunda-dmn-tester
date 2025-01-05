@@ -91,9 +91,6 @@ object Settings {
     )
 
     lazy val serverDeps =
-      Compile / mainClass := Some(
-        "pme123.camunda.dmn.tester.server.HttpServer"
-      )
       Seq(
         Deps.http4sDsl,
         Deps.http4sCirce,

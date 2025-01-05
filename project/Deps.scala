@@ -9,7 +9,8 @@ object Deps {
   val supportedScalaVersions = List(scala212, scala213, scala3)
 
   object version {
-    val ammonite = "2.4.1"
+    val circe = "0.14.10"
+    val scalaJavaTime = "2.5.0"
     val osLib = "0.8.1"
     val dmnScala = "1.6.2"
     val http4s = "0.21.12"
@@ -22,7 +23,7 @@ object Deps {
 
   val dmnScala =
     "org.camunda.bpm.extension.dmn.scala" % "dmn-engine" % version.dmnScala
-  val ammonite = "com.lihaoyi" %% "ammonite-ops" % version.ammonite
+  val osLib = "com.lihaoyi" %% "os-lib" % version.osLib
 
   val zio = "dev.zio" %% "zio" % version.zio
   val zioCats = "dev.zio" %% "zio-interop-cats" % version.zioCats
