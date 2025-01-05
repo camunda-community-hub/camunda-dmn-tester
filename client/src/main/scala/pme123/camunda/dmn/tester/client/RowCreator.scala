@@ -73,7 +73,7 @@ case class RowCreator(
                 Seq.empty,
                 Seq.empty,
                 Some(msg.msg),
-                Seq(rows.map(_.toChildRow()): _*)
+                Seq(rows.map(_.toChildRow()*)
               )
             )
           )

@@ -5,14 +5,12 @@ ThisBuild / evictionErrorLevel := Level.Warn
 lazy val root = project
   .settings(
     name := s"$projectName-root",
-    commands ++= Seq(ReleaseCmd, ReleaseClientCmd)
-  )
-  .in(file("."))
-  .aggregate(shared.jvm, shared.js, client, server)
-  .configure(
+    commands ++= Seq(ReleaseCmd, ReleaseClientCmd),
     projectSettings,
     preventPublication
   )
+  .in(file("."))
+  .aggregate(shared.jvm, shared.js, client, server)
 
 lazy val shared =
   crossProject(JSPlatform, JVMPlatform)
@@ -31,35 +29,37 @@ lazy val shared =
         "io.circe" %%% "circe-parser" % "0.14.6"
       )
     )
-    .settings(name := s"$projectName-shared")
-    .configure(
+    .settings(
+      name := s"$projectName-shared",
       projectSettings,
       publicationSettings
+    )
+    .configure(
     )
 
 lazy val client =
   project
-    .settings(name := s"$projectName-client")
-    .dependsOn(shared.js)
-    .enablePlugins(
-      ScalaJSPlugin
-    )
-    .configure(
+    .settings(
+      name := s"$projectName-client",
       projectSettings,
       cli.settings,
       cli.deps,
       preventPublication
     )
+    .dependsOn(shared.js)
+    .enablePlugins(
+      ScalaJSPlugin
+    )
 
 lazy val server =
   project
     .dependsOn(shared.jvm)
-    .configure(
+    .settings(
       projectSettings,
       ser.settings,
-      ser.serverDeps,
-      ser.deps, // must be moved?
-      ser.docker,
-      publicationSettings
+      publicationSettings,
+      libraryDependencies ++= ser.deps ++ ser.serverDeps,
+      ser.docker
     )
+    .enablePlugins(DockerPlugin)
     .enablePlugins(JavaAppPackaging)

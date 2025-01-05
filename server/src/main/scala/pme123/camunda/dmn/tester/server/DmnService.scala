@@ -3,7 +3,7 @@ package pme123.camunda.dmn.tester.server
 import pme123.camunda.dmn.tester.server.{ZDmnService => z}
 import pme123.camunda.dmn.tester.shared.HandledTesterException.EvalException
 import pme123.camunda.dmn.tester.shared.{DmnApi, DmnConfig, DmnEvalResult}
-import zio.{Runtime, ZEnv, ZIO}
+import zio.{Runtime, ZIO}
 
 class DmnService extends DmnApi {
 
