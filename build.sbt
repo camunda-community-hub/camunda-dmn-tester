@@ -6,14 +6,12 @@ lazy val root = project
   .settings(
     name := s"$projectName-root",
     commands ++= Seq(ReleaseCmd, ReleaseClientCmd),
-    crossScalaVersions := Nil
-  )
-  .in(file("."))
-  .aggregate(shared.jvm, shared.js, client, server)
-  .configure(
+    crossScalaVersions := Nil,
     projectSettings,
     preventPublication
   )
+  .in(file("."))
+  .aggregate(shared.jvm, shared.js, client, server)
 
 lazy val shared =
   crossProject(JSPlatform, JVMPlatform)
@@ -35,40 +33,48 @@ lazy val shared =
     .enablePlugins(BuildInfoPlugin)
     .jvmSettings(
       scalaVersion := scala2V,
+      libraryDependencies ++= Seq(
+        "io.circe" %% "circe-generic" % "0.14.6",
+        "io.circe" %% "circe-parser" % "0.14.6"
+      ),
       crossScalaVersions := Seq(scala2V, scala3V)
     )
     .jsSettings(
-      scalaVersion := scala3V
+      scalaVersion := scala3V,
+      libraryDependencies ++= Seq(
+        "io.circe" %%% "circe-generic" % "0.14.6",
+        "io.circe" %%% "circe-parser" % "0.14.6"
+      )
     )
-    .settings(name := s"$projectName-shared")
-    .configure(
+    .settings(
+      name := s"$projectName-shared",
       projectSettings,
       publicationSettings
     )
 
 lazy val client =
   project
-    .settings(name := s"$projectName-client")
-    .dependsOn(shared.js)
-    .enablePlugins(
-      ScalaJSPlugin
-    )
-    .configure(
+    .settings(
+      name := s"$projectName-client",
       projectSettings,
       cli.settings,
       cli.deps,
       preventPublication
     )
+    .dependsOn(shared.js)
+    .enablePlugins(
+      ScalaJSPlugin
+    )
 
 lazy val server =
   project
     .dependsOn(shared.jvm)
-    .configure(
+    .settings(
       projectSettings,
       ser.settings,
-      ser.serverDeps,
-      ser.deps, // must be moved?
-      ser.docker,
-      publicationSettings
+      publicationSettings,
+      libraryDependencies ++= ser.deps ++ ser.serverDeps,
+      ser.docker
     )
+    .enablePlugins(DockerPlugin)
     .enablePlugins(JavaAppPackaging)
